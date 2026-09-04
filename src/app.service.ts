@@ -1,26 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/mongoose';
-import { Connection } from 'mongoose';
 
 @Injectable()
 export class AppService {
-  constructor(@InjectConnection() private readonly connection: Connection) {}
-
-  async getHealth() {
-    let dbStatus = 'disconnected';
-    try {
-      if (Number(this.connection.readyState) === 1) {
-        await this.connection.db?.command({ ping: 1 });
-        dbStatus = 'connected';
-      }
-    } catch {
-      dbStatus = 'error';
-    }
-
+  getHealth() {
     return {
       name: 'EduTrack API',
       status: 'ok',
-      db: dbStatus,
       version: '0.0.1',
     };
   }
