@@ -35,8 +35,10 @@ export class MailService {
         `,
       });
       this.logger.log(`Đã gửi OTP xác thực đến ${email}`);
-    } catch (error: any) {
-      this.logger.error(`Lỗi khi gửi email xác thực tới ${email}: ${error.message}`, error.stack);
+    } catch (error) {
+      const errMessage = error instanceof Error ? error.message : String(error);
+      const errStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Lỗi khi gửi email xác thực tới ${email}: ${errMessage}`, errStack);
       throw new InternalServerErrorException(
         'Không thể gửi email OTP (Lỗi cấu hình SMTP hoặc mạng). Vui lòng báo cho quản trị viên.',
       );
@@ -69,8 +71,10 @@ export class MailService {
         `,
       });
       this.logger.log(`Đã gửi OTP đổi mật khẩu đến ${email}`);
-    } catch (error: any) {
-      this.logger.error(`Lỗi khi gửi email đổi mật khẩu tới ${email}: ${error.message}`, error.stack);
+    } catch (error) {
+      const errMessage = error instanceof Error ? error.message : String(error);
+      const errStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Lỗi khi gửi email đổi mật khẩu tới ${email}: ${errMessage}`, errStack);
       throw new InternalServerErrorException(
         'Không thể gửi email OTP (Lỗi cấu hình SMTP hoặc mạng). Vui lòng báo cho quản trị viên.',
       );
