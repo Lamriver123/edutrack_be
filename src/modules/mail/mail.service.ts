@@ -1,9 +1,10 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport, Transporter } from 'nodemailer';
 
 @Injectable()
 export class MailService {
+  private readonly logger = new Logger(MailService.name);
   private transporter?: Transporter;
 
   constructor(private readonly configService: ConfigService) {}
@@ -13,25 +14,33 @@ export class MailService {
     const from = this.configService.get<string>('mail.from');
     const safeFullName = this.escapeHtml(fullName);
 
-    await transporter.sendMail({
-      from,
-      to: email,
-      subject: 'Mã xác thực tài khoản EduTrack',
-      text: [
-        `Xin chào ${fullName},`,
-        '',
-        `Mã OTP xác thực tài khoản EduTrack của bạn là: ${otp}`,
-        'Mã có hiệu lực trong thời gian ngắn. Nếu bạn không tạo tài khoản, hãy bỏ qua email này.',
-      ].join('\n'),
-      html: `
-        <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6;">
-          <p>Xin chào <strong>${safeFullName}</strong>,</p>
-          <p>Mã OTP xác thực tài khoản EduTrack của bạn là:</p>
-          <p style="font-size: 28px; font-weight: 700; margin: 16px 0;">${otp}</p>
-          <p>Mã có hiệu lực trong thời gian ngắn. Nếu bạn không tạo tài khoản, hãy bỏ qua email này.</p>
-        </div>
-      `,
-    });
+    try {
+      await transporter.sendMail({
+        from,
+        to: email,
+        subject: 'Mã xác thực tài khoản EduTrack',
+        text: [
+          `Xin chào ${fullName},`,
+          '',
+          `Mã OTP xác thực tài khoản EduTrack của bạn là: ${otp}`,
+          'Mã có hiệu lực trong thời gian ngắn. Nếu bạn không tạo tài khoản, hãy bỏ qua email này.',
+        ].join('\n'),
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6;">
+            <p>Xin chào <strong>${safeFullName}</strong>,</p>
+            <p>Mã OTP xác thực tài khoản EduTrack của bạn là:</p>
+            <p style="font-size: 28px; font-weight: 700; margin: 16px 0;">${otp}</p>
+            <p>Mã có hiệu lực trong thời gian ngắn. Nếu bạn không tạo tài khoản, hãy bỏ qua email này.</p>
+          </div>
+        `,
+      });
+      this.logger.log(`Đã gửi OTP xác thực đến ${email}`);
+    } catch (error: any) {
+      this.logger.error(`Lỗi khi gửi email xác thực tới ${email}: ${error.message}`, error.stack);
+      throw new InternalServerErrorException(
+        'Không thể gửi email OTP (Lỗi cấu hình SMTP hoặc mạng). Vui lòng báo cho quản trị viên.',
+      );
+    }
   }
 
   async sendPasswordResetOtp(email: string, otp: string, fullName: string) {
@@ -39,25 +48,33 @@ export class MailService {
     const from = this.configService.get<string>('mail.from');
     const safeFullName = this.escapeHtml(fullName);
 
-    await transporter.sendMail({
-      from,
-      to: email,
-      subject: 'Mã OTP đổi mật khẩu EduTrack',
-      text: [
-        `Xin chào ${fullName},`,
-        '',
-        `Mã OTP đổi mật khẩu EduTrack của bạn là: ${otp}`,
-        'Mã có hiệu lực trong thời gian ngắn. Nếu bạn không yêu cầu đổi mật khẩu, hãy bỏ qua email này.',
-      ].join('\n'),
-      html: `
-        <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6;">
-          <p>Xin chào <strong>${safeFullName}</strong>,</p>
-          <p>Mã OTP đổi mật khẩu EduTrack của bạn là:</p>
-          <p style="font-size: 28px; font-weight: 700; margin: 16px 0;">${otp}</p>
-          <p>Mã có hiệu lực trong thời gian ngắn. Nếu bạn không yêu cầu đổi mật khẩu, hãy bỏ qua email này.</p>
-        </div>
-      `,
-    });
+    try {
+      await transporter.sendMail({
+        from,
+        to: email,
+        subject: 'Mã OTP đổi mật khẩu EduTrack',
+        text: [
+          `Xin chào ${fullName},`,
+          '',
+          `Mã OTP đổi mật khẩu EduTrack của bạn là: ${otp}`,
+          'Mã có hiệu lực trong thời gian ngắn. Nếu bạn không yêu cầu đổi mật khẩu, hãy bỏ qua email này.',
+        ].join('\n'),
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6;">
+            <p>Xin chào <strong>${safeFullName}</strong>,</p>
+            <p>Mã OTP đổi mật khẩu EduTrack của bạn là:</p>
+            <p style="font-size: 28px; font-weight: 700; margin: 16px 0;">${otp}</p>
+            <p>Mã có hiệu lực trong thời gian ngắn. Nếu bạn không yêu cầu đổi mật khẩu, hãy bỏ qua email này.</p>
+          </div>
+        `,
+      });
+      this.logger.log(`Đã gửi OTP đổi mật khẩu đến ${email}`);
+    } catch (error: any) {
+      this.logger.error(`Lỗi khi gửi email đổi mật khẩu tới ${email}: ${error.message}`, error.stack);
+      throw new InternalServerErrorException(
+        'Không thể gửi email OTP (Lỗi cấu hình SMTP hoặc mạng). Vui lòng báo cho quản trị viên.',
+      );
+    }
   }
 
   private getTransporter() {
