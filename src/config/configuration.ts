@@ -38,6 +38,7 @@ export default () => ({
       process.env.MAIL_FROM ??
       process.env.SMTP_FROM ??
       'Edutrack <no-reply@edutrack.local>',
+    apiUrl: process.env.MAIL_API_URL ?? '',
   },
   otp: {
     expiresMinutes: toNumber(process.env.OTP_EXPIRES_MINUTES, 10),
