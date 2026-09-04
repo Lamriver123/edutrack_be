@@ -9,11 +9,11 @@ export class AppService {
   async getHealth() {
     let dbStatus = 'disconnected';
     try {
-      if (this.connection.readyState === 1) {
+      if (Number(this.connection.readyState) === 1) {
         await this.connection.db?.command({ ping: 1 });
         dbStatus = 'connected';
       }
-    } catch (error) {
+    } catch {
       dbStatus = 'error';
     }
 
