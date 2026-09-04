@@ -1,9 +1,13 @@
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import * as dns from 'dns';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // Fix lỗi ENETUNREACH IPv6 trên Render khi gửi mail hoặc gọi API ngoài
+  dns.setDefaultResultOrder('ipv4first');
+
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const frontendUrl =
