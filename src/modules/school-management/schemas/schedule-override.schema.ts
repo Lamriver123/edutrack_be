@@ -31,6 +31,12 @@ export class ScheduleOverride {
   @Prop({ type: Date })
   originalDate?: Date;
 
+  @Prop({ match: timePattern })
+  originalStartTime?: string;
+
+  @Prop({ match: timePattern })
+  originalEndTime?: string;
+
   @Prop({
     enum: ScheduleOverrideAction,
     required: true,

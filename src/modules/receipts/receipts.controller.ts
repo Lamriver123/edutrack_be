@@ -63,6 +63,32 @@ export class ReceiptsController {
     );
   }
 
+  @Get('students/:studentId/billing/overview')
+  getStudentBillingOverview(
+    @CurrentUser() user: JwtUser,
+    @Param('studentId') studentId: string,
+    @Query() query: QueryBillingDto,
+  ) {
+    return this.receiptsService.getStudentBillingOverview(
+      user.userId,
+      studentId,
+      query,
+    );
+  }
+
+  @Get('students/:studentId/billing-candidates')
+  getStudentBillingCandidates(
+    @CurrentUser() user: JwtUser,
+    @Param('studentId') studentId: string,
+    @Query() query: QueryBillingDto,
+  ) {
+    return this.receiptsService.getStudentBillingCandidates(
+      user.userId,
+      studentId,
+      query,
+    );
+  }
+
   @Post('classes/:classId/students/:studentId/receipts/preview')
   previewReceipt(
     @CurrentUser() user: JwtUser,
@@ -78,6 +104,19 @@ export class ReceiptsController {
     );
   }
 
+  @Post('students/:studentId/receipts/preview')
+  previewStudentReceipt(
+    @CurrentUser() user: JwtUser,
+    @Param('studentId') studentId: string,
+    @Body() dto: IssueReceiptDto,
+  ) {
+    return this.receiptsService.previewStudentReceipt(
+      user.userId,
+      studentId,
+      dto,
+    );
+  }
+
   @Post('classes/:classId/students/:studentId/receipts')
   issueReceipt(
     @CurrentUser() user: JwtUser,
@@ -88,6 +127,19 @@ export class ReceiptsController {
     return this.receiptsService.issueReceipt(
       user.userId,
       classId,
+      studentId,
+      dto,
+    );
+  }
+
+  @Post('students/:studentId/receipts')
+  issueStudentReceipt(
+    @CurrentUser() user: JwtUser,
+    @Param('studentId') studentId: string,
+    @Body() dto: IssueReceiptDto,
+  ) {
+    return this.receiptsService.issueStudentReceipt(
+      user.userId,
       studentId,
       dto,
     );

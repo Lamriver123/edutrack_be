@@ -50,6 +50,9 @@ export class Class {
   @Prop({ required: true, min: 0, validate: integerMoneyValidator })
   makeupPrice: number;
 
+  @Prop({ type: Date })
+  priceEffectiveFrom?: Date;
+
   @Prop({
     enum: ClassStatus,
     default: ClassStatus.Active,

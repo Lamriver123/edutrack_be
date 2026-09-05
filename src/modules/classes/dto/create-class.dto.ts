@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsDateString,
   IsInt,
   IsOptional,
   IsString,
@@ -48,4 +49,8 @@ export class CreateClassDto {
   @IsInt()
   @Min(0)
   makeupPrice: number;
+
+  @IsOptional()
+  @IsDateString()
+  priceEffectiveFrom?: string;
 }

@@ -14,6 +14,7 @@ import {
   PaymentStatus,
   ReceiptPdfStatus,
   ReceiptReason,
+  ReceiptScope,
   TuitionStatus,
 } from '../school-management/enums';
 import {
@@ -63,6 +64,9 @@ type DateRange = {
 type ReceiptDraft = {
   teacherId: Types.ObjectId;
   classId: Types.ObjectId;
+  classIds: Types.ObjectId[];
+  primaryClassId: Types.ObjectId;
+  scopeType: ReceiptScope;
   studentId: Types.ObjectId;
   periodStart: Date;
   periodEnd: Date;
@@ -70,6 +74,7 @@ type ReceiptDraft = {
   reason: ReceiptReason;
   teacherSnapshot: Record<string, unknown>;
   classSnapshot: Record<string, unknown>;
+  classSnapshots: Array<Record<string, unknown>>;
   studentSnapshot: Record<string, unknown>;
   sessions: Array<Record<string, unknown>>;
   exams: Array<Record<string, unknown>>;
@@ -196,8 +201,8 @@ export class ReceiptsService {
       this.receiptModel
         .find({
           teacherId,
-          classId,
           studentId: { $in: studentIds },
+          $or: [{ classId }, { classIds: classId }],
         })
         .sort({ issuedAt: -1 })
         .lean()
@@ -264,17 +269,193 @@ export class ReceiptsService {
     const teacherId = this.toObjectId(teacherIdStr, 'teacherId');
     const classId = this.toObjectId(classIdStr, 'classId');
     const studentId = this.toObjectId(studentIdStr, 'studentId');
-    const { classroom, student } = await this.validateBillingScope(
+    return this.getBillingCandidatesForClasses(
       teacherId,
-      classId,
+      studentId,
+      [classId],
+      query,
+    );
+  }
+
+  async getStudentBillingOverview(
+    teacherIdStr: string,
+    studentIdStr: string,
+    query: QueryBillingDto,
+  ) {
+    const teacherId = this.toObjectId(teacherIdStr, 'teacherId');
+    const studentId = this.toObjectId(studentIdStr, 'studentId');
+    const range = this.parseDateRange(query.fromDate, query.toDate);
+    const student = await this.findStudentForTeacherOrThrow(
+      teacherId,
       studentId,
     );
-    const range = this.parseDateRange(query.fromDate, query.toDate);
-    const tuitionEntries = await this.findUnbilledTuitionEntries(
+    const classIds = await this.resolveStudentBillingClassIds(
       teacherId,
-      classId,
       studentId,
-      range,
+      query.classIds,
+    );
+
+    if (!classIds.length) {
+      return {
+        student: this.toStudentResponse(student),
+        classes: [],
+        totals: {
+          classes: 0,
+          unbilledLessonCount: 0,
+          unbilledAmount: 0,
+          readyToIssueCount: 0,
+        },
+      };
+    }
+
+    const { classrooms } = await this.validateMultiClassBillingScope(
+      teacherId,
+      classIds,
+      studentId,
+    );
+    const classMap = this.toClassDocumentMap(classrooms);
+    const tuitionFilter: Record<string, unknown> = {
+      teacherId,
+      studentId,
+      classId: { $in: classIds },
+      status: TuitionStatus.Unbilled,
+    };
+    this.assignDateRangeFilter(tuitionFilter, 'sessionDate', range);
+
+    const [tuitionGroups, latestReceipts] = await Promise.all([
+      this.tuitionEntryModel
+        .aggregate<{
+          _id: Types.ObjectId;
+          unbilledLessonCount: number;
+          unbilledAmount: number;
+          firstSessionDate?: Date;
+          lastSessionDate?: Date;
+        }>([
+          { $match: tuitionFilter },
+          {
+            $group: {
+              _id: '$classId',
+              firstSessionDate: { $min: '$sessionDate' },
+              lastSessionDate: { $max: '$sessionDate' },
+              unbilledAmount: { $sum: '$amount' },
+              unbilledLessonCount: { $sum: 1 },
+            },
+          },
+        ])
+        .exec(),
+      this.receiptModel
+        .find({
+          teacherId,
+          studentId,
+          $or: [
+            { classId: { $in: classIds } },
+            { classIds: { $in: classIds } },
+          ],
+        })
+        .sort({ issuedAt: -1 })
+        .lean()
+        .exec(),
+    ]);
+    const tuitionMap = new Map(
+      tuitionGroups.map((item) => [item._id.toString(), item]),
+    );
+    const latestReceiptMap = new Map<string, Record<string, unknown>>();
+
+    for (const receipt of latestReceipts) {
+      const receiptClassIds = this.getReceiptClassIds(receipt);
+
+      for (const receiptClassId of receiptClassIds) {
+        if (!latestReceiptMap.has(receiptClassId)) {
+          latestReceiptMap.set(receiptClassId, this.toReceiptListItem(receipt));
+        }
+      }
+    }
+
+    const rows = classIds
+      .map((classIdItem) => {
+        const classroom = classMap.get(classIdItem.toString());
+
+        if (!classroom) {
+          return null;
+        }
+
+        const group = tuitionMap.get(classIdItem.toString());
+        const unbilledLessonCount = group?.unbilledLessonCount ?? 0;
+
+        return {
+          class: this.toClassSummary(classroom),
+          unbilledLessonCount,
+          unbilledAmount: group?.unbilledAmount ?? 0,
+          firstUnbilledSessionDate: group?.firstSessionDate,
+          lastUnbilledSessionDate: group?.lastSessionDate,
+          reachedSuggestedCycle:
+            unbilledLessonCount >= DEFAULT_TARGET_SESSION_COUNT,
+          latestReceipt: latestReceiptMap.get(classIdItem.toString()) ?? null,
+        };
+      })
+      .filter(Boolean) as Array<Record<string, unknown>>;
+
+    return {
+      student: this.toStudentResponse(student),
+      classes: rows,
+      totals: {
+        classes: rows.length,
+        unbilledLessonCount: rows.reduce(
+          (sum, item) => sum + Number(item.unbilledLessonCount ?? 0),
+          0,
+        ),
+        unbilledAmount: rows.reduce(
+          (sum, item) => sum + Number(item.unbilledAmount ?? 0),
+          0,
+        ),
+        readyToIssueCount: rows.filter((item) => item.reachedSuggestedCycle)
+          .length,
+      },
+    };
+  }
+
+  async getStudentBillingCandidates(
+    teacherIdStr: string,
+    studentIdStr: string,
+    query: QueryBillingDto,
+  ) {
+    const teacherId = this.toObjectId(teacherIdStr, 'teacherId');
+    const studentId = this.toObjectId(studentIdStr, 'studentId');
+    const classIds = await this.resolveStudentBillingClassIds(
+      teacherId,
+      studentId,
+      query.classIds,
+    );
+
+    return this.getBillingCandidatesForClasses(
+      teacherId,
+      studentId,
+      classIds,
+      query,
+    );
+  }
+
+  private async getBillingCandidatesForClasses(
+    teacherId: Types.ObjectId,
+    studentId: Types.ObjectId,
+    classIds: Types.ObjectId[],
+    query: QueryBillingDto,
+  ) {
+    const { classrooms, student } = await this.validateMultiClassBillingScope(
+      teacherId,
+      classIds,
+      studentId,
+    );
+    const classMap = this.toClassDocumentMap(classrooms);
+    const range = this.parseDateRange(query.fromDate, query.toDate);
+    const tuitionEntries = this.withClassMetadata(
+      await this.findUnbilledTuitionEntries(
+        teacherId,
+        classIds,
+        studentId,
+        range,
+      ),
+      classMap,
     );
     const suggestedTuitionEntries = tuitionEntries.slice(
       0,
@@ -286,16 +467,20 @@ export class ReceiptsService {
     );
     const exams = await this.findExamSnapshots(
       teacherId,
-      classId,
+      classIds,
       studentId,
-      classroom.name,
+      classMap,
       period.from,
       period.to,
       new Map(),
     );
+    const primaryClassroom = classrooms[0];
 
     return {
-      class: this.toClassSummary(classroom),
+      class: this.toClassSummary(primaryClassroom),
+      classes: classrooms.map((classroom) => this.toClassSummary(classroom)),
+      scopeType:
+        classIds.length > 1 ? ReceiptScope.MultiClass : ReceiptScope.Class,
       student: this.toStudentResponse(student),
       periodStart: period.from,
       periodEnd: period.to,
@@ -322,6 +507,33 @@ export class ReceiptsService {
     const draft = await this.buildReceiptDraft(
       teacherIdStr,
       classIdStr,
+      studentIdStr,
+      dto,
+    );
+    const preview = this.toReceiptPreviewResponse(draft);
+    const paymentQrDataUrl = await this.getTeacherPaymentQrDataUrl(
+      draft.teacherId,
+    );
+
+    return {
+      receipt: preview,
+      html: this.receiptTemplateService.render(preview, paymentQrDataUrl),
+    };
+  }
+
+  async previewStudentReceipt(
+    teacherIdStr: string,
+    studentIdStr: string,
+    dto: IssueReceiptDto,
+  ) {
+    const classIds = await this.resolveStudentReceiptClassIds(
+      teacherIdStr,
+      studentIdStr,
+      dto,
+    );
+    const draft = await this.buildReceiptDraftForClasses(
+      teacherIdStr,
+      classIds,
       studentIdStr,
       dto,
     );
@@ -381,6 +593,61 @@ export class ReceiptsService {
     return this.findReceiptById(teacherIdStr, receiptId.toString());
   }
 
+  async issueStudentReceipt(
+    teacherIdStr: string,
+    studentIdStr: string,
+    dto: IssueReceiptDto,
+  ) {
+    const dbSession = await this.connection.startSession();
+    let receiptId: Types.ObjectId | null = null;
+
+    try {
+      await dbSession.withTransaction(async () => {
+        const classIds = await this.resolveStudentReceiptClassIds(
+          teacherIdStr,
+          studentIdStr,
+          dto,
+          dbSession,
+        );
+        const receipt = await this.persistIssuedReceiptForClasses(
+          teacherIdStr,
+          classIds,
+          studentIdStr,
+          dto,
+          dbSession,
+        );
+        receiptId = receipt._id;
+      });
+    } catch (error) {
+      if (!this.isTransactionUnsupportedError(error)) {
+        throw error;
+      }
+
+      const classIds = await this.resolveStudentReceiptClassIds(
+        teacherIdStr,
+        studentIdStr,
+        dto,
+      );
+      const receipt = await this.persistIssuedReceiptForClasses(
+        teacherIdStr,
+        classIds,
+        studentIdStr,
+        dto,
+      );
+      receiptId = receipt._id;
+    } finally {
+      await dbSession.endSession();
+    }
+
+    if (!receiptId) {
+      throw new BadRequestException('Không thể phát hành hóa đơn.');
+    }
+
+    await this.renderAndUploadReceiptPdf(teacherIdStr, receiptId.toString());
+
+    return this.findReceiptById(teacherIdStr, receiptId.toString());
+  }
+
   async listReceipts(teacherIdStr: string, query: QueryReceiptsDto) {
     const teacherId = this.toObjectId(teacherIdStr, 'teacherId');
     const filter: Record<string, unknown> = {
@@ -388,7 +655,9 @@ export class ReceiptsService {
     };
 
     if (query.classId) {
-      filter.classId = this.toObjectId(query.classId, 'classId');
+      const classId = this.toObjectId(query.classId, 'classId');
+
+      filter.$or = [{ classId }, { classIds: classId }];
     }
 
     if (query.studentId) {
@@ -562,9 +831,25 @@ export class ReceiptsService {
     dto: IssueReceiptDto,
     session?: ClientSession,
   ) {
-    const draft = await this.buildReceiptDraft(
+    return this.persistIssuedReceiptForClasses(
       teacherIdStr,
-      classIdStr,
+      [classIdStr],
+      studentIdStr,
+      dto,
+      session,
+    );
+  }
+
+  private async persistIssuedReceiptForClasses(
+    teacherIdStr: string,
+    classIdStrs: string[],
+    studentIdStr: string,
+    dto: IssueReceiptDto,
+    session?: ClientSession,
+  ) {
+    const draft = await this.buildReceiptDraftForClasses(
+      teacherIdStr,
+      classIdStrs,
       studentIdStr,
       dto,
       session,
@@ -577,6 +862,9 @@ export class ReceiptsService {
     const receiptPayload = {
       teacherId: draft.teacherId,
       classId: draft.classId,
+      classIds: draft.classIds,
+      primaryClassId: draft.primaryClassId,
+      scopeType: draft.scopeType,
       studentId: draft.studentId,
       billingCycleId: billingCycle._id,
       receiptNumber,
@@ -586,10 +874,17 @@ export class ReceiptsService {
       dueDate: draft.dueDate,
       reason: draft.reason,
       teacherSnapshot: draft.teacherSnapshot,
-      classSnapshot: draft.classSnapshot,
+      classSnapshot: this.toClassSnapshotResponse(draft.classSnapshot),
+      classSnapshots: draft.classSnapshots.map((snapshot) =>
+        this.toClassSnapshotResponse(snapshot),
+      ),
       studentSnapshot: draft.studentSnapshot,
-      sessions: draft.sessions,
-      exams: draft.exams,
+      sessions: draft.sessions.map((item) =>
+        this.toReceiptSessionSnapshotResponse(item),
+      ),
+      exams: draft.exams.map((item) =>
+        this.toReceiptExamSnapshotResponse(item),
+      ),
       lessonCount: draft.lessonCount,
       subtotal: draft.subtotal,
       discountAmount: draft.discountAmount,
@@ -623,7 +918,7 @@ export class ReceiptsService {
         {
           _id: { $in: draft.selectedTuitionEntryIds },
           teacherId: draft.teacherId,
-          classId: draft.classId,
+          classId: { $in: draft.classIds },
           studentId: draft.studentId,
           status: TuitionStatus.Unbilled,
         },
@@ -684,24 +979,58 @@ export class ReceiptsService {
     dto: IssueReceiptDto,
     session?: ClientSession,
   ): Promise<ReceiptDraft> {
-    const teacherId = this.toObjectId(teacherIdStr, 'teacherId');
-    const classId = this.toObjectId(classIdStr, 'classId');
-    const studentId = this.toObjectId(studentIdStr, 'studentId');
-    const { classroom, student, teacher } = await this.validateBillingScope(
-      teacherId,
-      classId,
-      studentId,
+    return this.buildReceiptDraftForClasses(
+      teacherIdStr,
+      [classIdStr],
+      studentIdStr,
+      dto,
       session,
-      true,
+    );
+  }
+
+  private async buildReceiptDraftForClasses(
+    teacherIdStr: string,
+    classIdStrs: string[],
+    studentIdStr: string,
+    dto: IssueReceiptDto,
+    session?: ClientSession,
+  ): Promise<ReceiptDraft> {
+    const teacherId = this.toObjectId(teacherIdStr, 'teacherId');
+    const classIds = this.toUniqueObjectIds(classIdStrs);
+
+    if (!classIds.length) {
+      throw new BadRequestException(
+        'Vui lòng chọn ít nhất một lớp để xuất hóa đơn.',
+      );
+    }
+
+    const studentId = this.toObjectId(studentIdStr, 'studentId');
+    const { classrooms, student, teacher } =
+      await this.validateMultiClassBillingScope(
+        teacherId,
+        classIds,
+        studentId,
+        session,
+        true,
+      );
+    const classMap = this.toClassDocumentMap(classrooms);
+    const primaryClassroom = classrooms[0];
+    const scopeType =
+      classIds.length > 1 ? ReceiptScope.MultiClass : ReceiptScope.Class;
+    const classSnapshots = classrooms.map((classroom) =>
+      this.toClassSnapshot(classroom),
     );
     const explicitRange = this.parseDateRange(dto.fromDate, dto.toDate);
-    const tuitionEntries = await this.findUnbilledTuitionEntries(
-      teacherId,
-      classId,
-      studentId,
-      explicitRange,
-      dto.tuitionEntryIds,
-      session,
+    const tuitionEntries = this.withClassMetadata(
+      await this.findUnbilledTuitionEntries(
+        teacherId,
+        classIds,
+        studentId,
+        explicitRange,
+        dto.tuitionEntryIds,
+        session,
+      ),
+      classMap,
     );
     const targetSessionCount =
       dto.targetSessionCount ?? DEFAULT_TARGET_SESSION_COUNT;
@@ -724,9 +1053,9 @@ export class ReceiptsService {
     );
     const exams = await this.findExamSnapshots(
       teacherId,
-      classId,
+      classIds,
       studentId,
-      classroom.name,
+      classMap,
       period.from,
       period.to,
       examRemarkMap,
@@ -744,7 +1073,7 @@ export class ReceiptsService {
     );
     const selectedAttendanceIds = await this.resolveReceiptAttendanceIds(
       teacherId,
-      classId,
+      classIds,
       studentId,
       selectedTuitionEntries,
       session,
@@ -752,7 +1081,10 @@ export class ReceiptsService {
 
     return {
       teacherId,
-      classId,
+      classId: primaryClassroom._id,
+      classIds,
+      primaryClassId: primaryClassroom._id,
+      scopeType,
       studentId,
       periodStart: period.from,
       periodEnd: period.to,
@@ -764,7 +1096,8 @@ export class ReceiptsService {
           ? ReceiptReason.CycleCompleted
           : ReceiptReason.ManualEarly,
       teacherSnapshot: this.toTeacherSnapshot(teacher),
-      classSnapshot: this.toClassSnapshot(classroom),
+      classSnapshot: this.toClassSnapshot(primaryClassroom),
+      classSnapshots,
       studentSnapshot: this.toStudentSnapshot(student),
       sessions: selectedTuitionEntries.map((item, index) => ({
         ...item,
@@ -879,9 +1212,10 @@ export class ReceiptsService {
     await receipt.save({ session });
 
     const tuitionEntryIds = receipt.sessions.map((item) => item.tuitionEntryId);
+    const receiptClassIds = this.getReceiptClassObjectIds(receipt);
     const attendanceIds = await this.resolveReceiptAttendanceIds(
       receipt.teacherId,
-      receipt.classId,
+      receiptClassIds,
       receipt.studentId,
       receipt.sessions,
       session,
@@ -948,7 +1282,7 @@ export class ReceiptsService {
 
   private async findUnbilledTuitionEntries(
     teacherId: Types.ObjectId,
-    classId: Types.ObjectId,
+    classIds: Types.ObjectId[],
     studentId: Types.ObjectId,
     range: DateRange,
     tuitionEntryIds?: string[],
@@ -956,7 +1290,7 @@ export class ReceiptsService {
   ) {
     const filter: Record<string, unknown> = {
       teacherId,
-      classId,
+      classId: { $in: classIds },
       studentId,
       status: TuitionStatus.Unbilled,
     };
@@ -997,7 +1331,7 @@ export class ReceiptsService {
         this.findAttendanceMap(teacherId, attendanceIds, session),
         this.findAttendanceBySessionStudentMap(
           teacherId,
-          classId,
+          classIds,
           studentId,
           sessionIds,
           session,
@@ -1031,11 +1365,16 @@ export class ReceiptsService {
           attendanceId: attendance._id.toString(),
           sessionId: entry.sessionId,
           classId: entry.classId,
+          attendedClassId: entry.attendedClassId || entry.classId,
+          billingClassId: entry.billingClassId || entry.classId,
+          makeupForClassId: entry.makeupForClassId,
           date: entry.sessionDate,
           sessionDate: entry.sessionDate,
           startTime: entry.sessionStartTime,
           endTime: entry.sessionEndTime,
           className: entry.classNameSnapshot,
+          attendedClassName: entry.classNameSnapshot,
+          billingClassName: entry.classNameSnapshot,
           topic: entry.topicSnapshot || classSession?.topic || undefined,
           content: entry.contentSnapshot || classSession?.content || undefined,
           attendanceStatus: attendance.status,
@@ -1086,7 +1425,7 @@ export class ReceiptsService {
 
   private async findAttendanceBySessionStudentMap(
     teacherId: Types.ObjectId,
-    classId: Types.ObjectId,
+    classIds: Types.ObjectId[],
     studentId: Types.ObjectId,
     sessionIds: Types.ObjectId[],
     session?: ClientSession,
@@ -1100,7 +1439,7 @@ export class ReceiptsService {
     const query = this.attendanceModel
       .find({
         teacherId,
-        classId,
+        classId: { $in: classIds },
         studentId,
         sessionId: { $in: sessionIds },
       })
@@ -1123,7 +1462,7 @@ export class ReceiptsService {
 
   private async resolveReceiptAttendanceIds(
     teacherId: Types.ObjectId,
-    classId: Types.ObjectId,
+    classIds: Types.ObjectId[],
     studentId: Types.ObjectId,
     refs: ReceiptAttendanceRef[],
     session?: ClientSession,
@@ -1144,7 +1483,7 @@ export class ReceiptsService {
       const query = this.attendanceModel
         .find({
           teacherId,
-          classId,
+          classId: { $in: classIds },
           studentId,
           sessionId: { $in: sessionIds },
         })
@@ -1193,9 +1532,9 @@ export class ReceiptsService {
 
   private async findExamSnapshots(
     teacherId: Types.ObjectId,
-    classId: Types.ObjectId,
+    classIds: Types.ObjectId[],
     studentId: Types.ObjectId,
-    className: string,
+    classMap: Map<string, ClassDocument>,
     periodStart: Date,
     periodEnd: Date,
     examRemarkMap: Map<string, string>,
@@ -1204,7 +1543,7 @@ export class ReceiptsService {
     const scoresQuery = this.examScoreModel
       .find({
         teacherId,
-        classId,
+        classId: { $in: classIds },
         studentId,
         deletedAt: null,
       })
@@ -1225,7 +1564,7 @@ export class ReceiptsService {
       .find({
         _id: { $in: examIds },
         teacherId,
-        classId,
+        classId: { $in: classIds },
         deletedAt: null,
         testDate: {
           $gte: periodStart,
@@ -1256,8 +1595,8 @@ export class ReceiptsService {
       snapshots.push({
         examId: exam._id,
         examScoreId: score._id,
-        classId,
-        className,
+        classId: exam.classId,
+        className: classMap.get(exam.classId.toString())?.name || 'Lớp học',
         title: exam.title,
         date: exam.testDate,
         score: score.score,
@@ -1330,6 +1669,271 @@ export class ReceiptsService {
       student,
       teacher: teacher as UserDocument,
     };
+  }
+
+  private async validateMultiClassBillingScope(
+    teacherId: Types.ObjectId,
+    classIds: Types.ObjectId[],
+    studentId: Types.ObjectId,
+    session?: ClientSession,
+    includeTeacher = false,
+  ) {
+    if (!classIds.length) {
+      throw new BadRequestException(
+        'Vui lòng chọn ít nhất một lớp để xuất hóa đơn.',
+      );
+    }
+
+    const classQuery = this.classModel.find({
+      _id: { $in: classIds },
+      teacherId,
+      status: { $ne: ClassStatus.Archived },
+    });
+    const studentQuery = this.studentModel.findOne({
+      _id: studentId,
+      teacherId,
+    });
+    const enrollmentQuery = this.enrollmentModel.find({
+      teacherId,
+      classId: { $in: classIds },
+      studentId,
+    });
+    const teacherQuery = this.userModel.findById(teacherId);
+
+    if (session) {
+      classQuery.session(session);
+      studentQuery.session(session);
+      enrollmentQuery.session(session);
+      teacherQuery.session(session);
+    }
+
+    const [classroomsRaw, student, enrollments, teacher] = await Promise.all([
+      classQuery.exec(),
+      studentQuery.exec(),
+      enrollmentQuery.exec(),
+      includeTeacher ? teacherQuery.exec() : Promise.resolve(null),
+    ]);
+    const classMap = this.toClassDocumentMap(classroomsRaw);
+    const classrooms = classIds
+      .map((classId) => classMap.get(classId.toString()))
+      .filter(Boolean) as ClassDocument[];
+
+    if (classrooms.length !== classIds.length) {
+      throw new NotFoundException('Một số lớp học không tồn tại.');
+    }
+
+    if (!student) {
+      throw new NotFoundException('Không tìm thấy học sinh.');
+    }
+
+    const enrollmentClassIds = new Set(
+      enrollments.map((enrollment) => enrollment.classId.toString()),
+    );
+    const missingEnrollment = classIds.some(
+      (classId) => !enrollmentClassIds.has(classId.toString()),
+    );
+
+    if (missingEnrollment) {
+      throw new BadRequestException('Học sinh không thuộc một số lớp đã chọn.');
+    }
+
+    if (includeTeacher && !teacher) {
+      throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
+    }
+
+    return {
+      classrooms,
+      student,
+      teacher: teacher as UserDocument,
+    };
+  }
+
+  private async findStudentForTeacherOrThrow(
+    teacherId: Types.ObjectId,
+    studentId: Types.ObjectId,
+  ) {
+    const student = await this.studentModel
+      .findOne({
+        _id: studentId,
+        teacherId,
+      })
+      .exec();
+
+    if (!student) {
+      throw new NotFoundException('Không tìm thấy học sinh.');
+    }
+
+    return student;
+  }
+
+  private async findClassesForTeacherOrThrow(
+    teacherId: Types.ObjectId,
+    classIds: Types.ObjectId[],
+    session?: ClientSession,
+  ) {
+    const query = this.classModel.find({
+      _id: { $in: classIds },
+      teacherId,
+      status: { $ne: ClassStatus.Archived },
+    });
+
+    if (session) {
+      query.session(session);
+    }
+
+    const classroomsRaw = await query.exec();
+    const classMap = this.toClassDocumentMap(classroomsRaw);
+    const classrooms = classIds
+      .map((classId) => classMap.get(classId.toString()))
+      .filter(Boolean) as ClassDocument[];
+
+    if (classrooms.length !== classIds.length) {
+      throw new NotFoundException('Một số lớp học không tồn tại.');
+    }
+
+    return classrooms;
+  }
+
+  private async resolveStudentBillingClassIds(
+    teacherId: Types.ObjectId,
+    studentId: Types.ObjectId,
+    rawClassIds?: string[],
+    session?: ClientSession,
+  ) {
+    const explicitClassIds = this.toUniqueObjectIds(rawClassIds ?? []);
+
+    if (explicitClassIds.length) {
+      return explicitClassIds;
+    }
+
+    const tuitionQuery = this.tuitionEntryModel.distinct('classId', {
+      teacherId,
+      studentId,
+      status: TuitionStatus.Unbilled,
+    });
+
+    if (session) {
+      tuitionQuery.session(session);
+    }
+
+    const tuitionClassIds = this.toUniqueObjectIds(await tuitionQuery.exec());
+
+    const enrollmentQuery = this.enrollmentModel
+      .find({
+        teacherId,
+        studentId,
+        status: EnrollmentStatus.Active,
+      })
+      .select('classId')
+      .sort({ joinedAt: -1 });
+
+    if (session) {
+      enrollmentQuery.session(session);
+    }
+
+    const enrollments = await enrollmentQuery.exec();
+
+    return this.toUniqueObjectIds([
+      ...tuitionClassIds,
+      ...enrollments.map((enrollment) => enrollment.classId),
+    ]);
+  }
+
+  private async resolveStudentReceiptClassIds(
+    teacherIdStr: string,
+    studentIdStr: string,
+    dto: IssueReceiptDto,
+    session?: ClientSession,
+  ) {
+    const teacherId = this.toObjectId(teacherIdStr, 'teacherId');
+    const studentId = this.toObjectId(studentIdStr, 'studentId');
+
+    if (dto.classIds?.length) {
+      return dto.classIds;
+    }
+
+    const classIds = await this.resolveStudentBillingClassIds(
+      teacherId,
+      studentId,
+      undefined,
+      session,
+    );
+
+    return classIds.map((classId) => classId.toString());
+  }
+
+  private toClassDocumentMap(classrooms: ClassDocument[]) {
+    return new Map(
+      classrooms.map((classroom) => [classroom._id.toString(), classroom]),
+    );
+  }
+
+  private withClassMetadata(
+    tuitionEntries: Array<Record<string, any>>,
+    classMap: Map<string, ClassDocument>,
+  ): Array<Record<string, any>> {
+    return tuitionEntries.map((entry) => {
+      const classId = entry.classId?.toString?.() ?? String(entry.classId);
+      const attendedClassId =
+        entry.attendedClassId?.toString?.() ??
+        String(entry.attendedClassId || '');
+      const billingClassId =
+        entry.billingClassId?.toString?.() ??
+        String(entry.billingClassId || '');
+      const makeupForClassId =
+        entry.makeupForClassId?.toString?.() ??
+        String(entry.makeupForClassId || '');
+      const classroom = classMap.get(classId);
+      const attendedClassroom = classMap.get(attendedClassId);
+      const billingClassroom = classMap.get(billingClassId);
+      const makeupForClassroom = classMap.get(makeupForClassId);
+
+      return {
+        ...entry,
+        className: classroom?.name || entry.className,
+        attendedClassName:
+          attendedClassroom?.name || entry.attendedClassName || classroom?.name,
+        billingClassName:
+          billingClassroom?.name || entry.billingClassName || classroom?.name,
+        makeupForClassName: makeupForClassroom?.name,
+        classColorHex: classroom?.colorHex,
+      };
+    });
+  }
+
+  private getReceiptClassIds(receipt: Record<string, any>) {
+    const values = [
+      ...(receipt.classIds ?? []),
+      receipt.primaryClassId,
+      receipt.classId,
+    ];
+
+    return this.toUniqueObjectIds(values).map((classId) => classId.toString());
+  }
+
+  private getReceiptClassNames(receipt: Record<string, any>) {
+    const snapshots = Array.isArray(receipt.classSnapshots)
+      ? receipt.classSnapshots
+      : [];
+    const names = snapshots
+      .map((snapshot: Record<string, unknown>) =>
+        typeof snapshot.className === 'string' ? snapshot.className.trim() : '',
+      )
+      .filter(Boolean);
+
+    if (!names.length && receipt.classSnapshot?.className) {
+      names.push(receipt.classSnapshot.className);
+    }
+
+    return [...new Set(names)].join(' + ') || 'Lớp học';
+  }
+
+  private getReceiptClassObjectIds(receipt: Record<string, any>) {
+    return this.toUniqueObjectIds([
+      ...(receipt.classIds ?? []),
+      receipt.primaryClassId,
+      receipt.classId,
+    ]);
   }
 
   private async findClassForTeacherOrThrow(
@@ -1656,6 +2260,9 @@ export class ReceiptsService {
       id: 'preview',
       teacherId: draft.teacherId.toString(),
       classId: draft.classId.toString(),
+      classIds: draft.classIds.map((classId) => classId.toString()),
+      primaryClassId: draft.primaryClassId.toString(),
+      scopeType: draft.scopeType,
       studentId: draft.studentId.toString(),
       billingCycleId: null,
       receiptNumber: 'Bản xem trước',
@@ -1666,6 +2273,7 @@ export class ReceiptsService {
       reason: draft.reason,
       teacherSnapshot: draft.teacherSnapshot,
       classSnapshot: draft.classSnapshot,
+      classSnapshots: draft.classSnapshots,
       studentSnapshot: draft.studentSnapshot,
       sessions: draft.sessions,
       exams: draft.exams,
@@ -1694,13 +2302,21 @@ export class ReceiptsService {
     return {
       id: receipt._id.toString(),
       classId: receipt.classId?.toString(),
+      classIds: this.getReceiptClassIds(receipt),
+      primaryClassId: receipt.primaryClassId?.toString?.(),
+      scopeType: receipt.scopeType ?? ReceiptScope.Class,
       studentId: receipt.studentId?.toString(),
       receiptNumber: receipt.receiptNumber,
       issuedAt: receipt.issuedAt,
       periodStart: receipt.periodStart,
       periodEnd: receipt.periodEnd,
       studentName: receipt.studentSnapshot?.fullName,
-      className: receipt.classSnapshot?.className,
+      className: this.getReceiptClassNames(receipt),
+      classSnapshots: (receipt.classSnapshots ?? [receipt.classSnapshot])
+        .filter(Boolean)
+        .map((snapshot: Record<string, any>) =>
+          this.toClassSnapshotResponse(snapshot),
+        ),
       lessonCount: receipt.lessonCount,
       totalAmount: receipt.totalAmount,
       paymentStatus: receipt.paymentStatus,
@@ -1757,6 +2373,9 @@ export class ReceiptsService {
       id: source._id.toString(),
       teacherId: source.teacherId.toString(),
       classId: source.classId?.toString(),
+      classIds: this.getReceiptClassIds(source),
+      primaryClassId: source.primaryClassId?.toString?.(),
+      scopeType: source.scopeType ?? ReceiptScope.Class,
       studentId: source.studentId.toString(),
       billingCycleId: source.billingCycleId?.toString(),
       receiptNumber: source.receiptNumber,
@@ -1766,21 +2385,19 @@ export class ReceiptsService {
       dueDate: source.dueDate,
       reason: source.reason,
       teacherSnapshot: source.teacherSnapshot,
-      classSnapshot: source.classSnapshot,
+      classSnapshot: this.toClassSnapshotResponse(source.classSnapshot),
+      classSnapshots: (source.classSnapshots ?? [source.classSnapshot])
+        .filter(Boolean)
+        .map((snapshot: Record<string, any>) =>
+          this.toClassSnapshotResponse(snapshot),
+        ),
       studentSnapshot: source.studentSnapshot,
-      sessions: (source.sessions ?? []).map((item: Record<string, any>) => ({
-        ...item,
-        tuitionEntryId: item.tuitionEntryId?.toString(),
-        attendanceId: item.attendanceId?.toString(),
-        sessionId: item.sessionId?.toString(),
-        classId: item.classId?.toString(),
-      })),
-      exams: (source.exams ?? []).map((item: Record<string, any>) => ({
-        ...item,
-        examId: item.examId?.toString(),
-        examScoreId: item.examScoreId?.toString(),
-        classId: item.classId?.toString(),
-      })),
+      sessions: (source.sessions ?? []).map((item: Record<string, any>) =>
+        this.toReceiptSessionSnapshotResponse(item),
+      ),
+      exams: (source.exams ?? []).map((item: Record<string, any>) =>
+        this.toReceiptExamSnapshotResponse(item),
+      ),
       lessonCount: source.lessonCount,
       subtotal: source.subtotal,
       discountAmount: source.discountAmount ?? 0,
@@ -1820,10 +2437,44 @@ export class ReceiptsService {
 
   private toClassSnapshot(classroom: ClassDocument) {
     return {
+      classId: classroom._id,
       className: classroom.name,
       colorHex: classroom.colorHex,
       regularPrice: classroom.regularPrice,
       makeupPrice: classroom.makeupPrice,
+    };
+  }
+
+  private toClassSnapshotResponse(snapshot?: Record<string, any>) {
+    if (!snapshot) {
+      return snapshot;
+    }
+
+    return {
+      ...snapshot,
+      classId: snapshot.classId?.toString?.(),
+    };
+  }
+
+  private toReceiptSessionSnapshotResponse(item: Record<string, any>) {
+    return {
+      ...item,
+      tuitionEntryId: item.tuitionEntryId?.toString?.(),
+      attendanceId: item.attendanceId?.toString?.(),
+      sessionId: item.sessionId?.toString?.(),
+      classId: item.classId?.toString?.(),
+      attendedClassId: item.attendedClassId?.toString?.(),
+      billingClassId: item.billingClassId?.toString?.(),
+      makeupForClassId: item.makeupForClassId?.toString?.(),
+    };
+  }
+
+  private toReceiptExamSnapshotResponse(item: Record<string, any>) {
+    return {
+      ...item,
+      examId: item.examId?.toString?.(),
+      examScoreId: item.examScoreId?.toString?.(),
+      classId: item.classId?.toString?.(),
     };
   }
 

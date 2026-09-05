@@ -1,8 +1,9 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
   IsDateString,
+  IsIn,
   IsInt,
   IsMongoId,
   IsOptional,
@@ -23,6 +24,19 @@ export class ReceiptExamRemarkDto {
 }
 
 export class IssueReceiptDto {
+  @IsOptional()
+  @IsIn(['class', 'multi_class'], {
+    message: 'Phạm vi hóa đơn không hợp lệ.',
+  })
+  scopeType?: 'class' | 'multi_class';
+
+  @IsOptional()
+  @Transform(({ value }) => normalizeStringArray(value))
+  @IsArray()
+  @ArrayMaxSize(12)
+  @IsMongoId({ each: true, message: 'Mã lớp học không hợp lệ.' })
+  classIds?: string[];
+
   @IsOptional()
   @IsDateString({}, { message: 'Ngày bắt đầu không hợp lệ.' })
   fromDate?: string;
@@ -95,4 +109,19 @@ export class IssueReceiptDto {
   @ValidateNested({ each: true })
   @Type(() => ReceiptExamRemarkDto)
   examRemarks?: ReceiptExamRemarkDto[];
+}
+
+function normalizeStringArray(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return value;
 }

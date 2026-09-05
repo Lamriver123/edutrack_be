@@ -623,6 +623,9 @@ export class ReceiptPdfService {
     const gap = 10;
     const height = 124;
     let x = options.left;
+    const priceNoteLines = this.buildTuitionPriceNoteLines(
+      receipt.sessions ?? [],
+    );
 
     widths.forEach((width) => {
       doc
@@ -658,6 +661,24 @@ export class ReceiptPdfService {
           width: widths[0] - 20,
         },
       );
+
+    if (priceNoteLines.length) {
+      doc
+        .font(options.boldFont)
+        .fontSize(6.6)
+        .fillColor('#7c3f15')
+        .text('Đơn giá theo ngày học', options.left + 10, y + 84, {
+          align: 'center',
+          width: widths[0] - 20,
+        })
+        .font(options.regularFont)
+        .fontSize(6.3)
+        .text(priceNoteLines.join('\n'), options.left + 10, y + 96, {
+          align: 'left',
+          height: height - 98,
+          width: widths[0] - 20,
+        });
+    }
 
     const infoX = options.left + widths[0] + gap + 12;
     doc
@@ -893,6 +914,9 @@ export class ReceiptPdfService {
         92,
       ),
     );
+    const priceNoteLines = this.buildTuitionPriceNoteLines(
+      receipt.sessions ?? [],
+    );
 
     return [
       'EDUTRACK - PHIEU THANH TOAN HOC PHI',
@@ -912,6 +936,9 @@ export class ReceiptPdfService {
       `Giam gia: ${this.formatMoney(receipt.discountAmount || 0)}`,
       `Phu thu: ${this.formatMoney(receipt.adjustmentAmount || 0)}`,
       `Tong tien: ${this.formatMoney(receipt.totalAmount || 0)}`,
+      ...(priceNoteLines.length
+        ? ['', 'Don gia theo ngay hoc:', ...priceNoteLines]
+        : []),
       '',
       'Diem manh:',
       ...this.wrapLine(
@@ -985,6 +1012,77 @@ export class ReceiptPdfService {
         seen.add(value);
         return true;
       });
+  }
+
+  private buildTuitionPriceNoteLines(sessions: any[]) {
+    return this.buildTuitionPriceRanges(sessions).map((range) =>
+      this.formatTuitionPriceRange(range),
+    );
+  }
+
+  private buildTuitionPriceRanges(sessions: any[]) {
+    const items = sessions
+      .map((session) => ({
+        date: this.parseDateValue(session?.date),
+        unitPrice: this.resolveSessionUnitPrice(session),
+      }))
+      .filter((item) => item.date && item.unitPrice !== null)
+      .sort((first, second) => first.date!.getTime() - second.date!.getTime());
+    const ranges: Array<{
+      endDate: Date;
+      startDate: Date;
+      unitPrice: number;
+    }> = [];
+
+    for (const item of items) {
+      const current = ranges[ranges.length - 1];
+
+      if (current && current.unitPrice === item.unitPrice) {
+        current.endDate = item.date!;
+        continue;
+      }
+
+      ranges.push({
+        endDate: item.date!,
+        startDate: item.date!,
+        unitPrice: item.unitPrice!,
+      });
+    }
+
+    return ranges;
+  }
+
+  private formatTuitionPriceRange(range: {
+    endDate: Date;
+    startDate: Date;
+    unitPrice: number;
+  }) {
+    const startDate = this.formatDate(range.startDate);
+    const endDate = this.formatDate(range.endDate);
+    const dateText =
+      startDate === endDate ? startDate : `${startDate} đến ngày ${endDate}`;
+
+    return `Ngày ${dateText}: ${this.formatMoney(range.unitPrice)}/buổi`;
+  }
+
+  private parseDateValue(value: unknown) {
+    if (!value) {
+      return null;
+    }
+
+    const date = value instanceof Date ? value : new Date(String(value));
+
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private resolveSessionUnitPrice(session: any) {
+    const unitPrice = Number(session?.unitPrice ?? session?.amount);
+
+    if (!Number.isFinite(unitPrice)) {
+      return null;
+    }
+
+    return Math.max(0, Math.round(unitPrice));
   }
 
   private formatMoney(value: number) {

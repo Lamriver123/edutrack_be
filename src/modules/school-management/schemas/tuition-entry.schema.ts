@@ -45,6 +45,27 @@ export class TuitionEntry {
 
   @Prop({
     type: mongoose.Schema.Types.ObjectId,
+    ref: Class.name,
+    index: true,
+  })
+  attendedClassId?: mongoose.Types.ObjectId;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: Class.name,
+    index: true,
+  })
+  billingClassId?: mongoose.Types.ObjectId;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: Class.name,
+    index: true,
+  })
+  makeupForClassId?: mongoose.Types.ObjectId;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
     ref: ClassSession.name,
     required: true,
     index: true,
@@ -128,3 +149,10 @@ TuitionEntrySchema.index({ teacherId: 1, billingCycleId: 1 });
 TuitionEntrySchema.index({ teacherId: 1, receiptId: 1 });
 TuitionEntrySchema.index({ teacherId: 1, studentId: 1, sessionDate: 1 });
 TuitionEntrySchema.index({ teacherId: 1, status: 1, sessionDate: 1 });
+TuitionEntrySchema.index({
+  teacherId: 1,
+  studentId: 1,
+  billingClassId: 1,
+  status: 1,
+  sessionDate: 1,
+});

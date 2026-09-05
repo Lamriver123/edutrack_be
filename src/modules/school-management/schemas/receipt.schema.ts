@@ -6,6 +6,7 @@ import {
   PaymentStatus,
   ReceiptPdfStatus,
   ReceiptReason,
+  ReceiptScope,
   ScheduleType,
   TuitionType,
 } from '../enums';
@@ -85,6 +86,12 @@ export const ReceiptTeacherSnapshotSchema = SchemaFactory.createForClass(
   versionKey: false,
 })
 export class ReceiptClassSnapshot {
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: Class.name,
+  })
+  classId?: mongoose.Types.ObjectId;
+
   @Prop({ required: true, trim: true })
   className: string;
 
@@ -134,6 +141,24 @@ export class ReceiptSessionSnapshot {
   })
   classId?: mongoose.Types.ObjectId;
 
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: Class.name,
+  })
+  attendedClassId?: mongoose.Types.ObjectId;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: Class.name,
+  })
+  billingClassId?: mongoose.Types.ObjectId;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: Class.name,
+  })
+  makeupForClassId?: mongoose.Types.ObjectId;
+
   @Prop({ type: Date, required: true })
   date: Date;
 
@@ -145,6 +170,18 @@ export class ReceiptSessionSnapshot {
 
   @Prop({ required: true, trim: true })
   className: string;
+
+  @Prop({ trim: true })
+  attendedClassName?: string;
+
+  @Prop({ trim: true })
+  billingClassName?: string;
+
+  @Prop({ trim: true })
+  makeupForClassName?: string;
+
+  @Prop({ trim: true })
+  classColorHex?: string;
 
   @Prop({ trim: true })
   topic?: string;
@@ -272,6 +309,25 @@ export class Receipt {
   })
   classId: mongoose.Types.ObjectId;
 
+  @Prop({
+    enum: ReceiptScope,
+    default: ReceiptScope.Class,
+    index: true,
+  })
+  scopeType: ReceiptScope;
+
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: Class.name }],
+    default: [],
+  })
+  classIds: mongoose.Types.ObjectId[];
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: Class.name,
+  })
+  primaryClassId?: mongoose.Types.ObjectId;
+
   @Prop({ required: true, trim: true })
   receiptNumber: string;
 
@@ -298,6 +354,9 @@ export class Receipt {
 
   @Prop({ type: ReceiptClassSnapshotSchema, required: true })
   classSnapshot: ReceiptClassSnapshot;
+
+  @Prop({ type: [ReceiptClassSnapshotSchema], default: [] })
+  classSnapshots: ReceiptClassSnapshot[];
 
   @Prop({ type: ReceiptStudentSnapshotSchema, required: true })
   studentSnapshot: ReceiptStudentSnapshot;
@@ -394,7 +453,9 @@ export const ReceiptSchema = SchemaFactory.createForClass(Receipt);
 
 ReceiptSchema.index({ teacherId: 1, receiptNumber: 1 }, { unique: true });
 ReceiptSchema.index({ teacherId: 1, classId: 1, issuedAt: -1 });
+ReceiptSchema.index({ teacherId: 1, classIds: 1, issuedAt: -1 });
 ReceiptSchema.index({ teacherId: 1, studentId: 1, issuedAt: -1 });
+ReceiptSchema.index({ teacherId: 1, scopeType: 1, issuedAt: -1 });
 ReceiptSchema.index({ teacherId: 1, issuedAt: -1 });
 ReceiptSchema.index({ teacherId: 1, paymentStatus: 1, issuedAt: -1 });
 ReceiptSchema.index({ teacherId: 1, pdfStatus: 1, issuedAt: -1 });

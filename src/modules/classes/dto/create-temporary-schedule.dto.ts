@@ -19,6 +19,14 @@ export class CreateTemporaryScheduleDto {
   originalDate?: string;
 
   @IsOptional()
+  @Matches(timePattern)
+  originalStartTime?: string;
+
+  @IsOptional()
+  @Matches(timePattern)
+  originalEndTime?: string;
+
+  @IsOptional()
   @IsDateString()
   newDate?: string;
 

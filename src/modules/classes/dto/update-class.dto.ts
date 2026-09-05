@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsDateString,
   IsEnum,
   IsInt,
   IsOptional,
@@ -53,6 +54,10 @@ export class UpdateClassDto {
   @IsInt()
   @Min(0)
   makeupPrice?: number;
+
+  @IsOptional()
+  @IsDateString()
+  priceEffectiveFrom?: string;
 
   @IsOptional()
   @IsEnum(ClassStatus)

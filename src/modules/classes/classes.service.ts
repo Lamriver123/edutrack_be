@@ -30,6 +30,10 @@ import {
   ClassDocument,
 } from '../school-management/schemas/class.schema';
 import {
+  ClassPriceVersion,
+  ClassPriceVersionDocument,
+} from '../school-management/schemas/class-price-version.schema';
+import {
   ClassSession,
   ClassSessionDocument,
 } from '../school-management/schemas/class-session.schema';
@@ -62,6 +66,7 @@ import { StudentDocument } from '../school-management/schemas/student.schema';
 import { CreateStudentDto } from '../students/dto/create-student.dto';
 import { StudentResponse, StudentsService } from '../students/students.service';
 import { SchedulesService } from '../schedules/schedules.service';
+import { ScheduleConflictsService } from '../schedules/schedule-conflicts.service';
 import { CreateClassDto } from './dto/create-class.dto';
 import {
   CreateFixedScheduleDto,
@@ -105,6 +110,8 @@ export type ScheduleOverrideResponse = {
   classId: string;
   action: ScheduleOverrideAction;
   originalDate?: Date;
+  originalStartTime?: string;
+  originalEndTime?: string;
   newDate?: Date;
   startTime?: string;
   endTime?: string;
@@ -133,6 +140,7 @@ export type ClassResponse = {
   colorHex?: string;
   regularPrice: number;
   makeupPrice: number;
+  priceEffectiveFrom?: Date | null;
   status: ClassStatus;
   studentCount: number;
   latestFixedSchedule: LatestFixedScheduleResponse | null;
@@ -182,11 +190,18 @@ type StudentEnrollmentCreationResult = {
   student: StudentDocument;
 };
 
+type PriceSnapshot = {
+  regularPrice: number;
+  makeupPrice: number;
+};
+
 type LeanScheduleOverride = {
   _id: Types.ObjectId;
   classId: Types.ObjectId;
   action: ScheduleOverrideAction;
   originalDate?: Date;
+  originalStartTime?: string;
+  originalEndTime?: string;
   newDate?: Date;
   startTime?: string;
   endTime?: string;
@@ -249,6 +264,8 @@ export class ClassesService {
     @InjectConnection() private readonly connection: Connection,
     @InjectModel(Class.name)
     private readonly classModel: Model<ClassDocument>,
+    @InjectModel(ClassPriceVersion.name)
+    private readonly classPriceVersionModel: Model<ClassPriceVersionDocument>,
     @InjectModel(ClassEnrollment.name)
     private readonly enrollmentModel: Model<ClassEnrollmentDocument>,
     @InjectModel(ScheduleVersion.name)
@@ -267,10 +284,14 @@ export class ClassesService {
     private readonly examScoreModel: Model<ExamScoreDocument>,
     private readonly studentsService: StudentsService,
     private readonly schedulesService: SchedulesService,
+    private readonly scheduleConflicts: ScheduleConflictsService,
   ) {}
 
   async create(teacherId: string, dto: CreateClassDto) {
     const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
+    const priceEffectiveFrom = this.resolvePriceEffectiveFrom(
+      dto.priceEffectiveFrom,
+    );
     const [classroom] = await this.classModel.create([
       {
         teacherId: teacherObjectId,
@@ -285,9 +306,20 @@ export class ClassesService {
         colorHex: this.normalizeColorHex(dto.colorHex),
         regularPrice: dto.regularPrice,
         makeupPrice: dto.makeupPrice,
+        priceEffectiveFrom,
         status: ClassStatus.Active,
       },
     ]);
+
+    await this.upsertClassPriceVersion(
+      teacherObjectId,
+      classroom._id,
+      {
+        regularPrice: dto.regularPrice,
+        makeupPrice: dto.makeupPrice,
+      },
+      priceEffectiveFrom,
+    );
 
     return this.toClassResponse(classroom, 0);
   }
@@ -388,6 +420,19 @@ export class ClassesService {
     const classroom = await this.findClassForTeacherOrThrow(teacherId, classId);
     const updateSet: Record<string, unknown> = {};
     const updateUnset: Record<string, ''> = {};
+    const hasPricePayload =
+      dto.regularPrice !== undefined ||
+      dto.makeupPrice !== undefined ||
+      dto.priceEffectiveFrom !== undefined;
+    const priceEffectiveFrom = hasPricePayload
+      ? this.resolvePriceEffectiveFrom(dto.priceEffectiveFrom)
+      : undefined;
+    const nextPrice = hasPricePayload
+      ? {
+          regularPrice: dto.regularPrice ?? classroom.regularPrice,
+          makeupPrice: dto.makeupPrice ?? classroom.makeupPrice,
+        }
+      : undefined;
 
     if (dto.name !== undefined) {
       const name = dto.name.trim();
@@ -428,12 +473,10 @@ export class ClassesService {
       updateSet.colorHex = this.normalizeColorHex(dto.colorHex);
     }
 
-    if (dto.regularPrice !== undefined) {
-      updateSet.regularPrice = dto.regularPrice;
-    }
-
-    if (dto.makeupPrice !== undefined) {
-      updateSet.makeupPrice = dto.makeupPrice;
+    if (nextPrice && priceEffectiveFrom) {
+      updateSet.regularPrice = nextPrice.regularPrice;
+      updateSet.makeupPrice = nextPrice.makeupPrice;
+      updateSet.priceEffectiveFrom = priceEffectiveFrom;
     }
 
     if (dto.status !== undefined) {
@@ -475,6 +518,16 @@ export class ClassesService {
 
     if (!updatedClassroom) {
       throw new NotFoundException('Không tìm thấy lớp học.');
+    }
+
+    if (nextPrice && priceEffectiveFrom) {
+      await this.ensureClassPriceBaseline(teacherObjectId, classroom);
+      await this.upsertClassPriceVersion(
+        teacherObjectId,
+        updatedClassroom._id,
+        nextPrice,
+        priceEffectiveFrom,
+      );
     }
 
     if (dto.status === ClassStatus.Archived) {
@@ -548,7 +601,6 @@ export class ClassesService {
           classId: classroom._id,
         })
         .sort({ createdAt: -1 })
-        .limit(30)
         .lean<LeanScheduleOverride[]>()
         .exec(),
     ]);
@@ -570,10 +622,26 @@ export class ClassesService {
     classId: string,
     dto: CreateFixedScheduleDto,
   ) {
+    return this.scheduleConflicts.withTeacherWrite(teacherId, () =>
+      this.saveFixedScheduleLocked(teacherId, classId, dto),
+    );
+  }
+
+  private async saveFixedScheduleLocked(
+    teacherId: string,
+    classId: string,
+    dto: CreateFixedScheduleDto,
+  ) {
     const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
     const classroom = await this.findClassForTeacherOrThrow(teacherId, classId);
     const effectiveFrom = this.parseDate(dto.effectiveFrom, 'Ngày áp dụng');
     const schedules = dto.schedules.map((slot) => this.normalizeSlot(slot));
+    const check = await this.scheduleConflicts.checkFixed(
+      teacherId,
+      classId,
+      dto,
+    );
+    this.scheduleConflicts.assertAvailable(check);
     const latestSchedule = await this.scheduleVersionModel
       .findOne({
         teacherId: teacherObjectId,
@@ -583,12 +651,31 @@ export class ClassesService {
       .lean<LeanScheduleVersion>()
       .exec();
 
+    const nextSchedule = await this.scheduleVersionModel
+      .findOne({
+        teacherId: teacherObjectId,
+        classId: classroom._id,
+        effectiveFrom: { $gt: effectiveFrom },
+      })
+      .sort({ effectiveFrom: 1 })
+      .lean<LeanScheduleVersion>()
+      .exec();
+    const predecessors = await this.scheduleVersionModel
+      .find({
+        teacherId: teacherObjectId,
+        classId: classroom._id,
+        effectiveFrom: { $lte: effectiveFrom },
+        $or: [{ effectiveTo: null }, { effectiveTo: { $gte: effectiveFrom } }],
+      })
+      .lean<LeanScheduleVersion[]>()
+      .exec();
+
     await this.scheduleVersionModel
       .updateMany(
         {
           teacherId: teacherObjectId,
           classId: classroom._id,
-          effectiveTo: null,
+          _id: { $in: predecessors.map((s) => s._id) },
         },
         {
           $set: {
@@ -598,19 +685,36 @@ export class ClassesService {
       )
       .exec();
 
-    const [schedule] = await this.scheduleVersionModel.create([
-      {
-        teacherId: teacherObjectId,
-        classId: classroom._id,
-        version: (latestSchedule?.version ?? 0) + 1,
-        effectiveFrom,
-        effectiveTo: null,
-        schedules,
-        timeStorage: 'utc',
-      },
-    ]);
+    try {
+      const [schedule] = await this.scheduleVersionModel.create([
+        {
+          teacherId: teacherObjectId,
+          classId: classroom._id,
+          version: (latestSchedule?.version ?? 0) + 1,
+          effectiveFrom,
+          effectiveTo: nextSchedule
+            ? this.getPreviousMoment(nextSchedule.effectiveFrom)
+            : null,
+          schedules,
+          timeStorage: 'utc',
+        },
+      ]);
 
-    return this.toLatestFixedScheduleResponse(schedule);
+      return {
+        ...this.toLatestFixedScheduleResponse(schedule),
+        warnings: check.warnings,
+      };
+    } catch (error) {
+      for (const previous of predecessors) {
+        await this.scheduleVersionModel
+          .updateOne(
+            { _id: previous._id, teacherId: teacherObjectId },
+            { $set: { effectiveTo: previous.effectiveTo ?? null } },
+          )
+          .exec();
+      }
+      throw error;
+    }
   }
 
   async createTemporarySchedule(
@@ -618,9 +722,29 @@ export class ClassesService {
     classId: string,
     dto: CreateTemporaryScheduleDto,
   ) {
+    return this.scheduleConflicts.withTeacherWrite(teacherId, () =>
+      this.createTemporaryScheduleLocked(teacherId, classId, dto),
+    );
+  }
+
+  private async createTemporaryScheduleLocked(
+    teacherId: string,
+    classId: string,
+    dto: CreateTemporaryScheduleDto,
+  ) {
     const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
     const classroom = await this.findClassForTeacherOrThrow(teacherId, classId);
-    const payload = this.buildTemporarySchedulePayload(dto);
+    const check = await this.scheduleConflicts.checkTemporary(
+      teacherId,
+      classId,
+      dto,
+    );
+    this.scheduleConflicts.assertAvailable(check);
+    const payload = this.buildTemporarySchedulePayload({
+      ...dto,
+      originalStartTime: check.originalStartTime,
+      originalEndTime: check.originalEndTime,
+    });
     const [temporarySchedule] = await this.scheduleOverrideModel.create([
       {
         teacherId: teacherObjectId,
@@ -639,11 +763,38 @@ export class ClassesService {
     scheduleId: string,
     dto: UpdateTemporaryScheduleDto,
   ) {
+    return this.scheduleConflicts.withTeacherWrite(teacherId, () =>
+      this.updateTemporaryScheduleLocked(teacherId, classId, scheduleId, dto),
+    );
+  }
+
+  private async updateTemporaryScheduleLocked(
+    teacherId: string,
+    classId: string,
+    scheduleId: string,
+    dto: UpdateTemporaryScheduleDto,
+  ) {
     const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
     const scheduleObjectId = this.toObjectId(scheduleId, 'scheduleId');
     const classroom = await this.findClassForTeacherOrThrow(teacherId, classId);
-    const payload = this.buildTemporarySchedulePayload(dto);
+    const check = await this.scheduleConflicts.checkTemporary(
+      teacherId,
+      classId,
+      dto,
+      scheduleId,
+    );
+    this.scheduleConflicts.assertAvailable(check);
+    const payload = this.buildTemporarySchedulePayload({
+      ...dto,
+      originalStartTime: check.originalStartTime,
+      originalEndTime: check.originalEndTime,
+    });
     const updateUnset: Record<string, ''> = {};
+
+    if (dto.action !== ScheduleOverrideAction.Reschedule) {
+      updateUnset.originalStartTime = '';
+      updateUnset.originalEndTime = '';
+    }
 
     if (dto.action === ScheduleOverrideAction.Cancel) {
       updateUnset.newDate = '';
@@ -694,9 +845,24 @@ export class ClassesService {
     classId: string,
     scheduleId: string,
   ) {
+    return this.scheduleConflicts.withTeacherWrite(teacherId, () =>
+      this.revokeTemporaryScheduleLocked(teacherId, classId, scheduleId),
+    );
+  }
+
+  private async revokeTemporaryScheduleLocked(
+    teacherId: string,
+    classId: string,
+    scheduleId: string,
+  ) {
     const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
     const scheduleObjectId = this.toObjectId(scheduleId, 'scheduleId');
     const classroom = await this.findClassForTeacherOrThrow(teacherId, classId);
+    await this.scheduleConflicts.assertCanRevoke(
+      teacherId,
+      classId,
+      scheduleId,
+    );
     const temporarySchedule = await this.scheduleOverrideModel
       .findOneAndDelete({
         _id: scheduleObjectId,
@@ -1214,6 +1380,13 @@ export class ClassesService {
       throw new BadRequestException('Không thể tạo hoặc tìm thấy buổi học.');
     }
 
+    const classPrice = await this.findClassPriceForDate(
+      teacherObjectId,
+      classroom,
+      date,
+      dbSession,
+    );
+
     const studentIds = dto.records.map((r) =>
       this.toObjectId(r.studentId, 'studentId'),
     );
@@ -1340,8 +1513,8 @@ export class ClassesService {
         const tuitionSnapshot = this.resolveAttendanceTuition(
           recordDto.status,
           dto.scheduleEventType,
-          classroom.regularPrice,
-          classroom.makeupPrice,
+          classPrice.regularPrice,
+          classPrice.makeupPrice,
         );
         const tuitionUpdateOptions: {
           returnDocument: 'after';
@@ -1372,6 +1545,8 @@ export class ClassesService {
               $set: {
                 studentId: studentObjectId,
                 classId: classroom._id,
+                attendedClassId: classroom._id,
+                billingClassId: classroom._id,
                 sessionId: session._id,
                 attendanceId: attendance._id,
                 type: tuitionSnapshot.type,
@@ -1903,9 +2078,106 @@ export class ClassesService {
       colorHex: classroom.colorHex,
       regularPrice: classroom.regularPrice,
       makeupPrice: classroom.makeupPrice,
+      priceEffectiveFrom: classroom.priceEffectiveFrom ?? null,
       status: classroom.status,
       studentCount,
       latestFixedSchedule,
+    };
+  }
+
+  private resolvePriceEffectiveFrom(value?: string) {
+    if (value?.trim()) {
+      return this.parseDate(value, 'Ngày áp dụng giá');
+    }
+
+    return this.getCurrentVietnamDate();
+  }
+
+  private async ensureClassPriceBaseline(
+    teacherId: Types.ObjectId,
+    classroom: ClassDocument,
+  ) {
+    const existingVersion = await this.classPriceVersionModel
+      .exists({
+        teacherId,
+        classId: classroom._id,
+      })
+      .exec();
+
+    if (existingVersion) {
+      return;
+    }
+
+    await this.upsertClassPriceVersion(
+      teacherId,
+      classroom._id,
+      {
+        regularPrice: classroom.regularPrice,
+        makeupPrice: classroom.makeupPrice,
+      },
+      new Date(0),
+    );
+  }
+
+  private async upsertClassPriceVersion(
+    teacherId: Types.ObjectId,
+    classId: Types.ObjectId,
+    price: PriceSnapshot,
+    effectiveFrom: Date,
+  ) {
+    await this.classPriceVersionModel
+      .findOneAndUpdate(
+        {
+          teacherId,
+          classId,
+          effectiveFrom,
+        },
+        {
+          $set: {
+            regularPrice: price.regularPrice,
+            makeupPrice: price.makeupPrice,
+          },
+          $setOnInsert: {
+            teacherId,
+            classId,
+            effectiveFrom,
+          },
+        },
+        {
+          upsert: true,
+          returnDocument: 'after',
+        },
+      )
+      .exec();
+  }
+
+  private async findClassPriceForDate(
+    teacherId: Types.ObjectId,
+    classroom: ClassDocument,
+    sessionDate: Date,
+    dbSession?: ClientSession,
+  ): Promise<PriceSnapshot> {
+    const query = this.classPriceVersionModel
+      .findOne({
+        teacherId,
+        classId: classroom._id,
+        effectiveFrom: { $lte: sessionDate },
+      })
+      .sort({ effectiveFrom: -1 })
+      .lean<PriceSnapshot>();
+
+    if (dbSession) {
+      query.session(dbSession);
+    }
+
+    const priceVersion = await query.exec();
+    return priceVersion ?? this.getFallbackClassPrice(classroom);
+  }
+
+  private getFallbackClassPrice(classroom: ClassDocument): PriceSnapshot {
+    return {
+      regularPrice: classroom.regularPrice,
+      makeupPrice: classroom.makeupPrice,
     };
   }
 
@@ -1955,6 +2227,12 @@ export class ClassesService {
       return {
         action: dto.action,
         originalDate: this.requireDate(dto.originalDate, 'Ngày gốc'),
+        originalStartTime: convertVietnamTimeToUtc(
+          this.requireTime(dto.originalStartTime, 'Giờ bắt đầu tiết gốc'),
+        ),
+        originalEndTime: convertVietnamTimeToUtc(
+          this.requireTime(dto.originalEndTime, 'Giờ kết thúc tiết gốc'),
+        ),
         newDate: this.requireDate(dto.newDate, 'Ngày học mới'),
         startTime: convertVietnamTimeToUtc(startTime),
         endTime: convertVietnamTimeToUtc(endTime),
@@ -2069,6 +2347,14 @@ export class ClassesService {
       classId: schedule.classId.toString(),
       action: schedule.action,
       originalDate: schedule.originalDate,
+      originalStartTime: this.toVietnamTime(
+        schedule.originalStartTime,
+        schedule.timeStorage,
+      ),
+      originalEndTime: this.toVietnamTime(
+        schedule.originalEndTime,
+        schedule.timeStorage,
+      ),
       newDate: schedule.newDate,
       startTime: this.toVietnamTime(schedule.startTime, schedule.timeStorage),
       endTime: this.toVietnamTime(schedule.endTime, schedule.timeStorage),
@@ -2186,6 +2472,10 @@ export class ClassesService {
     const day = String(vietnamDate.getUTCDate()).padStart(2, '0');
 
     return `${year}-${month}-${day}`;
+  }
+
+  private getCurrentVietnamDate() {
+    return this.parseDate(this.toVietnamDateKey(new Date()), 'Ngày hiện tại');
   }
 
   private requireDate(value: string | undefined, label: string) {

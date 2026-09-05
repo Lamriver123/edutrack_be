@@ -15,6 +15,10 @@ export class ReceiptTemplateService {
       receipt.generalComment ||
       receipt.teacherComment ||
       'Giáo viên chưa thêm nhận xét chung cho kỳ học này.';
+    const classNames = this.getReceiptClassNames(receipt);
+    const isMultiClass =
+      receipt.scopeType === 'multi_class' ||
+      this.getReceiptClassNameList(receipt).length > 1;
 
     return `<!doctype html>
 <html lang="vi">
@@ -186,6 +190,16 @@ export class ReceiptTemplateService {
       font-weight: 900;
       text-align: center;
     }
+    .lesson-class {
+      display: inline-block;
+      margin-bottom: 3px;
+      border-radius: 999px;
+      background: #eef2ff;
+      padding: 2px 7px;
+      color: #4338ca;
+      font-size: 10px;
+      font-weight: 900;
+    }
     .exam-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -259,7 +273,7 @@ export class ReceiptTemplateService {
     }
     .amount {
       display: grid;
-      min-height: 78px;
+      min-height: 76px;
       place-items: center;
       border-radius: 8px;
       background: #fff7d6;
@@ -271,6 +285,25 @@ export class ReceiptTemplateService {
       margin: 3px 0;
       font-size: 20px;
       font-weight: 900;
+    }
+    .price-note {
+      margin-top: 8px;
+      border-top: 1px dashed #f0cf71;
+      padding-top: 7px;
+      color: #7c3f15;
+      font-size: 10.5px;
+      font-weight: 800;
+      line-height: 1.38;
+      text-align: left;
+    }
+    .price-note strong {
+      display: block;
+      margin-bottom: 3px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+    .price-note span {
+      display: block;
     }
     .payment-line {
       display: grid;
@@ -334,7 +367,7 @@ export class ReceiptTemplateService {
         </div>
         <div class="info-pill">
           <span class="info-icon">${this.renderInfoIcon('class')}</span>
-          <span>Khóa học: ${this.escape(receipt.classSnapshot?.className)}</span>
+          <span>Khóa học: ${this.escape(classNames)}</span>
         </div>
       </div>
       <div class="meta-line">
@@ -346,12 +379,12 @@ export class ReceiptTemplateService {
 
     <section class="section">
       <div class="section-label">1. Lịch học &amp; nội dung bài học</div>
-      ${this.renderLessonTable(sessions)}
+      ${this.renderLessonTable(sessions, isMultiClass)}
     </section>
 
     <section class="section">
       <div class="section-label green">2. Kết quả kiểm tra &amp; tiến độ học tập</div>
-      ${this.renderExamTables(exams)}
+      ${this.renderExamTables(exams, isMultiClass)}
     </section>
 
     <section class="section">
@@ -374,6 +407,7 @@ export class ReceiptTemplateService {
               <div>${this.escape(this.numberToVietnameseWords(receipt.totalAmount))}</div>
             </div>
           </div>
+          ${this.renderTuitionPriceNotes(sessions)}
         </div>
         <div class="payment-card">
           <h3>Thông tin thanh toán</h3>
@@ -403,7 +437,7 @@ export class ReceiptTemplateService {
 </html>`;
   }
 
-  private renderLessonTable(sessions: any[]) {
+  private renderLessonTable(sessions: any[], isMultiClass = false) {
     if (!sessions.length) {
       return `<table><tbody><tr><td class="center muted">Chưa có buổi học tính phí.</td></tr></tbody></table>`;
     }
@@ -418,7 +452,7 @@ export class ReceiptTemplateService {
           </tr>
         </thead>
         <tbody>
-          <tr>${this.renderLessonCells(sessions[0])}</tr>
+          <tr>${this.renderLessonCells(sessions[0], isMultiClass)}</tr>
         </tbody>
       </table>`;
     }
@@ -431,8 +465,8 @@ export class ReceiptTemplateService {
       const second = right[index];
 
       return `<tr>
-        ${this.renderLessonCells(first)}
-        ${this.renderLessonCells(second)}
+        ${this.renderLessonCells(first, isMultiClass)}
+        ${this.renderLessonCells(second, isMultiClass)}
       </tr>`;
     }).join('');
 
@@ -451,33 +485,45 @@ export class ReceiptTemplateService {
     </table>`;
   }
 
-  private renderLessonCells(item?: Record<string, any>) {
+  private renderLessonCells(item?: Record<string, any>, isMultiClass = false) {
     if (!item) {
       return '<td></td><td></td><td></td>';
     }
 
     return `<td class="lesson-index">${this.escape(item.sequence)}</td>
       <td class="center">${this.formatDate(item.date)}</td>
-      <td>${this.renderLessonContent(item)}</td>`;
+      <td>${this.renderLessonContent(item, isMultiClass)}</td>`;
   }
 
-  private renderLessonContent(item: Record<string, any>) {
-    const parts = this.uniqueNonEmpty([item.topic, item.content, item.note]);
+  private renderLessonContent(item: Record<string, any>, isMultiClass = false) {
+    const makeupText = item.makeupForClassName
+      ? `Học tại ${item.attendedClassName || item.className} - bù cho ${item.makeupForClassName}`
+      : '';
+    const parts = this.uniqueNonEmpty([
+      makeupText,
+      item.topic,
+      item.content,
+      item.note,
+    ]);
+    const classBadge =
+      isMultiClass && item.className
+        ? `<span class="lesson-class">${this.escape(item.className)}</span><br>`
+        : '';
 
     if (!parts.length) {
-      return this.escape('Nội dung buổi học');
+      return `${classBadge}${this.escape('Nội dung buổi học')}`;
     }
 
     const [title, ...details] = parts;
 
     if (!details.length) {
-      return this.escape(title);
+      return `${classBadge}${this.escape(title)}`;
     }
 
-    return `<strong>${this.escape(title)}</strong><br><span class="muted">${this.escape(details.join(' - '))}</span>`;
+    return `${classBadge}<strong>${this.escape(title)}</strong><br><span class="muted">${this.escape(details.join(' - '))}</span>`;
   }
 
-  private renderExamTables(exams: any[]) {
+  private renderExamTables(exams: any[], isMultiClass = false) {
     if (!exams.length) {
       return `<table><tbody><tr><td class="center muted">Chưa có bài kiểm tra trong kỳ.</td></tr></tbody></table>`;
     }
@@ -492,7 +538,7 @@ export class ReceiptTemplateService {
           </thead>
           <tbody>
             <tr>
-              <td>${this.escape(exam.title)}<br><span class="muted">${this.formatDate(exam.date)}</span></td>
+              <td>${this.renderExamTitle(exam, isMultiClass)}</td>
               <td class="center">${this.renderExamScoreCell(exam)}</td>
             </tr>
           </tbody>
@@ -516,7 +562,7 @@ export class ReceiptTemplateService {
                   ? items
                       .map(
                         (exam: any) => `<tr>
-                          <td>${this.escape(exam.title)}<br><span class="muted">${this.formatDate(exam.date)}</span></td>
+                          <td>${this.renderExamTitle(exam, isMultiClass)}</td>
                           <td class="center">${this.renderExamScoreCell(exam)}</td>
                         </tr>`,
                       )
@@ -541,6 +587,15 @@ export class ReceiptTemplateService {
         : '';
 
     return `${this.escape(primaryText)}${remark}`;
+  }
+
+  private renderExamTitle(exam: Record<string, any>, isMultiClass = false) {
+    const classBadge =
+      isMultiClass && exam.className
+        ? `<span class="lesson-class">${this.escape(exam.className)}</span><br>`
+        : '';
+
+    return `${classBadge}${this.escape(exam.title)}<br><span class="muted">${this.formatDate(exam.date)}</span>`;
   }
 
   private renderCommentCard(
@@ -569,8 +624,112 @@ export class ReceiptTemplateService {
       });
   }
 
+  private getReceiptClassNames(receipt: Record<string, any>) {
+    return this.getReceiptClassNameList(receipt).join(' + ') || 'Lớp học';
+  }
+
+  private getReceiptClassNameList(receipt: Record<string, any>) {
+    const snapshots = Array.isArray(receipt.classSnapshots)
+      ? receipt.classSnapshots
+      : [];
+    const names = snapshots
+      .map((snapshot: Record<string, unknown>) =>
+        typeof snapshot.className === 'string' ? snapshot.className.trim() : '',
+      )
+      .filter(Boolean);
+
+    if (!names.length && receipt.classSnapshot?.className) {
+      names.push(receipt.classSnapshot.className);
+    }
+
+    return [...new Set(names)];
+  }
+
   private paymentLine(label: string, value?: string) {
     return `<div class="payment-line"><span>${this.escape(label)}:</span><strong>${this.escape(value || 'Chưa cập nhật')}</strong></div>`;
+  }
+
+  private renderTuitionPriceNotes(sessions: any[]) {
+    const ranges = this.buildTuitionPriceRanges(sessions);
+
+    if (!ranges.length) {
+      return '';
+    }
+
+    return `<div class="price-note">
+      <strong>Đơn giá theo ngày học</strong>
+      ${ranges
+        .map(
+          (range) =>
+            `<span>${this.escape(this.formatTuitionPriceRange(range))}</span>`,
+        )
+        .join('')}
+    </div>`;
+  }
+
+  private buildTuitionPriceRanges(sessions: any[]) {
+    const items = sessions
+      .map((session) => ({
+        date: this.parseDateValue(session?.date),
+        unitPrice: this.resolveSessionUnitPrice(session),
+      }))
+      .filter((item) => item.date && item.unitPrice !== null)
+      .sort((first, second) => first.date!.getTime() - second.date!.getTime());
+    const ranges: Array<{
+      endDate: Date;
+      startDate: Date;
+      unitPrice: number;
+    }> = [];
+
+    for (const item of items) {
+      const current = ranges[ranges.length - 1];
+
+      if (current && current.unitPrice === item.unitPrice) {
+        current.endDate = item.date!;
+        continue;
+      }
+
+      ranges.push({
+        endDate: item.date!,
+        startDate: item.date!,
+        unitPrice: item.unitPrice!,
+      });
+    }
+
+    return ranges;
+  }
+
+  private formatTuitionPriceRange(range: {
+    endDate: Date;
+    startDate: Date;
+    unitPrice: number;
+  }) {
+    const startDate = this.formatDate(range.startDate);
+    const endDate = this.formatDate(range.endDate);
+    const dateText =
+      startDate === endDate ? startDate : `${startDate} đến ngày ${endDate}`;
+
+    return `Ngày ${dateText}: ${this.formatMoney(range.unitPrice)}/buổi`;
+  }
+
+  private parseDateValue(value: unknown) {
+    if (!value) {
+      return null;
+    }
+
+    const date = value instanceof Date ? value : new Date(String(value));
+
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private resolveSessionUnitPrice(session: any) {
+    const unitPrice = Number(session?.unitPrice ?? session?.amount);
+
+    if (!Number.isFinite(unitPrice)) {
+      return null;
+    }
+
+    return Math.max(0, Math.round(unitPrice));
   }
 
   private renderSticker(position: 'left' | 'right') {

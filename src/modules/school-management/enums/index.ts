@@ -9,6 +9,7 @@ export * from './notification-type.enum';
 export * from './payment-status.enum';
 export * from './receipt-pdf-status.enum';
 export * from './receipt-reason.enum';
+export * from './receipt-scope.enum';
 export * from './schedule-override-action.enum';
 export * from './schedule-type.enum';
 export * from './session-status.enum';

@@ -1,6 +1,7 @@
 export * from './attendance.schema';
 export * from './billing-cycle.schema';
 export * from './class-enrollment.schema';
+export * from './class-price-version.schema';
 export * from './class-session.schema';
 export * from './class.schema';
 export * from './exam-score.schema';

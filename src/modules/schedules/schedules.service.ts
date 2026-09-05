@@ -8,6 +8,7 @@ import {
 import {
   ClassStatus,
   ScheduleOverrideAction,
+  ScheduleType,
 } from '../school-management/enums';
 import {
   Class,
@@ -47,7 +48,7 @@ export type TeacherScheduleDayResponse = {
 };
 
 export type TeacherScheduleEventType =
-  'fixed' | 'extra' | 'reschedule' | 'cancel';
+  'fixed' | 'extra' | 'reschedule' | 'cancel' | 'manual';
 
 export type TeacherScheduleEventResponse = {
   id: string;
@@ -63,6 +64,8 @@ export type TeacherScheduleEventResponse = {
   type: TeacherScheduleEventType;
   reason?: string;
   originalDate?: string;
+  originalStartTime?: string;
+  originalEndTime?: string;
   topic?: string;
   content?: string;
 };
@@ -102,6 +105,8 @@ type LeanScheduleOverride = {
   classId: Types.ObjectId;
   action: ScheduleOverrideAction;
   originalDate?: Date;
+  originalStartTime?: string;
+  originalEndTime?: string;
   newDate?: Date;
   startTime?: string;
   endTime?: string;
@@ -116,6 +121,7 @@ type LeanClassSession = {
   startTime: string;
   endTime: string;
   timeStorage?: 'utc' | 'vietnam';
+  scheduleType?: ScheduleType;
   topic?: string;
   content?: string;
 };
@@ -241,34 +247,25 @@ export class SchedulesService {
   ): Promise<TeacherScheduleEventResponse[]> {
     const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
     const classObjectId = this.toObjectId(classId, 'classId');
-
-    const firstVersion = await this.scheduleVersionModel
-      .findOne({ teacherId: teacherObjectId, classId: classObjectId })
-      .sort({ effectiveFrom: 1 })
-      .lean<LeanScheduleVersion>()
-      .exec();
-
-    if (!firstVersion) {
-      return [];
-    }
-
-    const startDate = firstVersion.effectiveFrom;
     const endDateExclusive = this.addDays(this.getCurrentVietnamDate(), 1);
 
-    if (startDate >= endDateExclusive) {
-      return [];
-    }
+    const [classroom, startDate] = await Promise.all([
+      this.classModel
+        .findOne({
+          _id: classObjectId,
+          teacherId: teacherObjectId,
+          status: { $ne: ClassStatus.Archived },
+        })
+        .lean<LeanClass>()
+        .exec(),
+      this.findClassScheduleHistoryStartDate(
+        teacherObjectId,
+        classObjectId,
+        endDateExclusive,
+      ),
+    ]);
 
-    const classroom = await this.classModel
-      .findOne({
-        _id: classObjectId,
-        teacherId: teacherObjectId,
-        status: { $ne: ClassStatus.Archived },
-      })
-      .lean<LeanClass>()
-      .exec();
-
-    if (!classroom) {
+    if (!classroom || !startDate || startDate >= endDateExclusive) {
       return [];
     }
 
@@ -336,13 +333,74 @@ export class SchedulesService {
       endDateExclusive,
     );
 
-    const finalEvents = this.attachSessionContent(
-      eventsWithOverrides,
+    const finalEvents = this.appendStandaloneClassSessions(
+      this.attachSessionContent(eventsWithOverrides, classSessions),
       classSessions,
+      classMap,
+      colorMap,
     );
     const activeEvents = finalEvents.filter((e) => e.type !== 'cancel');
 
     return this.sortEvents(activeEvents);
+  }
+
+  private async findClassScheduleHistoryStartDate(
+    teacherId: Types.ObjectId,
+    classId: Types.ObjectId,
+    endDateExclusive: Date,
+  ) {
+    const [firstVersion, firstTemporarySchedule, firstSession] =
+      await Promise.all([
+        this.scheduleVersionModel
+          .findOne({
+            teacherId,
+            classId,
+            effectiveFrom: { $lt: endDateExclusive },
+          })
+          .sort({ effectiveFrom: 1 })
+          .select('effectiveFrom')
+          .lean<{ effectiveFrom: Date }>()
+          .exec(),
+        this.scheduleOverrideModel
+          .findOne({
+            teacherId,
+            classId,
+            action: {
+              $in: [
+                ScheduleOverrideAction.Extra,
+                ScheduleOverrideAction.Reschedule,
+              ],
+            },
+            newDate: { $lt: endDateExclusive },
+          })
+          .sort({ newDate: 1 })
+          .select('newDate')
+          .lean<{ newDate?: Date }>()
+          .exec(),
+        this.classSessionModel
+          .findOne({
+            teacherId,
+            classId,
+            date: { $lt: endDateExclusive },
+          })
+          .sort({ date: 1 })
+          .select('date')
+          .lean<{ date: Date }>()
+          .exec(),
+      ]);
+    const startDates = [
+      firstVersion?.effectiveFrom,
+      firstTemporarySchedule?.newDate,
+      firstSession?.date,
+    ].filter(
+      (date): date is Date => date instanceof Date && date < endDateExclusive,
+    );
+
+    if (!startDates.length) {
+      return null;
+    }
+
+    return new Date(Math.min(...startDates.map((date) => date.getTime())));
   }
 
   private buildFixedEvents(
@@ -459,6 +517,81 @@ export class SchedulesService {
     });
   }
 
+  private appendStandaloneClassSessions(
+    events: TeacherScheduleEventResponse[],
+    sessions: LeanClassSession[],
+    classMap: Map<string, LeanClass>,
+    colorMap: Map<string, number>,
+  ) {
+    const eventKeys = new Set(
+      events
+        .filter((event) => event.startTime && event.endTime)
+        .map((event) =>
+          this.buildSessionKey(
+            event.classId,
+            event.date,
+            event.startTime!,
+            event.endTime!,
+          ),
+        ),
+    );
+    const result = [...events];
+
+    for (const session of sessions) {
+      const classId = session.classId.toString();
+      const classroom = classMap.get(classId);
+      const date = this.toVietnamDateKey(session.date);
+      const startTime =
+        this.toVietnamTime(session.startTime, session.timeStorage) ??
+        session.startTime;
+      const endTime =
+        this.toVietnamTime(session.endTime, session.timeStorage) ??
+        session.endTime;
+      const eventKey = this.buildSessionKey(classId, date, startTime, endTime);
+
+      if (!classroom || eventKeys.has(eventKey)) {
+        continue;
+      }
+
+      eventKeys.add(eventKey);
+      result.push({
+        id: `session:${session._id.toString()}:${date}:${startTime}:${endTime}`,
+        classId,
+        className: classroom.name,
+        classImageUrl: classroom.imageUrl || DEFAULT_CLASS_IMAGE_URL,
+        colorIndex: colorMap.get(classId) ?? 0,
+        colorHex: classroom.colorHex,
+        date,
+        dayOfWeek: this.getVietnamDayOfWeek(session.date),
+        startTime,
+        endTime,
+        type: this.mapSessionScheduleTypeToEventType(session.scheduleType),
+        topic: session.topic,
+        content: session.content,
+      });
+    }
+
+    return result;
+  }
+
+  private mapSessionScheduleTypeToEventType(
+    scheduleType?: ScheduleType,
+  ): Exclude<TeacherScheduleEventType, 'cancel'> {
+    if (scheduleType === ScheduleType.Extra) {
+      return 'extra';
+    }
+
+    if (scheduleType === ScheduleType.Temporary) {
+      return 'reschedule';
+    }
+
+    if (scheduleType === ScheduleType.Manual) {
+      return 'manual';
+    }
+
+    return 'fixed';
+  }
+
   private applyTemporarySchedules(
     fixedEvents: TeacherScheduleEventResponse[],
     temporarySchedules: LeanScheduleOverride[],
@@ -530,7 +663,16 @@ export class SchedulesService {
           : undefined;
 
         if (originalDateKey) {
-          this.removeFixedEvents(events, classId, originalDateKey);
+          this.removeFixedEvents(
+            events,
+            classId,
+            originalDateKey,
+            this.toVietnamTime(
+              schedule.originalStartTime,
+              schedule.timeStorage,
+            ),
+            this.toVietnamTime(schedule.originalEndTime, schedule.timeStorage),
+          );
         }
 
         if (
@@ -610,6 +752,14 @@ export class SchedulesService {
       type,
       reason: schedule.reason,
       originalDate,
+      originalStartTime: this.toVietnamTime(
+        schedule.originalStartTime,
+        schedule.timeStorage,
+      ),
+      originalEndTime: this.toVietnamTime(
+        schedule.originalEndTime,
+        schedule.timeStorage,
+      ),
     };
   }
 
@@ -631,7 +781,12 @@ export class SchedulesService {
       const classId = schedule.classId.toString();
       const current = activeMap.get(classId);
 
-      if (!current || schedule.version > current.version) {
+      if (
+        !current ||
+        schedule.effectiveFrom > current.effectiveFrom ||
+        (+schedule.effectiveFrom === +current.effectiveFrom &&
+          schedule.version > current.version)
+      ) {
         activeMap.set(classId, schedule);
       }
     }
