@@ -64,6 +64,12 @@ export class TuitionEntry {
   billingCycleId?: mongoose.Types.ObjectId;
 
   @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Receipt',
+  })
+  receiptId?: mongoose.Types.ObjectId;
+
+  @Prop({
     enum: TuitionType,
     required: true,
     index: true,
@@ -119,5 +125,6 @@ TuitionEntrySchema.index({
   createdAt: 1,
 });
 TuitionEntrySchema.index({ teacherId: 1, billingCycleId: 1 });
+TuitionEntrySchema.index({ teacherId: 1, receiptId: 1 });
 TuitionEntrySchema.index({ teacherId: 1, studentId: 1, sessionDate: 1 });
 TuitionEntrySchema.index({ teacherId: 1, status: 1, sessionDate: 1 });

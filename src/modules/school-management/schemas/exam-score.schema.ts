@@ -49,6 +49,9 @@ export class ExamScore {
   @Prop({ trim: true })
   note?: string;
 
+  @Prop({ type: [String], default: [] })
+  evidenceImages?: string[];
+
   @Prop({ type: Date })
   deletedAt?: Date;
 }

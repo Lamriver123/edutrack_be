@@ -37,6 +37,13 @@ export class Class {
   @Prop({ default: 0, min: 0, max: 7 })
   colorIndex: number;
 
+  @Prop({
+    trim: true,
+    lowercase: true,
+    match: /^#([0-9a-f]{6})$/,
+  })
+  colorHex?: string;
+
   @Prop({ required: true, min: 0, validate: integerMoneyValidator })
   regularPrice: number;
 
@@ -58,3 +65,4 @@ ClassSchema.index({ teacherId: 1, status: 1 });
 ClassSchema.index({ teacherId: 1, name: 1 });
 ClassSchema.index({ teacherId: 1, searchText: 1 });
 ClassSchema.index({ teacherId: 1, colorIndex: 1 });
+ClassSchema.index({ teacherId: 1, colorHex: 1 });

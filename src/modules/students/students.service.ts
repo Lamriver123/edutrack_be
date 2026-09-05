@@ -7,15 +7,8 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { randomBytes } from 'crypto';
 import { ClientSession, Model, Types } from 'mongoose';
-import {
-  EnrollmentStatus,
-  Gender,
-  StudentStatus,
-} from '../school-management/enums';
-import {
-  ClassEnrollment,
-  ClassEnrollmentDocument,
-} from '../school-management/schemas/class-enrollment.schema';
+import { Gender, StudentStatus } from '../school-management/enums';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   Student,
   StudentDocument,
@@ -59,8 +52,7 @@ export class StudentsService {
   constructor(
     @InjectModel(Student.name)
     private readonly studentModel: Model<StudentDocument>,
-    @InjectModel(ClassEnrollment.name)
-    private readonly enrollmentModel: Model<ClassEnrollmentDocument>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(
@@ -268,7 +260,7 @@ export class StudentsService {
             teacherId: teacherObjectId,
           },
           update,
-          { new: true },
+          { returnDocument: 'after' },
         )
         .exec();
 
@@ -277,10 +269,10 @@ export class StudentsService {
       }
 
       if (dto.status === StudentStatus.Inactive) {
-        await this.deactivateStudentEnrollments(
-          teacherObjectId,
-          studentObjectId,
-        );
+        this.eventEmitter.emit('student.deactivated', {
+          teacherId: teacherObjectId.toString(),
+          studentId: studentObjectId.toString(),
+        });
       }
 
       return student;
@@ -315,12 +307,10 @@ export class StudentsService {
         throw new NotFoundException('Không tìm thấy học sinh.');
       }
 
-      await this.enrollmentModel
-        .deleteMany({
-          teacherId: teacherObjectId,
-          studentId: studentObjectId,
-        })
-        .exec();
+      this.eventEmitter.emit('student.deleted', {
+        teacherId: teacherObjectId.toString(),
+        studentId: studentObjectId.toString(),
+      });
 
       return {
         message: 'Đã xóa vĩnh viễn hồ sơ học sinh.',
@@ -338,7 +328,7 @@ export class StudentsService {
             status: StudentStatus.Inactive,
           },
         },
-        { new: true },
+        { returnDocument: 'after' },
       )
       .exec();
 
@@ -346,7 +336,10 @@ export class StudentsService {
       throw new NotFoundException('Không tìm thấy học sinh.');
     }
 
-    await this.deactivateStudentEnrollments(teacherObjectId, studentObjectId);
+    this.eventEmitter.emit('student.deactivated', {
+      teacherId: teacherObjectId.toString(),
+      studentId: studentObjectId.toString(),
+    });
 
     return {
       message: 'Đã chuyển học sinh sang trạng thái tạm nghỉ.',
@@ -431,27 +424,6 @@ export class StudentsService {
     };
 
     return Object.values(cleanParent).some(Boolean) ? cleanParent : undefined;
-  }
-
-  private deactivateStudentEnrollments(
-    teacherId: Types.ObjectId,
-    studentId: Types.ObjectId,
-  ) {
-    return this.enrollmentModel
-      .updateMany(
-        {
-          teacherId,
-          studentId,
-          status: EnrollmentStatus.Active,
-        },
-        {
-          $set: {
-            status: EnrollmentStatus.Inactive,
-            leftAt: new Date(),
-          },
-        },
-      )
-      .exec();
   }
 
   private generateStudentCode() {

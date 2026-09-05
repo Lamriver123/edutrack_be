@@ -64,5 +64,19 @@ export default () => ({
     studentAvatarFolder:
       process.env.CLOUDINARY_STUDENT_AVATAR_FOLDER ??
       'edutrack/student-avatars',
+    teacherAvatarFolder:
+      process.env.CLOUDINARY_TEACHER_AVATAR_FOLDER ??
+      'edutrack/teacher-avatars',
+    classImageFolder:
+      process.env.CLOUDINARY_CLASS_IMAGE_FOLDER ?? 'edutrack/class-images',
+    examFileFolder:
+      process.env.CLOUDINARY_EXAM_FILE_FOLDER ?? 'edutrack/exam-files',
+    examEvidenceFolder:
+      process.env.CLOUDINARY_EXAM_EVIDENCE_FOLDER ?? 'edutrack/exam-evidence',
+    receiptPdfFolder:
+      process.env.CLOUDINARY_RECEIPT_PDF_FOLDER ?? 'edutrack/receipts',
+    receiptPaymentProofFolder:
+      process.env.CLOUDINARY_RECEIPT_PAYMENT_PROOF_FOLDER ??
+      'edutrack/receipt-payment-proofs',
   },
 });

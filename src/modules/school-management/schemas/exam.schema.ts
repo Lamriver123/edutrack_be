@@ -44,6 +44,12 @@ export class Exam {
   @Prop({ trim: true })
   description?: string;
 
+  @Prop({ trim: true })
+  fileUrl?: string;
+
+  @Prop({ trim: true })
+  fileName?: string;
+
   @Prop({ type: Date })
   deletedAt?: Date;
 }

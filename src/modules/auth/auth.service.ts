@@ -10,7 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { MailService } from '../mail/mail.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserDocument } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -28,7 +28,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly mailService: MailService,
+    private readonly eventEmitter: EventEmitter2,
     private readonly configService: ConfigService,
   ) {}
 
@@ -65,11 +65,11 @@ export class AuthService {
       await existingUser.save();
     }
 
-    await this.mailService.sendVerificationOtp(
-      user.email,
-      otpBundle.otp,
-      user.fullName,
-    );
+    this.eventEmitter.emit('auth.user_registered', {
+      email: user.email,
+      otp: otpBundle.otp,
+      fullName: user.fullName,
+    });
 
     return {
       message: 'Đăng ký thành công. Vui lòng kiểm tra email để lấy mã OTP.',
@@ -146,11 +146,11 @@ export class AuthService {
     user.otpResendAvailableAt = otpBundle.otpResendAvailableAt;
     await user.save();
 
-    await this.mailService.sendVerificationOtp(
-      user.email,
-      otpBundle.otp,
-      user.fullName,
-    );
+    this.eventEmitter.emit('auth.user_registered', {
+      email: user.email,
+      otp: otpBundle.otp,
+      fullName: user.fullName,
+    });
 
     return {
       message: 'Mã OTP mới đã được gửi đến email của bạn.',
@@ -187,11 +187,11 @@ export class AuthService {
     user.passwordResetOtpResendAvailableAt = otpBundle.otpResendAvailableAt;
     await user.save();
 
-    await this.mailService.sendPasswordResetOtp(
-      user.email,
-      otpBundle.otp,
-      user.fullName,
-    );
+    this.eventEmitter.emit('auth.forgot_password_requested', {
+      email: user.email,
+      otp: otpBundle.otp,
+      fullName: user.fullName,
+    });
 
     return {
       message: 'Mã OTP đổi mật khẩu đã được gửi đến email của bạn.',
@@ -264,11 +264,11 @@ export class AuthService {
     user.passwordResetOtpResendAvailableAt = otpBundle.otpResendAvailableAt;
     await user.save();
 
-    await this.mailService.sendPasswordResetOtp(
-      user.email,
-      otpBundle.otp,
-      user.fullName,
-    );
+    this.eventEmitter.emit('auth.forgot_password_requested', {
+      email: user.email,
+      otp: otpBundle.otp,
+      fullName: user.fullName,
+    });
 
     return {
       message: 'Mã OTP đổi mật khẩu mới đã được gửi đến email của bạn.',
@@ -384,11 +384,11 @@ export class AuthService {
     user.otpResendAvailableAt = otpBundle.otpResendAvailableAt;
     await user.save();
 
-    await this.mailService.sendVerificationOtp(
-      user.email,
-      otpBundle.otp,
-      user.fullName,
-    );
+    this.eventEmitter.emit('auth.user_registered', {
+      email: user.email,
+      otp: otpBundle.otp,
+      fullName: user.fullName,
+    });
   }
 
   private async createAuthSession(user: UserDocument): Promise<AuthSession> {

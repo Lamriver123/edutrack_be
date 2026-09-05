@@ -16,12 +16,38 @@ export class User {
   @Prop({ trim: true })
   avatarUrl?: string;
 
+  @Prop({ trim: true })
+  phone?: string;
+
+  @Prop({ trim: true })
+  address?: string;
+
+  @Prop({ trim: true, maxlength: 500 })
+  bio?: string;
+
+  @Prop({ trim: true, maxlength: 100 })
+  bankAccountName?: string;
+
+  @Prop({ trim: true, maxlength: 50 })
+  bankAccountNumber?: string;
+
+  @Prop({ type: Buffer, select: false })
+  paymentQrImageData?: Buffer;
+
+  @Prop({ trim: true })
+  paymentQrImageContentType?: string;
+
+  @Prop({ min: 0 })
+  paymentQrImageSize?: number;
+
+  @Prop({ type: Date })
+  paymentQrImageUpdatedAt?: Date;
+
   @Prop({
     required: true,
     lowercase: true,
     trim: true,
     unique: true,
-    index: true,
   })
   email: string;
 
@@ -76,5 +102,3 @@ export class User {
 
 export type UserDocument = HydratedDocument<User>;
 export const UserSchema = SchemaFactory.createForClass(User);
-
-UserSchema.index({ email: 1 }, { unique: true });

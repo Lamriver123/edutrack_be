@@ -70,8 +70,11 @@ export class Attendance {
   })
   makeupForSessionId?: mongoose.Types.ObjectId;
 
-  @Prop({ trim: true })
-  note?: string;
+  @Prop({ type: String, maxlength: 500, default: '' })
+  note: string;
+
+  @Prop({ type: Boolean, default: false })
+  isBilled: boolean;
 }
 
 export type AttendanceDocument = HydratedDocument<Attendance>;

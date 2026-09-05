@@ -38,6 +38,7 @@ export type TeacherScheduleClassResponse = {
   name: string;
   imageUrl: string;
   colorIndex: number;
+  colorHex?: string;
 };
 
 export type TeacherScheduleDayResponse = {
@@ -54,6 +55,7 @@ export type TeacherScheduleEventResponse = {
   className: string;
   classImageUrl: string;
   colorIndex: number;
+  colorHex?: string;
   date: string;
   dayOfWeek: number;
   startTime?: string;
@@ -78,6 +80,7 @@ type LeanClass = {
   name: string;
   imageUrl?: string;
   colorIndex?: number;
+  colorHex?: string;
 };
 
 type LeanScheduleVersion = {
@@ -226,9 +229,120 @@ export class SchedulesService {
         name: classroom.name,
         imageUrl: classroom.imageUrl || DEFAULT_CLASS_IMAGE_URL,
         colorIndex: colorMap.get(classroom._id.toString()) ?? 0,
+        colorHex: classroom.colorHex,
       })),
       events: this.sortEvents(events),
     };
+  }
+
+  async getClassScheduleHistory(
+    teacherId: string,
+    classId: string,
+  ): Promise<TeacherScheduleEventResponse[]> {
+    const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
+    const classObjectId = this.toObjectId(classId, 'classId');
+
+    const firstVersion = await this.scheduleVersionModel
+      .findOne({ teacherId: teacherObjectId, classId: classObjectId })
+      .sort({ effectiveFrom: 1 })
+      .lean<LeanScheduleVersion>()
+      .exec();
+
+    if (!firstVersion) {
+      return [];
+    }
+
+    const startDate = firstVersion.effectiveFrom;
+    const endDateExclusive = this.addDays(this.getCurrentVietnamDate(), 1);
+
+    if (startDate >= endDateExclusive) {
+      return [];
+    }
+
+    const classroom = await this.classModel
+      .findOne({
+        _id: classObjectId,
+        teacherId: teacherObjectId,
+        status: { $ne: ClassStatus.Archived },
+      })
+      .lean<LeanClass>()
+      .exec();
+
+    if (!classroom) {
+      return [];
+    }
+
+    const classMap = new Map([[classId, classroom]]);
+    const colorMap = new Map([[classId, classroom.colorIndex ?? 0]]);
+
+    const [fixedSchedules, temporarySchedules, classSessions] =
+      await Promise.all([
+        this.scheduleVersionModel
+          .find({
+            teacherId: teacherObjectId,
+            classId: classObjectId,
+            effectiveFrom: { $lt: endDateExclusive },
+            $or: [{ effectiveTo: null }, { effectiveTo: { $gte: startDate } }],
+          })
+          .lean<LeanScheduleVersion[]>()
+          .exec(),
+        this.scheduleOverrideModel
+          .find({
+            teacherId: teacherObjectId,
+            classId: classObjectId,
+            $or: [
+              {
+                originalDate: {
+                  $gte: startDate,
+                  $lt: endDateExclusive,
+                },
+              },
+              {
+                newDate: {
+                  $gte: startDate,
+                  $lt: endDateExclusive,
+                },
+              },
+            ],
+          })
+          .lean<LeanScheduleOverride[]>()
+          .exec(),
+        this.classSessionModel
+          .find({
+            teacherId: teacherObjectId,
+            classId: classObjectId,
+            date: {
+              $gte: startDate,
+              $lt: endDateExclusive,
+            },
+          })
+          .lean<LeanClassSession[]>()
+          .exec(),
+      ]);
+
+    const days = this.buildDays(startDate, endDateExclusive);
+    const fixedEvents = this.buildFixedEvents(
+      days,
+      fixedSchedules,
+      classMap,
+      colorMap,
+    );
+    const eventsWithOverrides = this.applyTemporarySchedules(
+      fixedEvents,
+      temporarySchedules,
+      classMap,
+      colorMap,
+      startDate,
+      endDateExclusive,
+    );
+
+    const finalEvents = this.attachSessionContent(
+      eventsWithOverrides,
+      classSessions,
+    );
+    const activeEvents = finalEvents.filter((e) => e.type !== 'cancel');
+
+    return this.sortEvents(activeEvents);
   }
 
   private buildFixedEvents(
@@ -274,6 +388,7 @@ export class SchedulesService {
             className: classroom.name,
             classImageUrl: classroom.imageUrl || DEFAULT_CLASS_IMAGE_URL,
             colorIndex: colorMap.get(classId) ?? 0,
+            colorHex: classroom.colorHex,
             date: day.date,
             dayOfWeek: day.dayOfWeek,
             startTime: vietnamStart.time,
@@ -485,6 +600,7 @@ export class SchedulesService {
       className: classroom.name,
       classImageUrl: classroom.imageUrl || DEFAULT_CLASS_IMAGE_URL,
       colorIndex,
+      colorHex: classroom.colorHex,
       date,
       dayOfWeek: this.getVietnamDayOfWeek(
         this.parseVietnamDateOnly(date, 'Ngày lịch tạm'),
@@ -566,14 +682,23 @@ export class SchedulesService {
   }
 
   private buildWeekDays(weekStart: Date): TeacherScheduleDayResponse[] {
-    return Array.from({ length: 7 }, (_, index) => {
-      const date = this.addDays(weekStart, index);
+    return this.buildDays(weekStart, this.addDays(weekStart, 7));
+  }
 
-      return {
-        date: this.toVietnamDateKey(date),
-        dayOfWeek: this.getVietnamDayOfWeek(date),
-      };
-    });
+  private buildDays(
+    startDate: Date,
+    endDateExclusive: Date,
+  ): TeacherScheduleDayResponse[] {
+    const days: TeacherScheduleDayResponse[] = [];
+    let currentDate = startDate;
+    while (currentDate < endDateExclusive) {
+      days.push({
+        date: this.toVietnamDateKey(currentDate),
+        dayOfWeek: this.getVietnamDayOfWeek(currentDate),
+      });
+      currentDate = this.addDays(currentDate, 1);
+    }
+    return days;
   }
 
   private buildEmptyWeekResponse(

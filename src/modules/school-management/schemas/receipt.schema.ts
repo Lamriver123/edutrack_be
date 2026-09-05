@@ -1,7 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 import { User } from '../../users/schemas/user.schema';
-import { PaymentStatus, ReceiptReason, TuitionType } from '../enums';
+import {
+  AttendanceStatus,
+  PaymentStatus,
+  ReceiptPdfStatus,
+  ReceiptReason,
+  ScheduleType,
+  TuitionType,
+} from '../enums';
 import { BillingCycle } from './billing-cycle.schema';
 import { Class } from './class.schema';
 import { ClassSession } from './class-session.schema';
@@ -43,6 +50,61 @@ export const ReceiptStudentSnapshotSchema = SchemaFactory.createForClass(
   _id: false,
   versionKey: false,
 })
+export class ReceiptTeacherSnapshot {
+  @Prop({ required: true, trim: true })
+  fullName: string;
+
+  @Prop({ required: true, trim: true })
+  email: string;
+
+  @Prop({ trim: true })
+  phone?: string;
+
+  @Prop({ trim: true })
+  address?: string;
+
+  @Prop({ trim: true })
+  avatarUrl?: string;
+
+  @Prop({ trim: true })
+  bankAccountName?: string;
+
+  @Prop({ trim: true })
+  bankAccountNumber?: string;
+
+  @Prop({ default: false })
+  hasPaymentQr: boolean;
+}
+
+export const ReceiptTeacherSnapshotSchema = SchemaFactory.createForClass(
+  ReceiptTeacherSnapshot,
+);
+
+@Schema({
+  _id: false,
+  versionKey: false,
+})
+export class ReceiptClassSnapshot {
+  @Prop({ required: true, trim: true })
+  className: string;
+
+  @Prop({ trim: true })
+  colorHex?: string;
+
+  @Prop({ required: true, validate: integerMoneyValidator })
+  regularPrice: number;
+
+  @Prop({ required: true, validate: integerMoneyValidator })
+  makeupPrice: number;
+}
+
+export const ReceiptClassSnapshotSchema =
+  SchemaFactory.createForClass(ReceiptClassSnapshot);
+
+@Schema({
+  _id: false,
+  versionKey: false,
+})
 export class ReceiptSessionSnapshot {
   @Prop({
     type: mongoose.Schema.Types.ObjectId,
@@ -50,6 +112,12 @@ export class ReceiptSessionSnapshot {
     required: true,
   })
   tuitionEntryId: mongoose.Types.ObjectId;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Attendance',
+  })
+  attendanceId?: mongoose.Types.ObjectId;
 
   @Prop({ required: true, min: 1 })
   sequence: number;
@@ -84,11 +152,28 @@ export class ReceiptSessionSnapshot {
   @Prop({ trim: true })
   content?: string;
 
+  @Prop({
+    enum: AttendanceStatus,
+    required: true,
+  })
+  attendanceStatus: AttendanceStatus;
+
+  @Prop({
+    enum: ScheduleType,
+  })
+  scheduleType?: ScheduleType;
+
   @Prop({ enum: TuitionType, required: true })
   tuitionType: TuitionType;
 
   @Prop({ required: true, validate: integerMoneyValidator })
+  unitPrice: number;
+
+  @Prop({ required: true, validate: integerMoneyValidator })
   amount: number;
+
+  @Prop({ trim: true })
+  note?: string;
 }
 
 export const ReceiptSessionSnapshotSchema = SchemaFactory.createForClass(
@@ -105,6 +190,12 @@ export class ReceiptExamSnapshot {
     ref: Exam.name,
   })
   examId?: mongoose.Types.ObjectId;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ExamScore',
+  })
+  examScoreId?: mongoose.Types.ObjectId;
 
   @Prop({
     type: mongoose.Schema.Types.ObjectId,
@@ -126,6 +217,18 @@ export class ReceiptExamSnapshot {
 
   @Prop({ required: true, min: 0 })
   maxScore: number;
+
+  @Prop({ trim: true })
+  description?: string;
+
+  @Prop({ trim: true })
+  note?: string;
+
+  @Prop({ type: [String], default: [] })
+  evidenceImages?: string[];
+
+  @Prop({ trim: true })
+  teacherRemark?: string;
 }
 
 export const ReceiptExamSnapshotSchema =
@@ -161,17 +264,40 @@ export class Receipt {
   })
   billingCycleId: mongoose.Types.ObjectId;
 
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: Class.name,
+    required: true,
+    index: true,
+  })
+  classId: mongoose.Types.ObjectId;
+
   @Prop({ required: true, trim: true })
   receiptNumber: string;
 
   @Prop({ type: Date, required: true, default: Date.now, index: true })
   issuedAt: Date;
 
+  @Prop({ type: Date, required: true, index: true })
+  periodStart: Date;
+
+  @Prop({ type: Date, required: true, index: true })
+  periodEnd: Date;
+
+  @Prop({ type: Date })
+  dueDate?: Date;
+
   @Prop({
     enum: ReceiptReason,
     required: true,
   })
   reason: ReceiptReason;
+
+  @Prop({ type: ReceiptTeacherSnapshotSchema, required: true })
+  teacherSnapshot: ReceiptTeacherSnapshot;
+
+  @Prop({ type: ReceiptClassSnapshotSchema, required: true })
+  classSnapshot: ReceiptClassSnapshot;
 
   @Prop({ type: ReceiptStudentSnapshotSchema, required: true })
   studentSnapshot: ReceiptStudentSnapshot;
@@ -181,6 +307,9 @@ export class Receipt {
 
   @Prop({ type: [ReceiptExamSnapshotSchema], default: [] })
   exams: ReceiptExamSnapshot[];
+
+  @Prop({ required: true, min: 0 })
+  lessonCount: number;
 
   @Prop({ required: true, validate: integerMoneyValidator })
   subtotal: number;
@@ -209,15 +338,66 @@ export class Receipt {
 
   @Prop({ trim: true })
   note?: string;
+
+  @Prop({ trim: true })
+  teacherComment?: string;
+
+  @Prop({ trim: true })
+  strengthsComment?: string;
+
+  @Prop({ trim: true })
+  improvementsComment?: string;
+
+  @Prop({ trim: true })
+  generalComment?: string;
+
+  @Prop({ trim: true })
+  paymentNote?: string;
+
+  @Prop({ trim: true })
+  paymentProofUrl?: string;
+
+  @Prop({ trim: true })
+  paymentProofPublicId?: string;
+
+  @Prop({ type: Date })
+  paymentProofUploadedAt?: Date;
+
+  @Prop({ default: 'v1' })
+  htmlTemplateVersion: string;
+
+  @Prop({ type: mongoose.Schema.Types.Mixed })
+  renderSnapshot?: Record<string, unknown>;
+
+  @Prop({
+    enum: ReceiptPdfStatus,
+    default: ReceiptPdfStatus.Pending,
+    index: true,
+  })
+  pdfStatus: ReceiptPdfStatus;
+
+  @Prop({ trim: true })
+  pdfUrl?: string;
+
+  @Prop({ trim: true })
+  pdfPublicId?: string;
+
+  @Prop({ type: Date })
+  pdfGeneratedAt?: Date;
+
+  @Prop({ trim: true })
+  pdfFailedReason?: string;
 }
 
 export type ReceiptDocument = HydratedDocument<Receipt>;
 export const ReceiptSchema = SchemaFactory.createForClass(Receipt);
 
 ReceiptSchema.index({ teacherId: 1, receiptNumber: 1 }, { unique: true });
+ReceiptSchema.index({ teacherId: 1, classId: 1, issuedAt: -1 });
 ReceiptSchema.index({ teacherId: 1, studentId: 1, issuedAt: -1 });
 ReceiptSchema.index({ teacherId: 1, issuedAt: -1 });
 ReceiptSchema.index({ teacherId: 1, paymentStatus: 1, issuedAt: -1 });
+ReceiptSchema.index({ teacherId: 1, pdfStatus: 1, issuedAt: -1 });
 ReceiptSchema.index(
   { teacherId: 1, billingCycleId: 1 },
   {

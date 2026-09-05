@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -7,6 +8,7 @@ import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ClassesModule } from './modules/classes/classes.module';
 import { MailModule } from './modules/mail/mail.module';
+import { ReceiptsModule } from './modules/receipts/receipts.module';
 import { SchedulesModule } from './modules/schedules/schedules.module';
 import { SchoolManagementModule } from './modules/school-management/school-management.module';
 import { StudentsModule } from './modules/students/students.module';
@@ -18,6 +20,7 @@ import { UsersModule } from './modules/users/users.module';
       isGlobal: true,
       load: [configuration],
     }),
+    EventEmitterModule.forRoot(),
     DatabaseModule,
     UsersModule,
     MailModule,
@@ -26,6 +29,7 @@ import { UsersModule } from './modules/users/users.module';
     StudentsModule,
     ClassesModule,
     SchedulesModule,
+    ReceiptsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

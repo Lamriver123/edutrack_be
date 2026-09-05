@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -30,6 +31,13 @@ export class CreateClassDto {
   @Min(0)
   @Max(7)
   colorIndex?: number;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^#([0-9a-fA-F]{6})$/, {
+    message: 'Màu lớp học phải có dạng #RRGGBB.',
+  })
+  colorHex?: string;
 
   @Type(() => Number)
   @IsInt()

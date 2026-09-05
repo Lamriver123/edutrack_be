@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport, Transporter } from 'nodemailer';
 
@@ -33,7 +37,10 @@ export class MailService {
     } catch (error) {
       const errMessage = error instanceof Error ? error.message : String(error);
       const errStack = error instanceof Error ? error.stack : undefined;
-      this.logger.error(`Lỗi khi gửi email xác thực tới ${email}: ${errMessage}`, errStack);
+      this.logger.error(
+        `Lỗi khi gửi email xác thực tới ${email}: ${errMessage}`,
+        errStack,
+      );
       throw new InternalServerErrorException(
         'Không thể gửi email OTP (Lỗi cấu hình SMTP hoặc mạng). Vui lòng báo cho quản trị viên.',
       );
@@ -64,16 +71,24 @@ export class MailService {
     } catch (error) {
       const errMessage = error instanceof Error ? error.message : String(error);
       const errStack = error instanceof Error ? error.stack : undefined;
-      this.logger.error(`Lỗi khi gửi email đổi mật khẩu tới ${email}: ${errMessage}`, errStack);
+      this.logger.error(
+        `Lỗi khi gửi email đổi mật khẩu tới ${email}: ${errMessage}`,
+        errStack,
+      );
       throw new InternalServerErrorException(
         'Không thể gửi email OTP (Lỗi cấu hình SMTP hoặc mạng). Vui lòng báo cho quản trị viên.',
       );
     }
   }
 
-  private async sendEmailCore(to: string, subject: string, html: string, text: string) {
+  private async sendEmailCore(
+    to: string,
+    subject: string,
+    html: string,
+    text: string,
+  ) {
     const apiUrl = this.configService.get<string>('mail.apiUrl');
-    
+
     if (apiUrl) {
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -82,15 +97,18 @@ export class MailService {
         },
         body: JSON.stringify({ to, subject, html, text }),
       });
-      
-      const result = (await response.json()) as { success: boolean; error?: string };
+
+      const result = (await response.json()) as {
+        success: boolean;
+        error?: string;
+      };
       if (!result.success) {
         throw new Error(result.error || 'Google Apps Script API trả về lỗi');
       }
     } else {
       const transporter = this.getTransporter();
       const from = this.configService.get<string>('mail.from');
-      
+
       await transporter.sendMail({
         from,
         to,
