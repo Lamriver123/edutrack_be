@@ -8,6 +8,8 @@ import {
   Patch,
   Post,
   Query,
+  Res,
+  StreamableFile,
   UnsupportedMediaTypeException,
   UploadedFile,
   UseGuards,
@@ -21,6 +23,8 @@ import {
   CloudinaryService,
   type UploadImageFile,
 } from '../cloudinary/cloudinary.service';
+import type { Response } from 'express';
+import { DownloadReceiptsDto } from './dto/download-receipts.dto';
 import { IssueReceiptDto } from './dto/issue-receipt.dto';
 import { QueryBillingDto } from './dto/query-billing.dto';
 import { QueryReceiptsDto } from './dto/query-receipts.dto';
@@ -150,6 +154,32 @@ export class ReceiptsController {
     return this.receiptsService.listReceipts(user.userId, query);
   }
 
+  @Post('receipts/download-bulk')
+  async downloadReceipts(
+    @CurrentUser() user: JwtUser,
+    @Body() dto: DownloadReceiptsDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const download = await this.receiptsService.getReceiptsBulkDownload(
+      user.userId,
+      dto.receiptIds,
+    );
+
+    response.setHeader('Content-Type', 'application/zip');
+    response.setHeader('Content-Length', String(download.buffer.length));
+    response.setHeader('Cache-Control', 'no-store');
+    response.setHeader(
+      'Access-Control-Expose-Headers',
+      'Content-Disposition, Content-Length, Content-Type',
+    );
+    response.setHeader(
+      'Content-Disposition',
+      this.buildFileContentDisposition(download.fileName),
+    );
+
+    return new StreamableFile(download.buffer);
+  }
+
   @Get('receipts/:receiptId')
   findReceipt(
     @CurrentUser() user: JwtUser,
@@ -159,11 +189,29 @@ export class ReceiptsController {
   }
 
   @Get('receipts/:receiptId/download')
-  downloadReceipt(
+  async downloadReceipt(
     @CurrentUser() user: JwtUser,
     @Param('receiptId') receiptId: string,
+    @Res({ passthrough: true }) response: Response,
   ) {
-    return this.receiptsService.getReceiptDownload(user.userId, receiptId);
+    const download = await this.receiptsService.getReceiptDownload(
+      user.userId,
+      receiptId,
+    );
+
+    response.setHeader('Content-Type', 'application/pdf');
+    response.setHeader('Content-Length', String(download.buffer.length));
+    response.setHeader('Cache-Control', 'no-store');
+    response.setHeader(
+      'Access-Control-Expose-Headers',
+      'Content-Disposition, Content-Length, Content-Type',
+    );
+    response.setHeader(
+      'Content-Disposition',
+      this.buildFileContentDisposition(download.fileName),
+    );
+
+    return new StreamableFile(download.buffer);
   }
 
   @Post('receipts/:receiptId/render-pdf')
@@ -215,5 +263,17 @@ export class ReceiptsController {
     @Param('receiptId') receiptId: string,
   ) {
     return this.receiptsService.cancelReceipt(user.userId, receiptId);
+  }
+
+  private buildFileContentDisposition(fileName: string) {
+    const asciiFileName =
+      fileName
+        .replace(/[^\x20-\x7e]+/g, '_')
+        .replace(/["\\]/g, '')
+        .trim() || 'receipt.pdf';
+
+    return `attachment; filename="${asciiFileName}"; filename*=UTF-8''${encodeURIComponent(
+      fileName,
+    )}`;
   }
 }

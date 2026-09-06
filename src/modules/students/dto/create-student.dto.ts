@@ -56,6 +56,11 @@ export class CreateStudentDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(40)
+  gradeLevel?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(24)
   phone?: string;
 

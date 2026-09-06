@@ -27,7 +27,9 @@ import { CreateClassDto } from './dto/create-class.dto';
 import { CreateFixedScheduleDto } from './dto/create-fixed-schedule.dto';
 import { CreateTemporaryScheduleDto } from './dto/create-temporary-schedule.dto';
 import { EnrollExistingStudentDto } from './dto/enroll-existing-student.dto';
+import { EnrollExistingStudentsDto } from './dto/enroll-existing-students.dto';
 import { QueryClassesDto } from './dto/query-classes.dto';
+import { RemoveExistingStudentsDto } from './dto/remove-existing-students.dto';
 import { SaveClassSessionContentDto } from './dto/save-class-session-content.dto';
 import { TakeAttendanceBatchDto } from './dto/take-attendance-batch.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
@@ -177,6 +179,19 @@ export class ClassesController {
     );
   }
 
+  @Post(':classId/students/bulk')
+  enrollExistingStudents(
+    @CurrentUser() user: JwtUser,
+    @Param('classId') classId: string,
+    @Body() dto: EnrollExistingStudentsDto,
+  ) {
+    return this.classesService.enrollExistingStudents(
+      user.userId,
+      classId,
+      dto.studentIds,
+    );
+  }
+
   @Post(':classId/students/new')
   createStudentAndEnroll(
     @CurrentUser() user: JwtUser,
@@ -187,6 +202,19 @@ export class ClassesController {
       user.userId,
       classId,
       dto,
+    );
+  }
+
+  @Post(':classId/students/bulk-remove')
+  removeStudentsFromClass(
+    @CurrentUser() user: JwtUser,
+    @Param('classId') classId: string,
+    @Body() dto: RemoveExistingStudentsDto,
+  ) {
+    return this.classesService.removeStudentsFromClass(
+      user.userId,
+      classId,
+      dto.studentIds,
     );
   }
 

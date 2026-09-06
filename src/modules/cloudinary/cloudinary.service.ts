@@ -82,6 +82,12 @@ export class CloudinaryService {
       'edutrack/receipts';
     const pdfFileName = this.ensureFileExtension(file.originalname, '.pdf');
 
+    if (!file.buffer.subarray(0, 5).equals(Buffer.from('%PDF-'))) {
+      throw new BadGatewayException(
+        'File hóa đơn được tạo không phải PDF hợp lệ.',
+      );
+    }
+
     return this.uploadFile(file, folder, 'raw', {
       publicId: this.toSafeCloudinaryPublicId(pdfFileName),
       overwrite: true,
@@ -134,9 +140,11 @@ export class CloudinaryService {
 
     const signature = this.createSignature(uploadParams, apiSecret);
     const formData = new FormData();
-    const encodedFile = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    const uploadBlob = new Blob([new Uint8Array(file.buffer)], {
+      type: file.mimetype,
+    });
 
-    formData.append('file', encodedFile);
+    formData.append('file', uploadBlob, file.originalname);
     formData.append('api_key', apiKey);
     Object.entries(uploadParams).forEach(([key, value]) => {
       formData.append(key, value);

@@ -1,8 +1,13 @@
 /* eslint-disable @typescript-eslint/no-base-to-string, @typescript-eslint/no-implied-eval, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
 
 import { Injectable } from '@nestjs/common';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+
+type TuitionPriceNote = {
+  label: string;
+  unitPrice: number;
+};
 
 @Injectable()
 export class ReceiptPdfService {
@@ -16,49 +21,109 @@ export class ReceiptPdfService {
     const browserAutomation = await this.tryLoadBrowserAutomation();
 
     if (browserAutomation) {
-      const launchOptions: Record<string, unknown> = {
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        headless: true,
-      };
-
-      if (browserAutomation.executablePath) {
-        launchOptions.executablePath = browserAutomation.executablePath;
-      }
-
-      const browser = await browserAutomation.module.launch(launchOptions);
-
       try {
-        const page = await browser.newPage();
-        await page.setViewport({
-          deviceScaleFactor: 1,
-          height: 1123,
-          width: 794,
-        });
-        await page.setContent(html, {
-          waitUntil: ['load', 'networkidle0'],
-        });
-        await page.emulateMediaType('screen');
-
-        return Buffer.from(
-          await page.pdf({
-            displayHeaderFooter: false,
-            format: 'A4',
-            margin: {
-              bottom: '0mm',
-              left: '0mm',
-              right: '0mm',
-              top: '0mm',
-            },
-            preferCSSPageSize: true,
-            printBackground: true,
-          }),
-        );
-      } finally {
-        await browser.close();
+        return await this.renderWithBrowser(browserAutomation, html);
+      } catch {
+        return this.renderFallbackPdf(receipt, paymentQrDataUrl);
       }
     }
 
     return this.renderFallbackPdf(receipt, paymentQrDataUrl);
+  }
+
+  private async renderWithBrowser(
+    browserAutomation: {
+      executablePath?: string;
+      module: any;
+    },
+    html: string,
+  ) {
+    const userDataDir = this.createBrowserUserDataDir();
+    const launchOptions: Record<string, unknown> = {
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-default-browser-check',
+      ],
+      headless: true,
+      userDataDir,
+    };
+    let browser: any = null;
+
+    if (browserAutomation.executablePath) {
+      launchOptions.executablePath = browserAutomation.executablePath;
+    }
+
+    try {
+      browser = await browserAutomation.module.launch(launchOptions);
+      const page = await browser.newPage();
+      await page.setViewport({
+        deviceScaleFactor: 1,
+        height: 1123,
+        width: 794,
+      });
+      await page.setContent(html, {
+        waitUntil: ['load', 'networkidle0'],
+      });
+      await page.emulateMediaType('screen');
+
+      return await this.printPageToPdf(page);
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+
+      rmSync(userDataDir, { force: true, recursive: true });
+    }
+  }
+
+  private async printPageToPdf(page: any) {
+    const client = await page.createCDPSession();
+    const result = await client.send('Page.printToPDF', {
+      displayHeaderFooter: false,
+      marginBottom: 0,
+      marginLeft: 0,
+      marginRight: 0,
+      marginTop: 0,
+      paperHeight: 11.69,
+      paperWidth: 8.27,
+      preferCSSPageSize: true,
+      printBackground: true,
+    });
+
+    if (typeof result?.data === 'string' && result.data) {
+      return Buffer.from(result.data, 'base64');
+    }
+
+    return Buffer.from(
+      await page.pdf({
+        displayHeaderFooter: false,
+        format: 'A4',
+        margin: {
+          bottom: '0mm',
+          left: '0mm',
+          right: '0mm',
+          top: '0mm',
+        },
+        preferCSSPageSize: true,
+        printBackground: true,
+      }),
+    );
+  }
+
+  private createBrowserUserDataDir() {
+    const baseDir = join(process.cwd(), '.tmp', 'puppeteer-receipts');
+    const userDataDir = join(
+      baseDir,
+      `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+
+    mkdirSync(userDataDir, { recursive: true });
+
+    return userDataDir;
   }
 
   private async tryLoadBrowserAutomation() {
@@ -1015,64 +1080,126 @@ export class ReceiptPdfService {
   }
 
   private buildTuitionPriceNoteLines(sessions: any[]) {
-    return this.buildTuitionPriceRanges(sessions).map((range) =>
-      this.formatTuitionPriceRange(range),
+    return this.buildTuitionPriceNotes(sessions).map(
+      (note) => `${note.label}: ${this.formatMoney(note.unitPrice)}/buổi`,
     );
   }
 
-  private buildTuitionPriceRanges(sessions: any[]) {
+  private buildTuitionPriceNotes(sessions: any[]): TuitionPriceNote[] {
     const items = sessions
-      .map((session) => ({
-        date: this.parseDateValue(session?.date),
+      .map((session, index) => ({
+        className: this.resolveSessionClassName(session),
+        order: index,
+        sequence: this.resolveSessionSequence(session, index),
         unitPrice: this.resolveSessionUnitPrice(session),
       }))
-      .filter((item) => item.date && item.unitPrice !== null)
-      .sort((first, second) => first.date!.getTime() - second.date!.getTime());
-    const ranges: Array<{
-      endDate: Date;
-      startDate: Date;
-      unitPrice: number;
-    }> = [];
+      .filter((item) => item.unitPrice !== null)
+      .sort(
+        (first, second) =>
+          first.sequence - second.sequence || first.order - second.order,
+      );
+
+    if (!items.length) {
+      return [];
+    }
+
+    const uniquePrices = new Set(items.map((item) => item.unitPrice));
+
+    if (uniquePrices.size === 1) {
+      return [
+        {
+          label: `Tất cả ${items.length} buổi học`,
+          unitPrice: items[0].unitPrice!,
+        },
+      ];
+    }
+
+    const classNames = new Set(items.map((item) => item.className));
+    const shouldShowClassName = classNames.size > 1;
+    const groups = new Map<
+      string,
+      {
+        className: string;
+        order: number;
+        sequences: number[];
+        unitPrice: number;
+      }
+    >();
 
     for (const item of items) {
-      const current = ranges[ranges.length - 1];
+      const key = `${shouldShowClassName ? item.className : ''}:${item.unitPrice}`;
+      const existing = groups.get(key);
 
-      if (current && current.unitPrice === item.unitPrice) {
-        current.endDate = item.date!;
+      if (existing) {
+        existing.sequences.push(item.sequence);
         continue;
       }
 
-      ranges.push({
-        endDate: item.date!,
-        startDate: item.date!,
+      groups.set(key, {
+        className: item.className,
+        order: item.order,
+        sequences: [item.sequence],
         unitPrice: item.unitPrice!,
       });
     }
 
-    return ranges;
+    return [...groups.values()]
+      .sort((first, second) => first.order - second.order)
+      .map((group) => ({
+        label: `${shouldShowClassName ? `${group.className} - ` : ''}Buổi ${this.formatSequenceRanges(group.sequences)}`,
+        unitPrice: group.unitPrice,
+      }));
   }
 
-  private formatTuitionPriceRange(range: {
-    endDate: Date;
-    startDate: Date;
-    unitPrice: number;
-  }) {
-    const startDate = this.formatDate(range.startDate);
-    const endDate = this.formatDate(range.endDate);
-    const dateText =
-      startDate === endDate ? startDate : `${startDate} đến ngày ${endDate}`;
+  private formatSequenceRanges(values: number[]) {
+    const sequences = [...new Set(values)]
+      .filter((value) => Number.isFinite(value) && value > 0)
+      .sort((first, second) => first - second);
+    const ranges: string[] = [];
+    let start: number | null = null;
+    let previous: number | null = null;
 
-    return `Ngày ${dateText}: ${this.formatMoney(range.unitPrice)}/buổi`;
-  }
+    for (const sequence of sequences) {
+      if (start === null || previous === null) {
+        start = sequence;
+        previous = sequence;
+        continue;
+      }
 
-  private parseDateValue(value: unknown) {
-    if (!value) {
-      return null;
+      if (sequence === previous + 1) {
+        previous = sequence;
+        continue;
+      }
+
+      ranges.push(start === previous ? String(start) : `${start}-${previous}`);
+      start = sequence;
+      previous = sequence;
     }
 
-    const date = value instanceof Date ? value : new Date(String(value));
+    if (start !== null && previous !== null) {
+      ranges.push(start === previous ? String(start) : `${start}-${previous}`);
+    }
 
-    return Number.isNaN(date.getTime()) ? null : date;
+    return ranges.join(', ');
+  }
+
+  private resolveSessionClassName(session: any) {
+    const value =
+      session?.billingClassName ||
+      session?.className ||
+      session?.attendedClassName;
+
+    return String(value || 'Lớp học').trim() || 'Lớp học';
+  }
+
+  private resolveSessionSequence(session: any, index: number) {
+    const sequence = Number(session?.sequence);
+
+    if (Number.isFinite(sequence) && sequence > 0) {
+      return Math.round(sequence);
+    }
+
+    return index + 1;
   }
 
   private resolveSessionUnitPrice(session: any) {

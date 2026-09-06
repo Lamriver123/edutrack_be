@@ -166,6 +166,28 @@ export type EnrollmentResponse = {
   student: StudentResponse;
 };
 
+export type EnrollmentBulkError = {
+  studentId: string;
+  studentName?: string;
+  message: string;
+};
+
+export type EnrollmentBulkResponse = {
+  totalCount: number;
+  successCount: number;
+  failedCount: number;
+  enrollments: EnrollmentResponse[];
+  errors: EnrollmentBulkError[];
+};
+
+export type RemoveStudentsBulkResponse = {
+  totalCount: number;
+  successCount: number;
+  failedCount: number;
+  removedStudents: StudentResponse[];
+  errors: EnrollmentBulkError[];
+};
+
 type LeanScheduleVersion = {
   _id: Types.ObjectId;
   classId: Types.ObjectId;
@@ -982,6 +1004,51 @@ export class ClassesService {
     return this.toEnrollmentResponse(enrollment, student);
   }
 
+  async enrollExistingStudents(
+    teacherId: string,
+    classId: string,
+    studentIds: string[],
+  ): Promise<EnrollmentBulkResponse> {
+    const uniqueStudentIds = [...new Set(studentIds.map((id) => id.trim()))];
+
+    if (!uniqueStudentIds.length) {
+      throw new BadRequestException('Vui lòng chọn ít nhất một học sinh.');
+    }
+
+    const classroom = await this.findClassForTeacherOrThrow(teacherId, classId);
+    const enrollments: EnrollmentResponse[] = [];
+    const errors: EnrollmentBulkError[] = [];
+
+    for (const studentId of uniqueStudentIds) {
+      try {
+        const student = await this.studentsService.findByIdForTeacherOrThrow(
+          teacherId,
+          studentId,
+        );
+        const enrollment = await this.createActiveEnrollment(
+          teacherId,
+          classroom._id,
+          student._id,
+        );
+
+        enrollments.push(this.toEnrollmentResponse(enrollment, student));
+      } catch (error) {
+        errors.push({
+          message: this.getEnrollmentErrorMessage(error),
+          studentId,
+        });
+      }
+    }
+
+    return {
+      enrollments,
+      errors,
+      failedCount: errors.length,
+      successCount: enrollments.length,
+      totalCount: uniqueStudentIds.length,
+    };
+  }
+
   async createStudentAndEnroll(
     teacherId: string,
     classId: string,
@@ -1055,6 +1122,71 @@ export class ClassesService {
 
     return {
       message: 'Đã cho học sinh nghỉ lớp.',
+    };
+  }
+
+  async removeStudentsFromClass(
+    teacherId: string,
+    classId: string,
+    studentIds: string[],
+  ): Promise<RemoveStudentsBulkResponse> {
+    const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
+    const classObjectId = this.toObjectId(classId, 'classId');
+    const uniqueStudentIds = [...new Set(studentIds.map((id) => id.trim()))];
+
+    if (!uniqueStudentIds.length) {
+      throw new BadRequestException('Vui lòng chọn ít nhất một học sinh.');
+    }
+
+    await this.findClassForTeacherOrThrow(teacherId, classObjectId);
+
+    const removedStudents: StudentResponse[] = [];
+    const errors: EnrollmentBulkError[] = [];
+
+    for (const studentId of uniqueStudentIds) {
+      try {
+        const studentObjectId = this.toObjectId(studentId, 'studentId');
+        const student = await this.studentsService.findByIdForTeacherOrThrow(
+          teacherId,
+          studentObjectId,
+        );
+        const enrollment = await this.enrollmentModel
+          .findOneAndUpdate(
+            {
+              teacherId: teacherObjectId,
+              classId: classObjectId,
+              studentId: studentObjectId,
+              status: EnrollmentStatus.Active,
+            },
+            {
+              $set: {
+                status: EnrollmentStatus.Inactive,
+                leftAt: new Date(),
+              },
+            },
+            { returnDocument: 'after' },
+          )
+          .exec();
+
+        if (!enrollment) {
+          throw new NotFoundException('Học sinh chưa có trong lớp này.');
+        }
+
+        removedStudents.push(this.studentsService.toStudentResponse(student));
+      } catch (error) {
+        errors.push({
+          message: this.getEnrollmentErrorMessage(error),
+          studentId,
+        });
+      }
+    }
+
+    return {
+      errors,
+      failedCount: errors.length,
+      removedStudents,
+      successCount: removedStudents.length,
+      totalCount: uniqueStudentIds.length,
     };
   }
 
@@ -2423,6 +2555,37 @@ export class ClassesService {
       leftAt: enrollment.leftAt,
       student: this.studentsService.toStudentResponse(student),
     };
+  }
+
+  private getEnrollmentErrorMessage(error: unknown) {
+    if (
+      error instanceof BadRequestException ||
+      error instanceof NotFoundException
+    ) {
+      const response = error.getResponse();
+
+      if (typeof response === 'string') {
+        return response;
+      }
+
+      if (typeof response === 'object' && response !== null) {
+        const message = (response as { message?: unknown }).message;
+
+        if (Array.isArray(message)) {
+          return message.join(', ');
+        }
+
+        if (typeof message === 'string') {
+          return message;
+        }
+      }
+    }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return 'Không thể thêm học sinh vào lớp.';
   }
 
   private toObjectId(value: string, fieldName: string) {

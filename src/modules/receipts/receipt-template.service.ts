@@ -4,6 +4,11 @@ import { Injectable } from '@nestjs/common';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+type TuitionPriceNote = {
+  label: string;
+  unitPrice: number;
+};
+
 @Injectable()
 export class ReceiptTemplateService {
   private readonly stickerDataUrl = this.loadStickerDataUrl();
@@ -287,23 +292,53 @@ export class ReceiptTemplateService {
       font-weight: 900;
     }
     .price-note {
-      margin-top: 8px;
-      border-top: 1px dashed #f0cf71;
-      padding-top: 7px;
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 145px 1fr;
+      gap: 8px;
+      align-items: stretch;
+      border: 1.8px dashed #f0cf71;
+      border-radius: 10px;
+      background: #fffaf0;
+      padding: 8px;
       color: #7c3f15;
-      font-size: 10.5px;
+      font-size: 11px;
       font-weight: 800;
-      line-height: 1.38;
-      text-align: left;
+      line-height: 1.35;
     }
-    .price-note strong {
-      display: block;
-      margin-bottom: 3px;
+    .price-note-title {
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #fff1bf;
+      padding: 7px;
       text-align: center;
       text-transform: uppercase;
     }
-    .price-note span {
-      display: block;
+    .price-note-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 6px;
+    }
+    .price-note-row {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 6px 8px;
+    }
+    .price-note-row span {
+      min-width: 0;
+      color: #6b3b1d;
+    }
+    .price-note-row strong {
+      flex: 0 0 auto;
+      color: #1f1646;
+      font-weight: 900;
+      white-space: nowrap;
     }
     .payment-line {
       display: grid;
@@ -407,7 +442,6 @@ export class ReceiptTemplateService {
               <div>${this.escape(this.numberToVietnameseWords(receipt.totalAmount))}</div>
             </div>
           </div>
-          ${this.renderTuitionPriceNotes(sessions)}
         </div>
         <div class="payment-card">
           <h3>Thông tin thanh toán</h3>
@@ -424,6 +458,7 @@ export class ReceiptTemplateService {
               : '<span>Chưa có QR thanh toán</span>'
           }</div>
         </div>
+        ${this.renderTuitionPriceNotes(sessions)}
       </div>
     </section>
 
@@ -650,76 +685,140 @@ export class ReceiptTemplateService {
   }
 
   private renderTuitionPriceNotes(sessions: any[]) {
-    const ranges = this.buildTuitionPriceRanges(sessions);
+    const notes = this.buildTuitionPriceNotes(sessions);
 
-    if (!ranges.length) {
+    if (!notes.length) {
       return '';
     }
 
     return `<div class="price-note">
-      <strong>Đơn giá theo ngày học</strong>
-      ${ranges
-        .map(
-          (range) =>
-            `<span>${this.escape(this.formatTuitionPriceRange(range))}</span>`,
-        )
-        .join('')}
+      <div class="price-note-title">Đơn giá buổi học</div>
+      <div class="price-note-list">
+        ${notes
+          .map(
+            (note) =>
+              `<div class="price-note-row"><span>${this.escape(note.label)}</span><strong>${this.formatMoney(note.unitPrice)}/buổi</strong></div>`,
+          )
+          .join('')}
+      </div>
     </div>`;
   }
 
-  private buildTuitionPriceRanges(sessions: any[]) {
+  private buildTuitionPriceNotes(sessions: any[]): TuitionPriceNote[] {
     const items = sessions
-      .map((session) => ({
-        date: this.parseDateValue(session?.date),
+      .map((session, index) => ({
+        className: this.resolveSessionClassName(session),
+        order: index,
+        sequence: this.resolveSessionSequence(session, index),
         unitPrice: this.resolveSessionUnitPrice(session),
       }))
-      .filter((item) => item.date && item.unitPrice !== null)
-      .sort((first, second) => first.date!.getTime() - second.date!.getTime());
-    const ranges: Array<{
-      endDate: Date;
-      startDate: Date;
-      unitPrice: number;
-    }> = [];
+      .filter((item) => item.unitPrice !== null)
+      .sort(
+        (first, second) =>
+          first.sequence - second.sequence || first.order - second.order,
+      );
+
+    if (!items.length) {
+      return [];
+    }
+
+    const uniquePrices = new Set(items.map((item) => item.unitPrice));
+
+    if (uniquePrices.size === 1) {
+      return [
+        {
+          label: `Tất cả ${items.length} buổi học`,
+          unitPrice: items[0].unitPrice!,
+        },
+      ];
+    }
+
+    const classNames = new Set(items.map((item) => item.className));
+    const shouldShowClassName = classNames.size > 1;
+    const groups = new Map<
+      string,
+      {
+        className: string;
+        order: number;
+        sequences: number[];
+        unitPrice: number;
+      }
+    >();
 
     for (const item of items) {
-      const current = ranges[ranges.length - 1];
+      const key = `${shouldShowClassName ? item.className : ''}:${item.unitPrice}`;
+      const existing = groups.get(key);
 
-      if (current && current.unitPrice === item.unitPrice) {
-        current.endDate = item.date!;
+      if (existing) {
+        existing.sequences.push(item.sequence);
         continue;
       }
 
-      ranges.push({
-        endDate: item.date!,
-        startDate: item.date!,
+      groups.set(key, {
+        className: item.className,
+        order: item.order,
+        sequences: [item.sequence],
         unitPrice: item.unitPrice!,
       });
     }
 
-    return ranges;
+    return [...groups.values()]
+      .sort((first, second) => first.order - second.order)
+      .map((group) => ({
+        label: `${shouldShowClassName ? `${group.className} - ` : ''}Buổi ${this.formatSequenceRanges(group.sequences)}`,
+        unitPrice: group.unitPrice,
+      }));
   }
 
-  private formatTuitionPriceRange(range: {
-    endDate: Date;
-    startDate: Date;
-    unitPrice: number;
-  }) {
-    const startDate = this.formatDate(range.startDate);
-    const endDate = this.formatDate(range.endDate);
-    const dateText =
-      startDate === endDate ? startDate : `${startDate} đến ngày ${endDate}`;
+  private formatSequenceRanges(values: number[]) {
+    const sequences = [...new Set(values)]
+      .filter((value) => Number.isFinite(value) && value > 0)
+      .sort((first, second) => first - second);
+    const ranges: string[] = [];
+    let start: number | null = null;
+    let previous: number | null = null;
 
-    return `Ngày ${dateText}: ${this.formatMoney(range.unitPrice)}/buổi`;
-  }
+    for (const sequence of sequences) {
+      if (start === null || previous === null) {
+        start = sequence;
+        previous = sequence;
+        continue;
+      }
 
-  private parseDateValue(value: unknown) {
-    if (!value) {
-      return null;
+      if (sequence === previous + 1) {
+        previous = sequence;
+        continue;
+      }
+
+      ranges.push(start === previous ? String(start) : `${start}-${previous}`);
+      start = sequence;
+      previous = sequence;
     }
 
-    const date = value instanceof Date ? value : new Date(String(value));
+    if (start !== null && previous !== null) {
+      ranges.push(start === previous ? String(start) : `${start}-${previous}`);
+    }
 
-    return Number.isNaN(date.getTime()) ? null : date;
+    return ranges.join(', ');
+  }
+
+  private resolveSessionClassName(session: any) {
+    const value =
+      session?.billingClassName ||
+      session?.className ||
+      session?.attendedClassName;
+
+    return String(value || 'Lớp học').trim() || 'Lớp học';
+  }
+
+  private resolveSessionSequence(session: any, index: number) {
+    const sequence = Number(session?.sequence);
+
+    if (Number.isFinite(sequence) && sequence > 0) {
+      return Math.round(sequence);
+    }
+
+    return index + 1;
   }
 
   private resolveSessionUnitPrice(session: any) {

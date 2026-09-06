@@ -51,6 +51,17 @@ import { ReceiptTemplateService } from './receipt-template.service';
 const DEFAULT_TARGET_SESSION_COUNT = 10;
 const VIETNAM_TIMEZONE_OFFSET_MS = 7 * 60 * 60 * 1000;
 const DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const ZIP_UTF8_FLAG = 0x0800;
+const ZIP_VERSION_NEEDED = 20;
+const CRC32_TABLE = Array.from({ length: 256 }, (_, index) => {
+  let crc = index;
+
+  for (let bit = 0; bit < 8; bit += 1) {
+    crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1;
+  }
+
+  return crc >>> 0;
+});
 const DEFAULT_BOY_AVATAR_URL =
   'https://img.magnific.com/premium-psd/student-boy-avatar-3d-icon_1723-409.jpg';
 const DEFAULT_GIRL_AVATAR_URL =
@@ -202,6 +213,7 @@ export class ReceiptsService {
         .find({
           teacherId,
           studentId: { $in: studentIds },
+          paymentStatus: { $ne: PaymentStatus.Cancelled },
           $or: [{ classId }, { classIds: classId }],
         })
         .sort({ issuedAt: -1 })
@@ -347,6 +359,7 @@ export class ReceiptsService {
         .find({
           teacherId,
           studentId,
+          paymentStatus: { $ne: PaymentStatus.Cancelled },
           $or: [
             { classId: { $in: classIds } },
             { classIds: { $in: classIds } },
@@ -652,6 +665,7 @@ export class ReceiptsService {
     const teacherId = this.toObjectId(teacherIdStr, 'teacherId');
     const filter: Record<string, unknown> = {
       teacherId,
+      paymentStatus: { $ne: PaymentStatus.Cancelled },
     };
 
     if (query.classId) {
@@ -662,6 +676,10 @@ export class ReceiptsService {
 
     if (query.studentId) {
       filter.studentId = this.toObjectId(query.studentId, 'studentId');
+    }
+
+    if (query.paymentStatus === PaymentStatus.Cancelled) {
+      return [];
     }
 
     if (query.paymentStatus) {
@@ -698,14 +716,73 @@ export class ReceiptsService {
       teacherIdStr,
       receiptIdStr,
     );
+    const pdf = await this.renderReceiptPdfBuffer(receipt);
 
-    if (!receipt.pdfUrl || receipt.pdfStatus !== ReceiptPdfStatus.Generated) {
-      throw new BadRequestException('Hóa đơn chưa có file PDF để tải.');
+    return {
+      buffer: pdf,
+      fileName: this.buildReceiptPdfFileName(receipt),
+    };
+  }
+
+  async getReceiptsBulkDownload(teacherIdStr: string, receiptIdStrs: string[]) {
+    const teacherId = this.toObjectId(teacherIdStr, 'teacherId');
+    const receiptIds = [...new Set(receiptIdStrs.map((item) => item.trim()))]
+      .filter(Boolean)
+      .map((item) => this.toObjectId(item, 'receiptId'));
+
+    if (!receiptIds.length) {
+      throw new BadRequestException('Vui lòng chọn ít nhất một hóa đơn.');
+    }
+
+    const receipts = await this.receiptModel
+      .find({
+        _id: { $in: receiptIds },
+        teacherId,
+        paymentStatus: { $ne: PaymentStatus.Cancelled },
+      })
+      .exec();
+    const receiptMap = new Map(
+      receipts.map((receipt) => [receipt._id.toString(), receipt]),
+    );
+
+    if (receiptMap.size !== receiptIds.length) {
+      throw new NotFoundException(
+        'Một hoặc nhiều hóa đơn không tồn tại hoặc đã bị hủy.',
+      );
+    }
+
+    const seenFileNames = new Set<string>();
+    const files: Array<{ buffer: Buffer; fileName: string; modifiedAt: Date }> =
+      [];
+
+    for (const receiptId of receiptIds) {
+      const receipt = receiptMap.get(receiptId.toString());
+
+      if (!receipt) {
+        continue;
+      }
+
+      const pdf = await this.renderReceiptPdfBuffer(receipt);
+
+      if (!pdf.subarray(0, 5).equals(Buffer.from('%PDF-'))) {
+        throw new BadRequestException(
+          `Hóa đơn ${receipt.receiptNumber} không tạo được file PDF hợp lệ.`,
+        );
+      }
+
+      files.push({
+        buffer: pdf,
+        fileName: this.toUniqueZipFileName(
+          this.buildReceiptPdfFileName(receipt),
+          seenFileNames,
+        ),
+        modifiedAt: receipt.pdfGeneratedAt ?? receipt.issuedAt ?? new Date(),
+      });
     }
 
     return {
-      url: receipt.pdfUrl,
-      fileName: this.buildReceiptPdfFileName(receipt),
+      buffer: this.buildZipArchive(files),
+      fileName: this.buildReceiptsZipFileName(files),
     };
   }
 
@@ -1133,19 +1210,7 @@ export class ReceiptsService {
     );
 
     try {
-      const paymentQrDataUrl = await this.getTeacherPaymentQrDataUrl(
-        receipt.teacherId,
-      );
-      const response = this.toReceiptResponse(receipt);
-      const html = this.receiptTemplateService.render(
-        response,
-        paymentQrDataUrl,
-      );
-      const pdf = await this.receiptPdfService.render(
-        html,
-        response,
-        paymentQrDataUrl,
-      );
+      const pdf = await this.renderReceiptPdfBuffer(receipt);
       const upload = await this.cloudinaryService.uploadReceiptPdf({
         buffer: pdf,
         mimetype: 'application/pdf',
@@ -1188,6 +1253,16 @@ export class ReceiptsService {
         )
         .exec();
     }
+  }
+
+  private async renderReceiptPdfBuffer(receipt: ReceiptDocument) {
+    const paymentQrDataUrl = await this.getTeacherPaymentQrDataUrl(
+      receipt.teacherId,
+    );
+    const response = this.toReceiptResponse(receipt);
+    const html = this.receiptTemplateService.render(response, paymentQrDataUrl);
+
+    return this.receiptPdfService.render(html, response, paymentQrDataUrl);
   }
 
   private async cancelReceiptCore(
@@ -2342,6 +2417,165 @@ export class ReceiptsService {
     const receiptNumber = this.toFileNamePart(source.receiptNumber, 'Hóa đơn');
 
     return `${studentName} - ${receiptNumber}.pdf`;
+  }
+
+  private buildReceiptsZipFileName(
+    files: Array<{ fileName: string; modifiedAt: Date }>,
+  ) {
+    const dateKey = this.toVietnamDateKey(new Date()).replace(/-/g, '');
+
+    if (files.length === 1) {
+      const name = files[0].fileName.replace(/\.pdf$/i, '');
+
+      return `${this.toFileNamePart(name, 'Hóa đơn')} - ${dateKey}.zip`;
+    }
+
+    return `Hóa đơn - ${dateKey} - ${files.length} file.zip`;
+  }
+
+  private toUniqueZipFileName(fileName: string, seenFileNames: Set<string>) {
+    const normalizedFileName = this.toZipEntryFileName(fileName);
+
+    if (!seenFileNames.has(normalizedFileName)) {
+      seenFileNames.add(normalizedFileName);
+
+      return normalizedFileName;
+    }
+
+    const extensionMatch = /\.[^.]+$/.exec(normalizedFileName);
+    const extension = extensionMatch?.[0] ?? '';
+    const baseName = extension
+      ? normalizedFileName.slice(0, -extension.length)
+      : normalizedFileName;
+    let index = 2;
+    let nextFileName = `${baseName} (${index})${extension}`;
+
+    while (seenFileNames.has(nextFileName)) {
+      index += 1;
+      nextFileName = `${baseName} (${index})${extension}`;
+    }
+
+    seenFileNames.add(nextFileName);
+
+    return nextFileName;
+  }
+
+  private toZipEntryFileName(fileName: string) {
+    const normalizedFileName = fileName
+      .replace(/[<>:"/\\|?*]+/g, '-')
+      .replace(/\s+/g, ' ')
+      .replace(/-+/g, '-')
+      .replace(/^[.\s-]+|[.\s-]+$/g, '')
+      .trim();
+
+    return normalizedFileName || 'receipt.pdf';
+  }
+
+  private buildZipArchive(
+    files: Array<{ buffer: Buffer; fileName: string; modifiedAt: Date }>,
+  ) {
+    if (!files.length) {
+      throw new BadRequestException('Vui lòng chọn ít nhất một hóa đơn.');
+    }
+
+    const localParts: Buffer[] = [];
+    const centralDirectoryParts: Buffer[] = [];
+    let offset = 0;
+
+    for (const file of files) {
+      if (file.buffer.length > 0xffffffff) {
+        throw new BadRequestException(
+          `File ${file.fileName} quá lớn để đóng gói ZIP.`,
+        );
+      }
+
+      const fileNameBuffer = Buffer.from(file.fileName, 'utf8');
+      const localHeaderOffset = offset;
+      const size = file.buffer.length;
+      const crc = this.crc32(file.buffer);
+      const dosDateTime = this.toZipDosDateTime(file.modifiedAt);
+      const localHeader = Buffer.alloc(30);
+
+      localHeader.writeUInt32LE(0x04034b50, 0);
+      localHeader.writeUInt16LE(ZIP_VERSION_NEEDED, 4);
+      localHeader.writeUInt16LE(ZIP_UTF8_FLAG, 6);
+      localHeader.writeUInt16LE(0, 8);
+      localHeader.writeUInt16LE(dosDateTime.time, 10);
+      localHeader.writeUInt16LE(dosDateTime.date, 12);
+      localHeader.writeUInt32LE(crc, 14);
+      localHeader.writeUInt32LE(size, 18);
+      localHeader.writeUInt32LE(size, 22);
+      localHeader.writeUInt16LE(fileNameBuffer.length, 26);
+      localHeader.writeUInt16LE(0, 28);
+
+      localParts.push(localHeader, fileNameBuffer, file.buffer);
+      offset += localHeader.length + fileNameBuffer.length + file.buffer.length;
+
+      const centralDirectoryHeader = Buffer.alloc(46);
+      centralDirectoryHeader.writeUInt32LE(0x02014b50, 0);
+      centralDirectoryHeader.writeUInt16LE(ZIP_VERSION_NEEDED, 4);
+      centralDirectoryHeader.writeUInt16LE(ZIP_VERSION_NEEDED, 6);
+      centralDirectoryHeader.writeUInt16LE(ZIP_UTF8_FLAG, 8);
+      centralDirectoryHeader.writeUInt16LE(0, 10);
+      centralDirectoryHeader.writeUInt16LE(dosDateTime.time, 12);
+      centralDirectoryHeader.writeUInt16LE(dosDateTime.date, 14);
+      centralDirectoryHeader.writeUInt32LE(crc, 16);
+      centralDirectoryHeader.writeUInt32LE(size, 20);
+      centralDirectoryHeader.writeUInt32LE(size, 24);
+      centralDirectoryHeader.writeUInt16LE(fileNameBuffer.length, 28);
+      centralDirectoryHeader.writeUInt16LE(0, 30);
+      centralDirectoryHeader.writeUInt16LE(0, 32);
+      centralDirectoryHeader.writeUInt16LE(0, 34);
+      centralDirectoryHeader.writeUInt16LE(0, 36);
+      centralDirectoryHeader.writeUInt32LE(0, 38);
+      centralDirectoryHeader.writeUInt32LE(localHeaderOffset, 42);
+
+      centralDirectoryParts.push(centralDirectoryHeader, fileNameBuffer);
+    }
+
+    const centralDirectoryOffset = offset;
+    const centralDirectorySize = centralDirectoryParts.reduce(
+      (sum, part) => sum + part.length,
+      0,
+    );
+    const endRecord = Buffer.alloc(22);
+
+    endRecord.writeUInt32LE(0x06054b50, 0);
+    endRecord.writeUInt16LE(0, 4);
+    endRecord.writeUInt16LE(0, 6);
+    endRecord.writeUInt16LE(files.length, 8);
+    endRecord.writeUInt16LE(files.length, 10);
+    endRecord.writeUInt32LE(centralDirectorySize, 12);
+    endRecord.writeUInt32LE(centralDirectoryOffset, 16);
+    endRecord.writeUInt16LE(0, 20);
+
+    return Buffer.concat([...localParts, ...centralDirectoryParts, endRecord]);
+  }
+
+  private toZipDosDateTime(value: Date) {
+    const source = Number.isNaN(value.getTime()) ? new Date() : value;
+    const date = new Date(source.getTime() + VIETNAM_TIMEZONE_OFFSET_MS);
+    const year = Math.max(1980, date.getUTCFullYear());
+    const month = date.getUTCMonth() + 1;
+    const day = date.getUTCDate();
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+    const seconds = Math.floor(date.getUTCSeconds() / 2);
+
+    return {
+      date: ((year - 1980) << 9) | (month << 5) | day,
+      time: (hours << 11) | (minutes << 5) | seconds,
+    };
+  }
+
+  private crc32(buffer: Buffer) {
+    let crc = 0xffffffff;
+
+    for (const byte of buffer) {
+      crc = (crc >>> 8) ^ CRC32_TABLE[(crc ^ byte) & 0xff];
+    }
+
+    return (crc ^ 0xffffffff) >>> 0;
   }
 
   private toFileNamePart(value: unknown, fallback: string) {

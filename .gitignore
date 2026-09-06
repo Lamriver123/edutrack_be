@@ -41,6 +41,7 @@ Thumbs.db
 /libpeerconnection.log
 testem.log
 /typings
+/.tmp
 
 # Environment variables
 .env

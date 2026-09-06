@@ -52,6 +52,9 @@ export class Student {
   @Prop({ type: Date })
   dateOfBirth?: Date;
 
+  @Prop({ trim: true })
+  gradeLevel?: string;
+
   @Prop({ enum: Gender })
   gender?: Gender;
 
@@ -80,5 +83,6 @@ export const StudentSchema = SchemaFactory.createForClass(Student);
 
 StudentSchema.index({ teacherId: 1, studentCode: 1 }, { unique: true });
 StudentSchema.index({ teacherId: 1, status: 1 });
+StudentSchema.index({ teacherId: 1, gradeLevel: 1 });
 StudentSchema.index({ teacherId: 1, fullName: 1 });
 StudentSchema.index({ teacherId: 1, searchText: 1 });
