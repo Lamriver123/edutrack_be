@@ -601,7 +601,9 @@ export class ReceiptsService {
       throw new BadRequestException('Không thể phát hành hóa đơn.');
     }
 
-    await this.renderAndUploadReceiptPdf(teacherIdStr, receiptId.toString());
+    this.renderAndUploadReceiptPdf(teacherIdStr, receiptId.toString()).catch((err) => {
+      console.error('Lỗi khi tạo PDF ngầm:', err);
+    });
 
     return this.findReceiptById(teacherIdStr, receiptId.toString());
   }
@@ -656,7 +658,9 @@ export class ReceiptsService {
       throw new BadRequestException('Không thể phát hành hóa đơn.');
     }
 
-    await this.renderAndUploadReceiptPdf(teacherIdStr, receiptId.toString());
+    this.renderAndUploadReceiptPdf(teacherIdStr, receiptId.toString()).catch((err) => {
+      console.error('Lỗi khi tạo PDF ngầm:', err);
+    });
 
     return this.findReceiptById(teacherIdStr, receiptId.toString());
   }
