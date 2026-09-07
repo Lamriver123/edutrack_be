@@ -755,6 +755,10 @@ export class ReceiptsService {
     const files: Array<{ buffer: Buffer; fileName: string; modifiedAt: Date }> =
       [];
 
+    const firstReceipt = receipts[0];
+    const periodStr = this.getPeriodString(firstReceipt);
+    const folderName = `Hóa đơn ${periodStr}`.trim();
+
     for (const receiptId of receiptIds) {
       const receipt = receiptMap.get(receiptId.toString());
 
@@ -773,7 +777,7 @@ export class ReceiptsService {
       files.push({
         buffer: pdf,
         fileName: this.toUniqueZipFileName(
-          this.buildReceiptPdfFileName(receipt),
+          `${folderName}/${this.buildReceiptPdfFileName(receipt)}`,
           seenFileNames,
         ),
         modifiedAt: receipt.pdfGeneratedAt ?? receipt.issuedAt ?? new Date(),
@@ -782,7 +786,7 @@ export class ReceiptsService {
 
     return {
       buffer: this.buildZipArchive(files),
-      fileName: this.buildReceiptsZipFileName(files),
+      fileName: `Hóa đơn${periodStr ? ` ${periodStr}` : ''}.zip`,
     };
   }
 
@@ -2438,6 +2442,19 @@ export class ReceiptsService {
     };
   }
 
+  private getPeriodString(receipt: ReceiptDocument | Record<string, any>) {
+    if (!receipt || !receipt.periodStart || !receipt.periodEnd) {
+      return '';
+    }
+    const start = new Date(new Date(receipt.periodStart).getTime() + VIETNAM_TIMEZONE_OFFSET_MS);
+    const end = new Date(new Date(receipt.periodEnd).getTime() + VIETNAM_TIMEZONE_OFFSET_MS);
+    
+    const startStr = `${String(start.getUTCDate()).padStart(2, '0')}${String(start.getUTCMonth() + 1).padStart(2, '0')}${start.getUTCFullYear()}`;
+    const endStr = `${end.getUTCDate()}-${end.getUTCMonth() + 1}-${end.getUTCFullYear()}`;
+    
+    return `${startStr}-${endStr}`;
+  }
+
   private buildReceiptPdfFileName(
     receipt: ReceiptDocument | Record<string, any>,
   ) {
@@ -2450,22 +2467,10 @@ export class ReceiptsService {
       'Học sinh',
     );
     const receiptNumber = this.toFileNamePart(source.receiptNumber, 'Hóa đơn');
+    const periodStr = this.getPeriodString(source);
+    const periodPart = periodStr ? ` ${periodStr}` : '';
 
-    return `${studentName} - ${receiptNumber}.pdf`;
-  }
-
-  private buildReceiptsZipFileName(
-    files: Array<{ fileName: string; modifiedAt: Date }>,
-  ) {
-    const dateKey = this.toVietnamDateKey(new Date()).replace(/-/g, '');
-
-    if (files.length === 1) {
-      const name = files[0].fileName.replace(/\.pdf$/i, '');
-
-      return `${this.toFileNamePart(name, 'Hóa đơn')} - ${dateKey}.zip`;
-    }
-
-    return `Hóa đơn - ${dateKey} - ${files.length} file.zip`;
+    return `${studentName}${periodPart} ${receiptNumber}.pdf`;
   }
 
   private toUniqueZipFileName(fileName: string, seenFileNames: Set<string>) {
@@ -2497,7 +2502,7 @@ export class ReceiptsService {
 
   private toZipEntryFileName(fileName: string) {
     const normalizedFileName = fileName
-      .replace(/[<>:"/\\|?*]+/g, '-')
+      .replace(/[<>:"\\|?*]+/g, '-')
       .replace(/\s+/g, ' ')
       .replace(/-+/g, '-')
       .replace(/^[.\s-]+|[.\s-]+$/g, '')
