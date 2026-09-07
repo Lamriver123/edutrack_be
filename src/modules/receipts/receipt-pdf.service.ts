@@ -958,10 +958,10 @@ export class ReceiptPdfService {
   private loadStickerBuffer() {
     const stickerPath = this.findExistingPath([
       process.env.EDUTRACK_RECEIPT_STICKER_PATH,
-      join(process.cwd(), '..', 'edutrack_fe', 'public', 'sticker.png'),
+      // join(process.cwd(), '..', 'edutrack_fe', 'public', 'sticker.png'),
       join(process.cwd(), 'public', 'sticker.png'),
       join(process.cwd(), '..', 'sticker.png'),
-      join(process.cwd(), '..', 'edutrack_fe', 'public', 'logo.png'),
+      // join(process.cwd(), '..', 'edutrack_fe', 'public', 'logo.png'),
     ]);
 
     return stickerPath ? readFileSync(stickerPath) : null;
