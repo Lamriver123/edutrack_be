@@ -31,6 +31,7 @@ export class ReceiptTemplateService {
   <meta charset="utf-8" />
   <title>${this.escape(receipt.receiptNumber)} - EduTrack</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,700;0,800;0,900;1,400;1,700&display=swap');
     @page {
       size: A4;
       margin: 0;
@@ -43,7 +44,7 @@ export class ReceiptTemplateService {
       margin: 0;
       background: #eef2ff;
       color: #1f1646;
-      font-family: Arial, "DejaVu Sans", "Liberation Sans", Tahoma, sans-serif;
+      font-family: "Be Vietnam Pro", Arial, "DejaVu Sans", "Liberation Sans", Tahoma, sans-serif;
       font-size: 13px;
       line-height: 1.45;
       print-color-adjust: exact;

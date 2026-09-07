@@ -33,22 +33,26 @@ export class ReceiptPdfService {
 
   private async renderWithBrowser(
     browserAutomation: {
+      chromiumArgs?: string[];
       executablePath?: string;
       module: any;
     },
     html: string,
   ) {
     const userDataDir = this.createBrowserUserDataDir();
+    const defaultArgs = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--no-first-run',
+      '--no-default-browser-check',
+    ];
     const launchOptions: Record<string, unknown> = {
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--no-first-run',
-        '--no-default-browser-check',
-      ],
-      headless: true,
+      args: browserAutomation.chromiumArgs?.length
+        ? browserAutomation.chromiumArgs
+        : defaultArgs,
+      headless: browserAutomation.chromiumArgs?.length ? 'shell' : true,
       userDataDir,
     };
     let browser: any = null;
@@ -136,19 +140,66 @@ export class ReceiptPdfService {
     } catch {
       try {
         const module = await this.dynamicImport('puppeteer-core');
+        const puppeteerCore = module.default ?? module;
         const executablePath = this.findBrowserExecutablePath();
 
-        if (!executablePath) {
-          return null;
+        if (executablePath) {
+          return {
+            executablePath,
+            module: puppeteerCore,
+          };
         }
 
-        return {
-          executablePath,
-          module: module.default ?? module,
-        };
+        // No local browser found – try @sparticuz/chromium (serverless/container)
+        const serverlessChromium = await this.tryLoadServerlessChromium();
+
+        if (serverlessChromium) {
+          return {
+            chromiumArgs: serverlessChromium.args,
+            executablePath: serverlessChromium.executablePath,
+            module: puppeteerCore,
+          };
+        }
+
+        return null;
       } catch {
         return null;
       }
+    }
+  }
+
+  private async tryLoadServerlessChromium() {
+    try {
+      const chromiumModule = await this.dynamicImport('@sparticuz/chromium');
+      const chromium = chromiumModule.default ?? chromiumModule;
+
+      chromium.setHeadlessMode = true;
+      chromium.setGraphicsMode = false;
+
+      const executablePath: string | undefined =
+        typeof chromium.executablePath === 'function'
+          ? await chromium.executablePath()
+          : chromium.executablePath;
+
+      if (!executablePath) {
+        return null;
+      }
+
+      const args: string[] = Array.isArray(chromium.args)
+        ? [...chromium.args]
+        : [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--no-first-run',
+            '--no-default-browser-check',
+            '--single-process',
+          ];
+
+      return { args, executablePath };
+    } catch {
+      return null;
     }
   }
 
