@@ -2450,7 +2450,7 @@ export class ReceiptsService {
     const end = new Date(new Date(receipt.periodEnd).getTime() + VIETNAM_TIMEZONE_OFFSET_MS);
     
     const startStr = `${String(start.getUTCDate()).padStart(2, '0')}${String(start.getUTCMonth() + 1).padStart(2, '0')}${start.getUTCFullYear()}`;
-    const endStr = `${end.getUTCDate()}-${end.getUTCMonth() + 1}-${end.getUTCFullYear()}`;
+    const endStr = `${String(end.getUTCDate()).padStart(2, '0')}${String(end.getUTCMonth() + 1).padStart(2, '0')}${end.getUTCFullYear()}`;
     
     return `${startStr}-${endStr}`;
   }
