@@ -123,7 +123,7 @@ describe('Teacher calendar source exclusion', () => {
               timeStorage: 'utc',
               startTime: '01:00',
               endTime: '02:30',
-              reason: 'Học bù đầu tiên',
+              reason: 'Học kèm đầu tiên',
             },
           ],
           findOne: { newDate: new Date('2026-09-05T00:00:00+07:00') },
@@ -145,7 +145,7 @@ describe('Teacher calendar source exclusion', () => {
         startTime: '08:00',
         endTime: '09:30',
         type: 'extra',
-        reason: 'Học bù đầu tiên',
+        reason: 'Học kèm đầu tiên',
       });
     } finally {
       jest.useRealTimers();

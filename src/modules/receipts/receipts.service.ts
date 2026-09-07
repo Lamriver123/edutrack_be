@@ -1793,8 +1793,10 @@ export class ReceiptsService {
       .map((classId) => classMap.get(classId.toString()))
       .filter(Boolean) as ClassDocument[];
 
-    if (classrooms.length !== classIds.length) {
-      throw new NotFoundException('Một số lớp học không tồn tại.');
+    if (!classrooms.length) {
+      throw new NotFoundException(
+        'Không tìm thấy lớp học nào hợp lệ (có thể đã bị xóa).',
+      );
     }
 
     if (!student) {
@@ -1862,8 +1864,10 @@ export class ReceiptsService {
       .map((classId) => classMap.get(classId.toString()))
       .filter(Boolean) as ClassDocument[];
 
-    if (classrooms.length !== classIds.length) {
-      throw new NotFoundException('Một số lớp học không tồn tại.');
+    if (!classrooms.length) {
+      throw new NotFoundException(
+        'Không tìm thấy lớp học nào hợp lệ (có thể đã bị xóa).',
+      );
     }
 
     return classrooms;
@@ -1878,7 +1882,7 @@ export class ReceiptsService {
     const explicitClassIds = this.toUniqueObjectIds(rawClassIds ?? []);
 
     if (explicitClassIds.length) {
-      return explicitClassIds;
+      return this.filterActiveClassIds(explicitClassIds, teacherId, session);
     }
 
     const tuitionQuery = this.tuitionEntryModel.distinct('classId', {
@@ -1908,10 +1912,41 @@ export class ReceiptsService {
 
     const enrollments = await enrollmentQuery.exec();
 
-    return this.toUniqueObjectIds([
+    const allClassIds = this.toUniqueObjectIds([
       ...tuitionClassIds,
       ...enrollments.map((enrollment) => enrollment.classId),
     ]);
+
+    return this.filterActiveClassIds(allClassIds, teacherId, session);
+  }
+
+  private async filterActiveClassIds(
+    classIds: Types.ObjectId[],
+    teacherId: Types.ObjectId,
+    session?: ClientSession,
+  ): Promise<Types.ObjectId[]> {
+    if (!classIds.length) {
+      return [];
+    }
+
+    const query = this.classModel
+      .find({
+        _id: { $in: classIds },
+        teacherId,
+        status: { $ne: ClassStatus.Archived },
+      })
+      .select('_id');
+
+    if (session) {
+      query.session(session);
+    }
+
+    const activeClasses = await query.lean().exec();
+    const activeIdSet = new Set(
+      activeClasses.map((cls) => cls._id.toString()),
+    );
+
+    return classIds.filter((classId) => activeIdSet.has(classId.toString()));
   }
 
   private async resolveStudentReceiptClassIds(
