@@ -57,6 +57,9 @@ export default () => ({
       7 * 24 * 60 * 60 * 1000,
     ),
   },
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY ?? '',
+  },
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? '',
     apiKey: process.env.CLOUDINARY_API_KEY ?? '',
