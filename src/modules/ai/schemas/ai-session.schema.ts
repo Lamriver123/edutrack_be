@@ -38,6 +38,9 @@ export class AiSession {
 
   @Prop({ type: Date, default: () => new Date() })
   lastActivityAt: Date;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type AiSessionDocument = HydratedDocument<AiSession>;

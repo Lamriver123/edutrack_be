@@ -9,7 +9,10 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { GoogleGenAI } from '@google/genai';
-import { ClassStatus } from '../school-management/enums';
+import {
+  ClassStatus,
+  ScheduleOverrideAction,
+} from '../school-management/enums';
 import {
   Class,
   ClassDocument,
@@ -22,10 +25,7 @@ import {
   ScheduleOverride,
   ScheduleOverrideDocument,
 } from '../school-management/schemas/schedule-override.schema';
-import {
-  AiSession,
-  AiSessionDocument,
-} from './schemas/ai-session.schema';
+import { AiSession, AiSessionDocument } from './schemas/ai-session.schema';
 import {
   convertUtcTimeToVietnam,
   convertUtcWeeklyTimeToVietnam,
@@ -110,7 +110,7 @@ export class AiScheduleService {
     return {
       sessionId: session._id.toString(),
       scheduleContext,
-      greeting: this.buildGreeting(scheduleContext),
+      greeting: this.buildGreeting(),
     };
   }
 
@@ -205,15 +205,15 @@ export class AiScheduleService {
         timestamp: msg.timestamp,
       })),
       scheduleContext: session.scheduleContext,
-      createdAt: (session as any).createdAt,
+      createdAt: session.createdAt,
     };
   }
 
   async listSessions(teacherId: string) {
     const sessions = await this.aiSessionModel
-      .find({ 
+      .find({
         teacherId: new Types.ObjectId(teacherId),
-        'messages.0': { $exists: true }
+        'messages.0': { $exists: true },
       })
       .sort({ createdAt: -1 })
       .select('_id messages lastActivityAt createdAt')
@@ -224,7 +224,7 @@ export class AiScheduleService {
       sessionId: session._id.toString(),
       messageCount: session.messages?.length ?? 0,
       lastActivityAt: session.lastActivityAt,
-      createdAt: (session as any).createdAt,
+      createdAt: session.createdAt,
       preview:
         session.messages?.find((m) => m.role === 'user')?.text?.slice(0, 80) ??
         '',
@@ -265,9 +265,7 @@ export class AiScheduleService {
     }
 
     const classIds = classes.map((c) => c._id);
-    const classMap = new Map(
-      classes.map((c) => [c._id.toString(), c.name]),
-    );
+    const classMap = new Map(classes.map((c) => [c._id.toString(), c.name]));
 
     const [activeVersions, overrides] = await Promise.all([
       this.scheduleVersionModel
@@ -323,7 +321,6 @@ export class AiScheduleService {
           endTime = convertUtcTimeToVietnam(slot.endTime);
         }
 
-        const dayName = DAY_NAMES[dayOfWeek] ?? `Thứ ${dayOfWeek}`;
         const entry = `  - ${startTime} - ${endTime}: ${className}`;
 
         if (!scheduleByDay.has(dayOfWeek)) {
@@ -355,9 +352,9 @@ export class AiScheduleService {
         const className =
           classMap.get(override.classId.toString()) ?? 'Lớp không xác định';
         const action =
-          override.action === 'extra'
+          override.action === ScheduleOverrideAction.Extra
             ? 'Học thêm'
-            : override.action === 'reschedule'
+            : override.action === ScheduleOverrideAction.Reschedule
               ? 'Dời lịch'
               : 'Hủy buổi';
 
@@ -466,7 +463,7 @@ export class AiScheduleService {
     return `${day}/${month}/${year}`;
   }
 
-  private buildGreeting(scheduleContext: string): string {
+  private buildGreeting(): string {
     return `Xin chào! Tôi là trợ lý AI của EduTrack. Tôi đã xem qua lịch dạy hiện tại của bạn.\n\nBạn có thể mô tả yêu cầu sắp xếp lịch học, ví dụ:\n• "Tôi muốn thêm lớp Toán 9, học 3 buổi/tuần, mỗi buổi 2 tiếng, buổi tối"\n• "Sắp xếp lịch cho lớp Văn 10, 2 buổi/tuần vào sáng thứ 3 và thứ 5"\n• "Gợi ý giờ rảnh để thêm 1 lớp mới"\n\nHãy cho tôi biết bạn cần gì nhé!`;
   }
 }

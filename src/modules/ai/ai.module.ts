@@ -3,10 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { SchoolManagementModule } from '../school-management/school-management.module';
 import { AiController } from './ai.controller';
 import { AiScheduleService } from './ai-schedule.service';
-import {
-  AiSession,
-  AiSessionSchema,
-} from './schemas/ai-session.schema';
+import { AiSession, AiSessionSchema } from './schemas/ai-session.schema';
 
 @Module({
   imports: [
