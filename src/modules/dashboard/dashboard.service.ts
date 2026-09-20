@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import {
   ClassStatus,
   PaymentStatus,
+  ReceiptPdfStatus,
   StudentStatus,
 } from '../school-management/enums';
 import {
@@ -47,6 +48,7 @@ type PendingReceipt = RevenueReceipt & {
   lessonCount?: number;
   periodEnd?: Date;
   periodStart?: Date;
+  pdfStatus?: ReceiptPdfStatus;
   receiptNumber?: string;
   studentId?: Types.ObjectId;
   studentSnapshot?: {
@@ -121,6 +123,7 @@ export class DashboardService {
             'paymentStatus',
             'periodEnd',
             'periodStart',
+            'pdfStatus',
             'receiptNumber',
             'studentId',
             'studentSnapshot',
@@ -146,6 +149,10 @@ export class DashboardService {
       ),
     );
     const overallRevenue = this.buildRevenueStats(revenueReceipts);
+    const monthlyRevenue = this.buildMonthlyRevenue(
+      revenueReceipts,
+      vietnamNow.year,
+    );
 
     return {
       generatedAt: new Date(),
@@ -158,6 +165,8 @@ export class DashboardService {
         pendingPaymentCount: overallRevenue.pendingReceiptCount,
       },
       revenue: {
+        year: vietnamNow.year,
+        monthly: monthlyRevenue,
         currentMonth: currentMonthRevenue,
         collectedThisMonth: this.sumPaidAmount(
           revenueReceipts.filter(
@@ -276,6 +285,38 @@ export class DashboardService {
     );
   }
 
+  private buildMonthlyRevenue(receipts: RevenueReceipt[], year: number) {
+    return Array.from({ length: 12 }, (_, monthIndex) => {
+      const monthStartUtc = new Date(
+        Date.UTC(year, monthIndex, 1) - VIETNAM_TIMEZONE_OFFSET_MS,
+      );
+      const nextMonthStartUtc = new Date(
+        Date.UTC(year, monthIndex + 1, 1) - VIETNAM_TIMEZONE_OFFSET_MS,
+      );
+      const issuedReceipts = receipts.filter(
+        (receipt) =>
+          receipt.issuedAt &&
+          receipt.issuedAt >= monthStartUtc &&
+          receipt.issuedAt < nextMonthStartUtc,
+      );
+      const paidReceipts = receipts.filter(
+        (receipt) =>
+          receipt.paidAt &&
+          receipt.paidAt >= monthStartUtc &&
+          receipt.paidAt < nextMonthStartUtc,
+      );
+
+      return {
+        month: monthIndex + 1,
+        issuedAmount: issuedReceipts.reduce(
+          (sum, receipt) => sum + this.resolveMoney(receipt.totalAmount),
+          0,
+        ),
+        collectedAmount: this.sumPaidAmount(paidReceipts),
+      };
+    });
+  }
+
   private resolveReceiptPaidAmount(receipt: RevenueReceipt) {
     const totalAmount = this.resolveMoney(receipt.totalAmount);
 
@@ -302,6 +343,7 @@ export class DashboardService {
       parentName: receipt.studentSnapshot?.parentName || 'Chưa cập nhật',
       parentPhone: receipt.studentSnapshot?.parentPhone || 'Chưa cập nhật',
       paymentStatus: receipt.paymentStatus,
+      pdfStatus: receipt.pdfStatus,
       periodEnd: receipt.periodEnd,
       periodStart: receipt.periodStart,
       receiptNumber: receipt.receiptNumber,
@@ -351,6 +393,7 @@ export class DashboardService {
     const day = vietnamDate.getUTCDate();
 
     return {
+      year,
       currentMinutes:
         vietnamDate.getUTCHours() * 60 + vietnamDate.getUTCMinutes(),
       monthStartUtc: new Date(
