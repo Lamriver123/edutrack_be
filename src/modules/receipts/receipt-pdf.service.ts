@@ -3,6 +3,7 @@
 import { Injectable } from '@nestjs/common';
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { isReceiptBrowserRequestAllowed } from './receipt-image-policy';
 
 type TuitionPriceNote = {
   label: string;
@@ -17,17 +18,28 @@ export class ReceiptPdfService {
     html: string,
     receipt: Record<string, any>,
     paymentQrDataUrl?: string,
+    options: { requireHtml?: boolean } = {},
   ) {
     const browserAutomation = await this.tryLoadBrowserAutomation();
 
     if (browserAutomation) {
       try {
-        return await this.renderWithBrowser(browserAutomation, html);
-      } catch {
+        return await this.renderWithBrowser(
+          browserAutomation,
+          html,
+          options.requireHtml,
+        );
+      } catch (error) {
+        if (options.requireHtml) throw error;
         return this.renderFallbackPdf(receipt, paymentQrDataUrl);
       }
     }
 
+    if (options.requireHtml) {
+      throw new Error(
+        'Không có trình kết xuất HTML/PDF. Vui lòng cấu hình Chromium rồi tạo lại PDF để giữ đúng mẫu đã chọn.',
+      );
+    }
     return this.renderFallbackPdf(receipt, paymentQrDataUrl);
   }
 
@@ -38,6 +50,7 @@ export class ReceiptPdfService {
       module: any;
     },
     html: string,
+    restrictAssets = false,
   ) {
     const userDataDir = this.createBrowserUserDataDir();
     const defaultArgs = [
@@ -64,6 +77,25 @@ export class ReceiptPdfService {
     try {
       browser = await browserAutomation.module.launch(launchOptions);
       const page = await browser.newPage();
+      await page.setJavaScriptEnabled(false);
+      let blockedAsset = false;
+      if (restrictAssets) {
+        await page.setRequestInterception(true);
+        page.on(
+          'request',
+          (request: {
+            url: () => string;
+            abort: () => Promise<void>;
+            continue: () => Promise<void>;
+          }) => {
+            const allowed = isReceiptBrowserRequestAllowed(request.url());
+            if (!allowed) blockedAsset = true;
+            void (allowed ? request.continue() : request.abort()).catch(() => {
+              blockedAsset = true;
+            });
+          },
+        );
+      }
       await page.setViewport({
         deviceScaleFactor: 1,
         height: 1123,
@@ -73,6 +105,11 @@ export class ReceiptPdfService {
         waitUntil: ['load', 'networkidle0'],
       });
       await page.emulateMediaType('screen');
+      if (blockedAsset) {
+        throw new Error(
+          'Không thể tải tài nguyên được phép của mẫu hóa đơn. Vui lòng kiểm tra ảnh trong mẫu.',
+        );
+      }
 
       return await this.printPageToPdf(page);
     } finally {

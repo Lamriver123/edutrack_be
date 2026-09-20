@@ -16,6 +16,10 @@ import { ClassSession } from './class-session.schema';
 import { Exam } from './exam.schema';
 import { Student } from './student.schema';
 import { TuitionEntry } from './tuition-entry.schema';
+import {
+  ReceiptTemplateSnapshot,
+  ReceiptTemplateSnapshotSchema,
+} from './receipt-template-snapshot.schema';
 
 const integerMoneyValidator = {
   validator: Number.isInteger,
@@ -424,6 +428,9 @@ export class Receipt {
 
   @Prop({ default: 'v1' })
   htmlTemplateVersion: string;
+
+  @Prop({ type: ReceiptTemplateSnapshotSchema })
+  templateSnapshot?: ReceiptTemplateSnapshot;
 
   @Prop({ type: mongoose.Schema.Types.Mixed })
   renderSnapshot?: Record<string, unknown>;

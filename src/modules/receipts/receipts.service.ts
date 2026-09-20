@@ -47,6 +47,8 @@ import { QueryReceiptsDto } from './dto/query-receipts.dto';
 import { UpdateReceiptPaymentDto } from './dto/update-receipt-payment.dto';
 import { ReceiptPdfService } from './receipt-pdf.service';
 import { ReceiptTemplateService } from './receipt-template.service';
+import { ReceiptDesignService } from './receipt-design.service';
+import { ReceiptTemplateSnapshot } from '../school-management/schemas/receipt-template-snapshot.schema';
 
 const DEFAULT_TARGET_SESSION_COUNT = 10;
 const VIETNAM_TIMEZONE_OFFSET_MS = 7 * 60 * 60 * 1000;
@@ -73,6 +75,7 @@ type DateRange = {
 };
 
 type ReceiptDraft = {
+  templateSnapshot: ReceiptTemplateSnapshot;
   teacherId: Types.ObjectId;
   classId: Types.ObjectId;
   classIds: Types.ObjectId[];
@@ -138,6 +141,7 @@ export class ReceiptsService {
     private readonly cloudinaryService: CloudinaryService,
     private readonly receiptTemplateService: ReceiptTemplateService,
     private readonly receiptPdfService: ReceiptPdfService,
+    private readonly receiptDesignService: ReceiptDesignService,
   ) {}
 
   async getClassBillingOverview(
@@ -530,7 +534,12 @@ export class ReceiptsService {
 
     return {
       receipt: preview,
-      html: this.receiptTemplateService.render(preview, paymentQrDataUrl),
+      template: this.receiptDesignService.metadata(draft.templateSnapshot),
+      html: this.receiptDesignService.render(
+        preview,
+        draft.templateSnapshot,
+        paymentQrDataUrl,
+      ),
     };
   }
 
@@ -557,7 +566,12 @@ export class ReceiptsService {
 
     return {
       receipt: preview,
-      html: this.receiptTemplateService.render(preview, paymentQrDataUrl),
+      template: this.receiptDesignService.metadata(draft.templateSnapshot),
+      html: this.receiptDesignService.render(
+        preview,
+        draft.templateSnapshot,
+        paymentQrDataUrl,
+      ),
     };
   }
 
@@ -943,6 +957,13 @@ export class ReceiptsService {
       draft.teacherId,
       session,
     );
+    const issuedAt = new Date();
+    const paymentQr = await this.getTeacherPaymentQrDataUrl(draft.teacherId);
+    const renderedHtml = this.receiptDesignService.render(
+      { ...this.toReceiptPreviewResponse(draft), receiptNumber, issuedAt },
+      draft.templateSnapshot,
+      paymentQr,
+    );
     const billingCycle = await this.createBillingCycleFromDraft(draft, session);
     const receiptPayload = {
       teacherId: draft.teacherId,
@@ -953,7 +974,7 @@ export class ReceiptsService {
       studentId: draft.studentId,
       billingCycleId: billingCycle._id,
       receiptNumber,
-      issuedAt: new Date(),
+      issuedAt,
       periodStart: draft.periodStart,
       periodEnd: draft.periodEnd,
       dueDate: draft.dueDate,
@@ -983,9 +1004,11 @@ export class ReceiptsService {
       improvementsComment: draft.improvementsComment,
       generalComment: draft.generalComment,
       paymentNote: draft.paymentNote,
-      htmlTemplateVersion: 'v1',
+      htmlTemplateVersion: `${draft.templateSnapshot.id}:v${draft.templateSnapshot.version}`,
+      templateSnapshot: draft.templateSnapshot,
       renderSnapshot: {
         ...draft,
+        html: renderedHtml,
         receiptNumber,
         selectedTuitionEntryIds: draft.selectedTuitionEntryIds.map((id) =>
           id.toString(),
@@ -1081,6 +1104,11 @@ export class ReceiptsService {
     session?: ClientSession,
   ): Promise<ReceiptDraft> {
     const teacherId = this.toObjectId(teacherIdStr, 'teacherId');
+    const templateSnapshot = await this.receiptDesignService.resolve(
+      teacherIdStr,
+      dto.templateId,
+      dto.templateRevision,
+    );
     const classIds = this.toUniqueObjectIds(classIdStrs);
 
     if (!classIds.length) {
@@ -1167,6 +1195,7 @@ export class ReceiptsService {
     return {
       teacherId,
       classId: primaryClassroom._id,
+      templateSnapshot,
       classIds,
       primaryClassId: primaryClassroom._id,
       scopeType,
@@ -1264,13 +1293,30 @@ export class ReceiptsService {
   }
 
   private async renderReceiptPdfBuffer(receipt: ReceiptDocument) {
+    const frozenHtml = receipt.renderSnapshot?.html;
+    if (receipt.templateSnapshot && typeof frozenHtml === 'string' && frozenHtml) {
+      return this.receiptPdfService.render(
+        frozenHtml,
+        this.toReceiptResponse(receipt),
+        undefined,
+        { requireHtml: true },
+      );
+    }
     const paymentQrDataUrl = await this.getTeacherPaymentQrDataUrl(
       receipt.teacherId,
     );
     const response = this.toReceiptResponse(receipt);
-    const html = this.receiptTemplateService.render(response, paymentQrDataUrl);
+    const html = receipt.templateSnapshot
+      ? this.receiptDesignService.render(
+          response,
+          receipt.templateSnapshot,
+          paymentQrDataUrl,
+        )
+      : this.receiptTemplateService.render(response, paymentQrDataUrl);
 
-    return this.receiptPdfService.render(html, response, paymentQrDataUrl);
+    return this.receiptPdfService.render(html, response, paymentQrDataUrl, {
+      requireHtml: Boolean(receipt.templateSnapshot),
+    });
   }
 
   private async cancelReceiptCore(
@@ -2657,6 +2703,7 @@ export class ReceiptsService {
       studentId: source.studentId.toString(),
       billingCycleId: source.billingCycleId?.toString(),
       receiptNumber: source.receiptNumber,
+      template: this.receiptDesignService.metadata(source.templateSnapshot),
       issuedAt: source.issuedAt,
       periodStart: source.periodStart,
       periodEnd: source.periodEnd,

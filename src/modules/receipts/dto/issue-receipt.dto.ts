@@ -10,6 +10,7 @@ import {
   IsString,
   Max,
   MaxLength,
+  Matches,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -24,6 +25,18 @@ export class ReceiptExamRemarkDto {
 }
 
 export class IssueReceiptDto {
+  @IsOptional()
+  @IsString()
+  @Matches(/^(SYSTEM_INVOICE_V[12]|system-v[12]|[a-f\d]{24})$/i, {
+    message: 'Mã mẫu hóa đơn không hợp lệ.',
+  })
+  templateId?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-f\d]{64}$/)
+  templateRevision?: string;
+
   @IsOptional()
   @IsIn(['class', 'multi_class'], {
     message: 'Phạm vi hóa đơn không hợp lệ.',

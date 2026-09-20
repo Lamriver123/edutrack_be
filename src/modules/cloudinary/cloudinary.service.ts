@@ -16,17 +16,22 @@ export type UploadImageFile = {
 export type CloudinaryUploadResponse = {
   url: string;
   publicId: string;
+  width?: number;
+  height?: number;
 };
 
 type CloudinaryUploadPayload = {
   secure_url?: string;
   public_id?: string;
+  width?: number;
+  height?: number;
   error?: {
     message?: string;
   };
 };
 
 type CloudinaryUploadOptions = {
+  timeoutMs?: number;
   publicId?: string;
   overwrite?: boolean;
   filenameOverride?: string;
@@ -35,6 +40,37 @@ type CloudinaryUploadOptions = {
 @Injectable()
 export class CloudinaryService {
   constructor(private readonly configService: ConfigService) {}
+
+  uploadInvoiceImage(file: UploadImageFile, teacherId: string) {
+    return this.uploadFile(
+      file,
+      `edutrack/invoice-images/${teacherId}`,
+      'image',
+      { timeoutMs: 60000 },
+    );
+  }
+
+  async deleteInvoiceImage(publicId: string) {
+    const cloudName =
+      this.configService.get<string>('cloudinary.cloudName') ?? '';
+    const apiKey = this.configService.get<string>('cloudinary.apiKey') ?? '';
+    const secret = this.configService.get<string>('cloudinary.apiSecret') ?? '';
+    const params = {
+      public_id: publicId,
+      timestamp: Math.floor(Date.now() / 1000).toString(),
+    };
+    const body = new URLSearchParams({
+      ...params,
+      api_key: apiKey,
+      signature: this.createSignature(params, secret),
+    });
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`,
+      { method: 'POST', body, signal: AbortSignal.timeout(30000) },
+    );
+    if (!response.ok)
+      throw new BadGatewayException('Không thể dọn ảnh hóa đơn.');
+  }
 
   async uploadStudentAvatar(file: UploadImageFile) {
     const folder =
@@ -156,6 +192,9 @@ export class CloudinaryService {
       {
         method: 'POST',
         body: formData,
+        ...(options.timeoutMs
+          ? { signal: AbortSignal.timeout(options.timeoutMs) }
+          : {}),
       },
     );
     const payload = (await response.json()) as CloudinaryUploadPayload;
@@ -169,6 +208,8 @@ export class CloudinaryService {
     return {
       url: payload.secure_url,
       publicId: payload.public_id,
+      width: payload.width,
+      height: payload.height,
     };
   }
 

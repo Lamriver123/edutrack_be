@@ -9,6 +9,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ClassesModule } from './modules/classes/classes.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { InvoiceTemplateModule } from './modules/invoice-template/invoice-template.module';
 import { MailModule } from './modules/mail/mail.module';
 import { ReceiptsModule } from './modules/receipts/receipts.module';
 import { SchedulesModule } from './modules/schedules/schedules.module';
@@ -32,6 +33,7 @@ import { UsersModule } from './modules/users/users.module';
     ClassesModule,
     SchedulesModule,
     ReceiptsModule,
+    InvoiceTemplateModule,
     DashboardModule,
     AiModule,
   ],
