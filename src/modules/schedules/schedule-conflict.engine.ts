@@ -13,7 +13,7 @@ export type FixedVersion = {
 export type TemporarySlot = {
   id: string;
   classId: string;
-  action: 'extra' | 'reschedule' | 'cancel';
+  action: 'extra' | 'one_on_one' | 'reschedule' | 'cancel';
   originalDate?: string;
   newDate?: string;
   originalStartTime?: string;
@@ -40,6 +40,10 @@ export type ConflictResult = {
   blockingConflicts: ScheduleConflict[];
   warnings: ScheduleConflict[];
 };
+
+function isStandaloneAction(action: TemporarySlot['action']) {
+  return action === 'extra' || action === 'one_on_one';
+}
 
 const DAY_MS = 86400000;
 export function dateKey(value: Date) {
@@ -166,7 +170,9 @@ export function occupiedOnDate(
   const overrides = snapshot.overrides.filter((s) => s.id !== ignoreId);
   const fixed = fixedOnDate(snapshot, date).filter(
     (event) =>
-      !overrides.some((s) => s.action !== 'extra' && sourceMatches(event, s)),
+      !overrides.some(
+        (s) => !isStandaloneAction(s.action) && sourceMatches(event, s),
+      ),
   );
   return [
     ...fixed,
@@ -315,7 +321,9 @@ export function resolveSource(
   if (
     snapshot.overrides.some(
       (s) =>
-        s.id !== ignoreId && s.action !== 'extra' && sourceMatches(source, s),
+        s.id !== ignoreId &&
+        !isStandaloneAction(s.action) &&
+        sourceMatches(source, s),
     )
   ) {
     throw new BadRequestException(

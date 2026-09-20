@@ -23,7 +23,6 @@ import {
   SessionStatus,
   AttendanceStatus,
   TuitionStatus,
-  TuitionType,
 } from '../school-management/enums';
 import {
   Class,
@@ -85,6 +84,7 @@ import { TakeAttendanceBatchDto } from './dto/take-attendance-batch.dto';
 import { CreateExamDto } from './dto/create-exam.dto';
 import { UpdateExamDto } from './dto/update-exam.dto';
 import { TakeExamScoresBatchDto } from './dto/take-exam-scores-batch.dto';
+import { resolveAttendanceTuition } from './attendance-tuition';
 
 const DEFAULT_CLASS_IMAGE_URL =
   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTR-qRE8Ud2H3MA_umzUwRTCefEIGGjOmnsi5hsMnPdrg&s=10';
@@ -825,7 +825,10 @@ export class ClassesService {
         updateUnset.startTime = '';
         updateUnset.endTime = '';
       }
-    } else if (dto.action === ScheduleOverrideAction.Extra) {
+    } else if (
+      dto.action === ScheduleOverrideAction.Extra ||
+      dto.action === ScheduleOverrideAction.OneOnOne
+    ) {
       updateUnset.originalDate = '';
     }
 
@@ -1493,15 +1496,17 @@ export class ClassesService {
           sourceKey,
         },
         {
+          $set: {
+            scheduleType: this.resolveSessionScheduleType(
+              dto.scheduleEventType,
+            ),
+            status: SessionStatus.Completed,
+          },
           $setOnInsert: {
             date,
             startTime: convertVietnamTimeToUtc(startTime),
             endTime: convertVietnamTimeToUtc(endTime),
             timeStorage: 'utc',
-            scheduleType: this.resolveSessionScheduleType(
-              dto.scheduleEventType,
-            ),
-            status: SessionStatus.Completed, // Mark as completed when attended
           },
         },
         sessionOptions,
@@ -1642,7 +1647,7 @@ export class ClassesService {
         recordDto.status === AttendanceStatus.Absent ||
         recordDto.status === AttendanceStatus.Late
       ) {
-        const tuitionSnapshot = this.resolveAttendanceTuition(
+        const tuitionSnapshot = resolveAttendanceTuition(
           recordDto.status,
           dto.scheduleEventType,
           classPrice.regularPrice,
@@ -1725,33 +1730,15 @@ export class ClassesService {
       return ScheduleType.Extra;
     }
 
+    if (scheduleEventType === 'one_on_one') {
+      return ScheduleType.OneOnOne;
+    }
+
     if (scheduleEventType === 'reschedule') {
       return ScheduleType.Temporary;
     }
 
     return ScheduleType.Manual;
-  }
-
-  private resolveAttendanceTuition(
-    status: AttendanceStatus,
-    scheduleEventType: AttendanceScheduleEventType | undefined,
-    regularPrice: number,
-    makeupPrice: number,
-  ) {
-    const isExtraSession = scheduleEventType === 'extra';
-    const amount = isExtraSession ? makeupPrice : regularPrice;
-
-    if (status === AttendanceStatus.Absent) {
-      return {
-        type: TuitionType.Absence,
-        amount,
-      };
-    }
-
-    return {
-      type: isExtraSession ? TuitionType.Extra : TuitionType.Regular,
-      amount,
-    };
   }
 
   async getAttendanceOverview(teacherIdStr: string, classIdStr: string) {
@@ -2379,9 +2366,14 @@ export class ClassesService {
       throw new BadRequestException('Giờ bắt đầu phải nhỏ hơn giờ kết thúc.');
     }
 
+    const isOneOnOne = dto.action === ScheduleOverrideAction.OneOnOne;
+
     return {
-      action: ScheduleOverrideAction.Extra,
-      newDate: this.requireDate(dto.newDate, 'Ngày học thêm'),
+      action: dto.action,
+      newDate: this.requireDate(
+        dto.newDate,
+        isOneOnOne ? 'Ngày học kèm 1:1' : 'Ngày học thêm',
+      ),
       startTime: convertVietnamTimeToUtc(startTime),
       endTime: convertVietnamTimeToUtc(endTime),
       reason,

@@ -228,7 +228,10 @@ export class ScheduleConflictsService {
         s.classId === classId &&
         !snapshot.overrides.some(
           (o) =>
-            o.id !== ignoreId && o.action !== 'extra' && sourceMatches(s, o),
+            o.id !== ignoreId &&
+            o.action !== 'extra' &&
+            o.action !== 'one_on_one' &&
+            sourceMatches(s, o),
         ),
     );
   }
@@ -244,7 +247,12 @@ export class ScheduleConflictsService {
     const snapshot = await this.snapshot(teacherId, classId);
     this.checkOwnedOverride(snapshot, classId, id);
     const old = snapshot.overrides.find((s) => s.id === id)!;
-    if (old.action === 'extra' || !old.originalDate) return;
+    if (
+      old.action === 'extra' ||
+      old.action === 'one_on_one' ||
+      !old.originalDate
+    )
+      return;
     const before = occupiedOnDate(snapshot, old.originalDate);
     const after = occupiedOnDate(snapshot, old.originalDate, id);
     const blockingConflicts = after

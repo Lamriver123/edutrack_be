@@ -354,9 +354,11 @@ export class AiScheduleService {
         const action =
           override.action === ScheduleOverrideAction.Extra
             ? 'Học thêm'
-            : override.action === ScheduleOverrideAction.Reschedule
-              ? 'Dời lịch'
-              : 'Hủy buổi';
+            : override.action === ScheduleOverrideAction.OneOnOne
+              ? 'Kèm 1:1'
+              : override.action === ScheduleOverrideAction.Reschedule
+                ? 'Dời lịch'
+                : 'Hủy buổi';
 
         let detail = `  - ${action}: ${className}`;
 

@@ -48,7 +48,7 @@ export type TeacherScheduleDayResponse = {
 };
 
 export type TeacherScheduleEventType =
-  'fixed' | 'extra' | 'reschedule' | 'cancel' | 'manual';
+  'fixed' | 'extra' | 'one_on_one' | 'reschedule' | 'cancel' | 'manual';
 
 export type TeacherScheduleEventResponse = {
   id: string;
@@ -368,6 +368,7 @@ export class SchedulesService {
             action: {
               $in: [
                 ScheduleOverrideAction.Extra,
+                ScheduleOverrideAction.OneOnOne,
                 ScheduleOverrideAction.Reschedule,
               ],
             },
@@ -581,6 +582,10 @@ export class SchedulesService {
       return 'extra';
     }
 
+    if (scheduleType === ScheduleType.OneOnOne) {
+      return 'one_on_one';
+    }
+
     if (scheduleType === ScheduleType.Temporary) {
       return 'reschedule';
     }
@@ -713,7 +718,10 @@ export class SchedulesService {
           classroom,
           colorIndex: colorMap.get(classId) ?? 0,
           date: newDateKey,
-          type: 'extra',
+          type:
+            schedule.action === ScheduleOverrideAction.OneOnOne
+              ? 'one_on_one'
+              : 'extra',
         }),
       );
     }

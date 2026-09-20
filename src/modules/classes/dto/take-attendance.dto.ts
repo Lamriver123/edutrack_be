@@ -15,7 +15,7 @@ import { AttendanceStatus } from '../../school-management/enums';
 
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 export type AttendanceScheduleEventType =
-  'fixed' | 'extra' | 'reschedule' | 'manual';
+  'fixed' | 'extra' | 'one_on_one' | 'reschedule' | 'manual';
 
 export class TakeAttendanceRecordDto {
   @IsMongoId()
@@ -42,7 +42,7 @@ export class TakeAttendanceDto {
   endTime: string;
 
   @IsOptional()
-  @IsIn(['fixed', 'extra', 'reschedule', 'manual'])
+  @IsIn(['fixed', 'extra', 'one_on_one', 'reschedule', 'manual'])
   scheduleEventType?: AttendanceScheduleEventType;
 
   @IsArray()

@@ -228,6 +228,10 @@ export class DashboardService {
       return 'Buổi học thêm';
     }
 
+    if (type === 'one_on_one') {
+      return 'Học kèm 1:1';
+    }
+
     if (type === 'reschedule') {
       return 'Lịch dời';
     }

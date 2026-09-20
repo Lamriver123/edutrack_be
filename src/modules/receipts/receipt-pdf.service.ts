@@ -1057,7 +1057,7 @@ export class ReceiptPdfService {
   private buildFallbackLines(receipt: Record<string, any>) {
     const sessionLines = (receipt.sessions ?? []).flatMap((item: any) =>
       this.wrapLine(
-        `${item.sequence}. ${this.formatDate(item.date)} ${item.startTime || ''}-${item.endTime || ''} | ${item.className} | ${this.formatMoney(item.amount)} | ${this.formatLessonContent(item)}`,
+        `${item.sequence}${item.scheduleType === 'one_on_one' ? ' (Kem 1:1)' : ''}. ${this.formatDate(item.date)} ${item.startTime || ''}-${item.endTime || ''} | ${item.className} | ${this.formatMoney(item.amount)} | ${this.formatLessonContent(item)}`,
         92,
       ),
     );

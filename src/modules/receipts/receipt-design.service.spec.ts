@@ -86,6 +86,30 @@ describe('receipt template selection and snapshots', () => {
     expect($('.qr img').attr('src')).toBe(qr);
   });
 
+  it('marks one-on-one lessons in receipt previews and issued template HTML', async () => {
+    const snapshot = await service.resolve('teacher');
+    const html = service.render(
+      {
+        ...PREVIEW_RECEIPT,
+        sessions: [
+          {
+            ...PREVIEW_RECEIPT.sessions[0],
+            scheduleType: 'one_on_one',
+          },
+        ],
+      },
+      snapshot,
+    );
+    const $ = load(html);
+
+    expect($('.lesson-index .lesson-index-kind')).toHaveLength(1);
+    expect($('.lesson-index-value').text()).toBe('1');
+    expect($('.lesson-index-kind').text()).toBe('(Kèm 1:1)');
+    expect(
+      $('.lesson-index').closest('tr').find('td').eq(2).text(),
+    ).not.toContain('Kèm 1:1');
+  });
+
   it('fills legacy field templates without leaking demonstration data into issued invoices', async () => {
     templates.findOne.mockResolvedValue(LEGACY);
     const snapshot = await service.resolve('teacher', LEGACY.id);

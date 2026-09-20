@@ -162,7 +162,26 @@ export const RECEIPT_TEMPLATE_CSS = `
       background: #ff8a3d;
       color: #ffffff;
       font-weight: 900;
+      padding: 6px 3px;
       text-align: center;
+    }
+    .lesson-index-value {
+      display: block;
+      font-size: 13px;
+      line-height: 1.1;
+    }
+    .lesson-index-kind {
+      display: inline-block;
+      margin-top: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 1px 3px;
+      color: #9f1239;
+      font-size: 8px;
+      font-weight: 900;
+      line-height: 1.15;
+      white-space: nowrap;
     }
     .lesson-class {
       display: inline-block;

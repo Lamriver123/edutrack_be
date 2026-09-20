@@ -152,6 +152,50 @@ describe('Teacher calendar source exclusion', () => {
     }
   });
 
+  it('keeps one-on-one schedules distinct for attendance and billing', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-09-05T04:00:00.000Z'));
+
+    try {
+      const teacherId = new Types.ObjectId().toString();
+      const classId = new Types.ObjectId();
+      const overrideId = new Types.ObjectId();
+      const service = new SchedulesService(
+        model({ findOne: { _id: classId, name: 'Lớp A', colorIndex: 1 } }),
+        model({ find: [], findOne: null }),
+        model({
+          find: [
+            {
+              _id: overrideId,
+              classId,
+              action: 'one_on_one',
+              newDate: new Date('2026-09-05T00:00:00+07:00'),
+              timeStorage: 'utc',
+              startTime: '02:00',
+              endTime: '03:00',
+            },
+          ],
+          findOne: { newDate: new Date('2026-09-05T00:00:00+07:00') },
+        }),
+        model({ find: [], findOne: null }),
+      );
+
+      const result = await service.getClassScheduleHistory(
+        teacherId,
+        classId.toString(),
+      );
+
+      expect(result[0]).toMatchObject({
+        id: `one_on_one:${overrideId.toString()}:2026-09-05`,
+        startTime: '09:00',
+        endTime: '10:00',
+        type: 'one_on_one',
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('keeps standalone class sessions visible in attendance history', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-09-05T04:00:00.000Z'));

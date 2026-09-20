@@ -17,10 +17,12 @@ type TuitionPriceNote = {
 @Injectable()
 export class ReceiptTemplateService {
   private readonly stickerDataUrl = this.loadStickerDataUrl();
-  private readonly logoDataUrl = this.loadImageDataUrl(this.findExistingPath([
-    join(process.cwd(), '..', 'edutrack_fe', 'public', 'logo.png'),
-    join(process.cwd(), 'public', 'logo.png'),
-  ]));
+  private readonly logoDataUrl = this.loadImageDataUrl(
+    this.findExistingPath([
+      join(process.cwd(), '..', 'edutrack_fe', 'public', 'logo.png'),
+      join(process.cwd(), 'public', 'logo.png'),
+    ]),
+  );
 
   embedBuiltInImages(html: string) {
     const $ = load(html);
@@ -28,11 +30,19 @@ export class ReceiptTemplateService {
       const path = receiptBuiltInImagePath($(node).attr('src') ?? '');
       if (!path) return;
       if (path.endsWith('.svg')) {
-        const svg = this.renderInfoIcon(path === '/invoice-student.svg' ? 'student' : 'class')
-          .replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#08796c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"');
-        $(node).attr('src', `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`);
+        const svg = this.renderInfoIcon(
+          path === '/invoice-student.svg' ? 'student' : 'class',
+        ).replace(
+          '<svg',
+          '<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#08796c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"',
+        );
+        $(node).attr(
+          'src',
+          `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`,
+        );
       } else {
-        const dataUrl = path === '/logo.png' ? this.logoDataUrl : this.stickerDataUrl;
+        const dataUrl =
+          path === '/logo.png' ? this.logoDataUrl : this.stickerDataUrl;
         if (dataUrl) $(node).attr('src', dataUrl);
         else $(node).remove();
       }
@@ -142,9 +152,9 @@ export class ReceiptTemplateService {
       return `<table>
         <thead>
           <tr>
-            <th style="width: 10%;">Buổi</th>
+            <th style="width: 13%;">Buổi</th>
             <th style="width: 18%;">Ngày học</th>
-            <th style="width: 72%;">Nội dung</th>
+            <th style="width: 69%;">Nội dung</th>
           </tr>
         </thead>
         <tbody>
@@ -169,12 +179,12 @@ export class ReceiptTemplateService {
     return `<table>
       <thead>
         <tr>
-          <th style="width: 7%;">Buổi</th>
+          <th style="width: 10%;">Buổi</th>
           <th style="width: 14%;">Ngày học</th>
-          <th style="width: 29%;">Nội dung</th>
-          <th style="width: 7%;">Buổi</th>
+          <th style="width: 26%;">Nội dung</th>
+          <th style="width: 10%;">Buổi</th>
           <th style="width: 14%;">Ngày học</th>
-          <th style="width: 29%;">Nội dung</th>
+          <th style="width: 26%;">Nội dung</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -186,7 +196,12 @@ export class ReceiptTemplateService {
       return '<td></td><td></td><td></td>';
     }
 
-    return `<td class="lesson-index">${this.escape(item.sequence)}</td>
+    const oneOnOneLabel =
+      item.scheduleType === 'one_on_one'
+        ? '<span class="lesson-index-kind">(Kèm 1:1)</span>'
+        : '';
+
+    return `<td class="lesson-index"><span class="lesson-index-value">${this.escape(item.sequence)}</span>${oneOnOneLabel}</td>
       <td class="center">${this.formatDate(item.date)}</td>
       <td>${this.renderLessonContent(item, isMultiClass)}</td>`;
   }
