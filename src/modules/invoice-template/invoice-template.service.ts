@@ -261,6 +261,25 @@ export class InvoiceTemplateService {
     }
   }
 
+  async remove(teacherIdStr: string, templateId: string) {
+    if (
+      this.isSystemTemplateId(templateId) ||
+      this.isLegacyTemplateId(templateId)
+    ) {
+      throw new BadRequestException('Không thể xóa mẫu hóa đơn hệ thống.');
+    }
+
+    const template = await this.findCustomTemplateForTeacherOrThrow(
+      teacherIdStr,
+      templateId,
+    );
+    template.status = InvoiceTemplateStatus.Archived;
+    template.isDefault = false;
+    await template.save();
+
+    return { message: 'Đã xóa mẫu hóa đơn.' };
+  }
+
   async resetDefaultTemplate(teacherIdStr: string) {
     const teacherId = this.toObjectId(teacherIdStr, 'teacherId');
 

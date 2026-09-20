@@ -116,4 +116,26 @@ describe('invoice template saved versions', () => {
     expect(model.create).not.toHaveBeenCalled();
     expect(model.updateMany).not.toHaveBeenCalled();
   });
+
+  it('archives an owned custom template instead of deleting its history', async () => {
+    const selected = document();
+    model.findOne.mockReturnValue(query(selected));
+
+    await expect(
+      service.remove(teacherId, templateId.toString()),
+    ).resolves.toEqual({ message: 'Đã xóa mẫu hóa đơn.' });
+    expect(selected.status).toBe(InvoiceTemplateStatus.Archived);
+    expect(selected.isDefault).toBe(false);
+    expect(selected.save).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not allow system templates to be removed', async () => {
+    await expect(
+      service.remove(teacherId, 'SYSTEM_INVOICE_V2'),
+    ).rejects.toThrow('Không thể xóa mẫu hóa đơn hệ thống.');
+    await expect(
+      service.remove(teacherId, 'SYSTEM_INVOICE_V1'),
+    ).rejects.toThrow('Không thể xóa mẫu hóa đơn hệ thống.');
+    expect(model.findOne).not.toHaveBeenCalled();
+  });
 });

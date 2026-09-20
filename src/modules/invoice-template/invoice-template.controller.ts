@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -92,6 +93,11 @@ export class InvoiceTemplateController {
     @Body() dto: UpdateInvoiceTemplateDto,
   ) {
     return this.invoiceTemplateService.update(user.userId, id, dto);
+  }
+
+  @Delete(':id')
+  remove(@CurrentUser() user: JwtUser, @Param('id') id: string) {
+    return this.invoiceTemplateService.remove(user.userId, id);
   }
 
   @Post(':id/duplicate')

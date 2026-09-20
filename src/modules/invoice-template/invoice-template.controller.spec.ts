@@ -26,6 +26,7 @@ describe('invoice template HTTP routes', () => {
   const service = {
     findOne: jest.fn(),
     getDefaultTemplate: jest.fn(),
+    remove: jest.fn(),
   };
 
   beforeAll(async () => {
@@ -94,6 +95,17 @@ describe('invoice template HTTP routes', () => {
       .expect(200)
       .expect({ id });
     expect(service.findOne).toHaveBeenCalledWith(teacherId, id);
+  });
+
+  it('passes deletion through with the authenticated owner', async () => {
+    const id = '000000000000000000000002';
+    service.remove.mockResolvedValue({ message: 'Đã xóa mẫu hóa đơn.' });
+    await request(app.getHttpServer())
+      .delete(`/api/invoice-templates/${id}`)
+      .set('Authorization', 'Bearer test-token')
+      .expect(200)
+      .expect({ message: 'Đã xóa mẫu hóa đơn.' });
+    expect(service.remove).toHaveBeenCalledWith(teacherId, id);
   });
 
   it('requires authentication for the region registry', async () => {
