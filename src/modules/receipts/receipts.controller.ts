@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   Patch,
   Post,
@@ -181,6 +182,7 @@ export class ReceiptsController {
   }
 
   @Get('receipts/:receiptId')
+  @Header('Cache-Control', 'no-store')
   findReceipt(
     @CurrentUser() user: JwtUser,
     @Param('receiptId') receiptId: string,

@@ -81,6 +81,9 @@ export function buildMockInvoiceRenderContext(): InvoiceTemplateRenderContext {
     },
     teacher: {
       address: 'Hà Nội',
+      bankAccountName: 'NGUYEN VAN A',
+      bankAccountNumber: '0000000000',
+      bankName: 'Vietcombank',
       fullName: 'Ms. Cheese',
       phone: '0912345678',
     },

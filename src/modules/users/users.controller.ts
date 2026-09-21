@@ -22,6 +22,7 @@ import {
   type UploadImageFile,
 } from '../cloudinary/cloudinary.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { LookupBankAccountDto } from './dto/lookup-bank-account.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UsersService } from './users.service';
 
@@ -44,6 +45,16 @@ export class UsersController {
   @Get('me')
   getProfile(@CurrentUser() user: JwtUser) {
     return this.usersService.getProfile(user.userId);
+  }
+
+  @Get('banks')
+  getBanks() {
+    return this.usersService.getBanks();
+  }
+
+  @Post('bank-account/lookup')
+  lookupBankAccount(@Body() dto: LookupBankAccountDto) {
+    return this.usersService.lookupBankAccount(dto);
   }
 
   @Patch('me')
@@ -86,6 +97,8 @@ export class UsersController {
   uploadPaymentQr(
     @CurrentUser() user: JwtUser,
     @UploadedFile() file?: UploadImageFile,
+    @Body('qrContent') qrContent?: string,
+    @Body('allowUnrecognized') allowUnrecognized?: string,
   ) {
     this.assertImageFile(file, {
       allowedMimeTypes: PAYMENT_QR_MIME_TYPES,
@@ -95,7 +108,23 @@ export class UsersController {
       typeMessage: 'Ảnh QR chỉ hỗ trợ PNG, JPG hoặc WEBP.',
     });
 
-    return this.usersService.updatePaymentQr(user.userId, file);
+    if (
+      qrContent !== undefined &&
+      (typeof qrContent !== 'string' || qrContent.length > 4096)
+    ) {
+      throw new BadRequestException('Dữ liệu QR thanh toán không hợp lệ.');
+    }
+
+    if (allowUnrecognized !== undefined && allowUnrecognized !== 'true') {
+      throw new BadRequestException('Xác nhận lưu QR không hợp lệ.');
+    }
+
+    return this.usersService.updatePaymentQr(
+      user.userId,
+      file,
+      qrContent,
+      allowUnrecognized === 'true',
+    );
   }
 
   @Get('me/payment-qr')

@@ -48,4 +48,12 @@ export class UpdateProfileDto {
     message: 'Số tài khoản chỉ nên gồm số, khoảng trắng hoặc dấu gạch ngang.',
   })
   bankAccountNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  @Matches(/^$|^[0-9]{6}$/, {
+    message: 'Mã BIN ngân hàng không hợp lệ.',
+  })
+  bankBin?: string;
 }

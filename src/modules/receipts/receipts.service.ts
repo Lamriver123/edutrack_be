@@ -4,6 +4,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Connection, Model, Types } from 'mongoose';
@@ -40,6 +41,7 @@ import {
   TuitionEntryDocument,
 } from '../school-management/schemas';
 import { User, UserDocument } from '../users/schemas/user.schema';
+import { BankDirectoryService } from '../users/bank-directory.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { IssueReceiptDto } from './dto/issue-receipt.dto';
 import { QueryBillingDto } from './dto/query-billing.dto';
@@ -142,6 +144,8 @@ export class ReceiptsService {
     private readonly receiptTemplateService: ReceiptTemplateService,
     private readonly receiptPdfService: ReceiptPdfService,
     private readonly receiptDesignService: ReceiptDesignService,
+    @Optional()
+    private readonly bankDirectoryService?: BankDirectoryService,
   ) {}
 
   async getClassBillingOverview(
@@ -528,17 +532,19 @@ export class ReceiptsService {
       dto,
     );
     const preview = this.toReceiptPreviewResponse(draft);
-    const paymentQrDataUrl = await this.getTeacherPaymentQrDataUrl(
-      draft.teacherId,
-    );
+    const [paymentQrDataUrl, bankLogoDataUrl] = await Promise.all([
+      this.getTeacherPaymentQrDataUrl(draft.teacherId),
+      this.getBankLogoDataUrl(draft.teacherSnapshot),
+    ]);
 
     return {
       receipt: preview,
       template: this.receiptDesignService.metadata(draft.templateSnapshot),
-      html: this.receiptDesignService.render(
+      html: this.renderReceiptDesign(
         preview,
         draft.templateSnapshot,
         paymentQrDataUrl,
+        bankLogoDataUrl,
       ),
     };
   }
@@ -560,17 +566,19 @@ export class ReceiptsService {
       dto,
     );
     const preview = this.toReceiptPreviewResponse(draft);
-    const paymentQrDataUrl = await this.getTeacherPaymentQrDataUrl(
-      draft.teacherId,
-    );
+    const [paymentQrDataUrl, bankLogoDataUrl] = await Promise.all([
+      this.getTeacherPaymentQrDataUrl(draft.teacherId),
+      this.getBankLogoDataUrl(draft.teacherSnapshot),
+    ]);
 
     return {
       receipt: preview,
       template: this.receiptDesignService.metadata(draft.templateSnapshot),
-      html: this.receiptDesignService.render(
+      html: this.renderReceiptDesign(
         preview,
         draft.templateSnapshot,
         paymentQrDataUrl,
+        bankLogoDataUrl,
       ),
     };
   }
@@ -959,7 +967,7 @@ export class ReceiptsService {
     );
     const issuedAt = new Date();
     const paymentQr = await this.getTeacherPaymentQrDataUrl(draft.teacherId);
-    const renderedHtml = this.receiptDesignService.render(
+    const renderedHtml = this.renderReceiptDesign(
       { ...this.toReceiptPreviewResponse(draft), receiptNumber, issuedAt },
       draft.templateSnapshot,
       paymentQr,
@@ -1294,10 +1302,27 @@ export class ReceiptsService {
 
   private async renderReceiptPdfBuffer(receipt: ReceiptDocument) {
     const frozenHtml = receipt.renderSnapshot?.html;
-    if (receipt.templateSnapshot && typeof frozenHtml === 'string' && frozenHtml) {
-      return this.receiptPdfService.render(
+    if (
+      receipt.templateSnapshot &&
+      typeof frozenHtml === 'string' &&
+      frozenHtml
+    ) {
+      const response = this.toReceiptResponse(receipt);
+      const bankLogoDataUrl = await this.getBankLogoDataUrl(
+        response.teacherSnapshot,
+      );
+      const compatibleHtml = this.receiptTemplateService.ensurePaymentBankLine(
         frozenHtml,
-        this.toReceiptResponse(receipt),
+        response.teacherSnapshot,
+        bankLogoDataUrl,
+      );
+
+      return this.receiptPdfService.render(
+        this.receiptTemplateService.embedBankLogo(
+          compatibleHtml,
+          bankLogoDataUrl,
+        ),
+        response,
         undefined,
         { requireHtml: true },
       );
@@ -1306,17 +1331,31 @@ export class ReceiptsService {
       receipt.teacherId,
     );
     const response = this.toReceiptResponse(receipt);
+    const bankLogoDataUrl = await this.getBankLogoDataUrl(
+      response.teacherSnapshot,
+    );
     const html = receipt.templateSnapshot
-      ? this.receiptDesignService.render(
+      ? this.renderReceiptDesign(
           response,
           receipt.templateSnapshot,
           paymentQrDataUrl,
+          bankLogoDataUrl,
         )
-      : this.receiptTemplateService.render(response, paymentQrDataUrl);
+      : this.receiptTemplateService.render(
+          response,
+          paymentQrDataUrl,
+          bankLogoDataUrl,
+        );
 
-    return this.receiptPdfService.render(html, response, paymentQrDataUrl, {
-      requireHtml: Boolean(receipt.templateSnapshot),
-    });
+    return this.receiptPdfService.render(
+      this.receiptTemplateService.embedBankLogo(html, bankLogoDataUrl),
+      response,
+      paymentQrDataUrl,
+      {
+        bankLogoDataUrl,
+        requireHtml: Boolean(receipt.templateSnapshot),
+      },
+    );
   }
 
   private async cancelReceiptCore(
@@ -2378,6 +2417,32 @@ export class ReceiptsService {
     return `data:${teacher.paymentQrImageContentType};base64,${paymentQrBuffer.toString('base64')}`;
   }
 
+  private getBankLogoDataUrl(teacherSnapshot: Record<string, unknown>) {
+    const logoUrl = teacherSnapshot.bankLogoUrl;
+
+    return this.bankDirectoryService
+      ? this.bankDirectoryService.getLogoDataUrl(
+          typeof logoUrl === 'string' ? logoUrl : undefined,
+        )
+      : Promise.resolve(undefined);
+  }
+
+  private renderReceiptDesign(
+    receipt: Record<string, unknown>,
+    template: ReceiptTemplateSnapshot,
+    paymentQrDataUrl?: string,
+    bankLogoDataUrl?: string,
+  ) {
+    return bankLogoDataUrl
+      ? this.receiptDesignService.render(
+          receipt,
+          template,
+          paymentQrDataUrl,
+          bankLogoDataUrl,
+        )
+      : this.receiptDesignService.render(receipt, template, paymentQrDataUrl);
+  }
+
   private toBuffer(value: unknown) {
     if (!value) {
       return null;
@@ -2754,6 +2819,10 @@ export class ReceiptsService {
       avatarUrl: teacher.avatarUrl,
       bankAccountName: teacher.bankAccountName,
       bankAccountNumber: teacher.bankAccountNumber,
+      bankName: teacher.bankName,
+      bankCode: teacher.bankCode,
+      bankBin: teacher.bankBin,
+      bankLogoUrl: teacher.bankLogoUrl,
       hasPaymentQr: Boolean(
         teacher.paymentQrImageContentType && teacher.paymentQrImageSize,
       ),

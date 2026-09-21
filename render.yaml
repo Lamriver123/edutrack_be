@@ -37,6 +37,12 @@ services:
         value: "60"
       - key: FRONTEND_URL
         sync: false
+      - key: VIETQR_ACCOUNT_LOOKUP_URL
+        value: https://api.vietqr.io/v2/lookup
+      - key: VIETQR_CLIENT_ID
+        sync: false
+      - key: VIETQR_API_KEY
+        sync: false
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY

@@ -9,12 +9,14 @@ import { ReceiptsController } from './receipts.controller';
 import { ReceiptsService } from './receipts.service';
 import { InvoiceTemplateModule } from '../invoice-template/invoice-template.module';
 import { ReceiptDesignService } from './receipt-design.service';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
     SchoolManagementModule,
     CloudinaryModule,
     InvoiceTemplateModule,
+    UsersModule,
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   controllers: [ReceiptsController],

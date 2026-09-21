@@ -60,6 +60,13 @@ export default () => ({
   gemini: {
     apiKey: process.env.GEMINI_API_KEY ?? '',
   },
+  vietQr: {
+    accountLookupUrl:
+      process.env.VIETQR_ACCOUNT_LOOKUP_URL ??
+      'https://api.vietqr.io/v2/lookup',
+    clientId: process.env.VIETQR_CLIENT_ID ?? '',
+    apiKey: process.env.VIETQR_API_KEY ?? '',
+  },
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? '',
     apiKey: process.env.CLOUDINARY_API_KEY ?? '',

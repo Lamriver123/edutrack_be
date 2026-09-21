@@ -50,17 +50,35 @@ export class ReceiptTemplateService {
     return $.html();
   }
 
+  embedBankLogo(html: string, bankLogoDataUrl?: string) {
+    const $ = load(html);
+    const bankLogo = $('.bank-logo');
+
+    if (!bankLogo.length) {
+      return html;
+    }
+
+    if (bankLogoDataUrl) {
+      bankLogo.attr('src', bankLogoDataUrl);
+    } else {
+      bankLogo.remove();
+    }
+
+    return $.html();
+  }
+
   renderCustomTemplate(
     receipt: Record<string, any>,
     template: { html: string; css: string },
     paymentQrDataUrl?: string,
+    bankLogoDataUrl?: string,
   ) {
-    const $ = load(this.render(receipt, paymentQrDataUrl));
+    const $ = load(this.render(receipt, paymentQrDataUrl, bankLogoDataUrl));
     const section = $('.page > .section');
     const comments = $('.comment-body');
     const payment = $('.payment-card').eq(1).clone();
     payment.children('h3').remove();
-    return renderRegionTemplate(template.html, template.css, {
+    const renderedHtml = renderRegionTemplate(template.html, template.css, {
       student: $('.info-pill').eq(0).find('span').last().html() ?? '',
       class: $('.info-pill').eq(1).find('span').last().html() ?? '',
       metadata: $('.meta-line').toString(),
@@ -74,9 +92,71 @@ export class ReceiptTemplateService {
       qr: $('.qr').html() ?? '',
       prices: $('.price-note-list').toString(),
     });
+
+    return this.ensurePaymentBankLine(
+      renderedHtml,
+      record(receipt.teacherSnapshot),
+      bankLogoDataUrl,
+    );
   }
 
-  render(receipt: Record<string, any>, paymentQrDataUrl?: string) {
+  ensurePaymentBankLine(
+    html: string,
+    teacherSnapshot: Record<string, unknown>,
+    bankLogoDataUrl?: string,
+  ) {
+    const $ = load(html);
+    const bankName = this.stringValue(teacherSnapshot.bankName);
+    const bankLogoUrl =
+      bankLogoDataUrl || this.stringValue(teacherSnapshot.bankLogoUrl);
+    const hasBankLine = $('.payment-line')
+      .toArray()
+      .some((node) => {
+        const label = $(node).children('span').first().text().trim();
+
+        return (
+          $(node).hasClass('payment-bank-line') ||
+          this.normalizeLabel(label).startsWith('ngan hang')
+        );
+      });
+
+    if (hasBankLine) {
+      return html;
+    }
+
+    const bankLine = this.paymentBankLine(bankName, bankLogoUrl);
+    const accountLine = $('.payment-line')
+      .toArray()
+      .find((node) => {
+        const label = $(node).children('span').first().text().trim();
+
+        return this.normalizeLabel(label).startsWith('ten tai khoan');
+      });
+
+    if (accountLine) {
+      $(accountLine).before(bankLine);
+      return $.html();
+    }
+
+    const paymentHeading = $('.payment-card h3')
+      .toArray()
+      .find((node) =>
+        this.normalizeLabel($(node).text()).includes('thong tin thanh toan'),
+      );
+
+    if (!paymentHeading) {
+      return html;
+    }
+
+    $(paymentHeading).after(bankLine);
+    return $.html();
+  }
+
+  render(
+    receipt: Record<string, any>,
+    paymentQrDataUrl?: string,
+    bankLogoDataUrl?: string,
+  ) {
     const sessions = receipt.sessions ?? [];
     const exams = receipt.exams ?? [];
     const generalComment =
@@ -115,6 +195,10 @@ export class ReceiptTemplateService {
     comment: this.escape(generalComment),
     total: `<div><strong>${this.formatMoney(receipt.totalAmount)}</strong><div>${this.escape(this.numberToVietnameseWords(receipt.totalAmount))}</div></div>`,
     payment: [
+      this.paymentBankLine(
+        receipt.teacherSnapshot?.bankName,
+        bankLogoDataUrl || receipt.teacherSnapshot?.bankLogoUrl,
+      ),
       this.paymentLine(
         'Tên tài khoản',
         receipt.teacherSnapshot?.bankAccountName ||
@@ -131,7 +215,7 @@ export class ReceiptTemplateService {
       this.paymentLine(
         'Ghi chú',
         receipt.paymentNote ||
-          'Vui lòng ghi nội dung chuyển khoản theo mã hóa đơn.',
+          'Nếu có thắc mắc gì vui lòng liên hệ giáo viên.',
       ),
     ].join(''),
     qr: paymentQrDataUrl
@@ -347,6 +431,45 @@ export class ReceiptTemplateService {
 
   private paymentLine(label: string, value?: string) {
     return `<div class="payment-line"><span>${this.escape(label)}:</span><strong>${this.escape(value || 'Chưa cập nhật')}</strong></div>`;
+  }
+
+  private paymentBankLine(bankName?: string, bankLogoUrl?: string) {
+    const logoUrl = this.safeBankLogoUrl(bankLogoUrl);
+    const logo = logoUrl
+      ? `<img alt="" class="bank-logo" height="26" src="${this.escape(logoUrl)}" style="width:50px;height:26px;object-fit:contain;vertical-align:middle" width="26" />`
+      : '';
+
+    return `<div class="payment-line payment-bank-line"><span>Ngân hàng:</span><strong class="payment-bank-value">${logo}<span>${this.escape(bankName || 'Chưa cập nhật')}</span></strong></div>`;
+  }
+
+  private normalizeLabel(value: string) {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D')
+      .toLowerCase();
+  }
+
+  private stringValue(value: unknown) {
+    return typeof value === 'string' ? value.trim() : '';
+  }
+
+  private safeBankLogoUrl(value?: string) {
+    if (/^data:image\/(png|jpeg|webp);base64,/i.test(value ?? '')) {
+      return value;
+    }
+
+    try {
+      const url = new URL(value ?? '');
+
+      return url.protocol === 'https:' &&
+        ['api.vietqr.io', 'cdn.vietqr.io', 'vietqr.net'].includes(url.hostname)
+        ? url.toString()
+        : '';
+    } catch {
+      return '';
+    }
   }
 
   private renderTuitionPriceNotes(sessions: any[]) {
@@ -659,4 +782,10 @@ export class ReceiptTemplateService {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
   }
+}
+
+function record(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }

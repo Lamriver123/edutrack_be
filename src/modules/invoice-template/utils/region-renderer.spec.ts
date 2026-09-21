@@ -19,7 +19,7 @@ describe('receipt layout with dynamic regions', () => {
     expect($('.info-icon img').length).toBe(2);
     expect($('[data-edutrack-region="sessions"] th').length).toBe(6);
     expect($('[data-edutrack-region="sessions"] .lesson-index').length).toBe(4);
-    expect($('.payment-line').length).toBe(4);
+    expect($('.payment-line').length).toBe(5);
     expect($('.meta-line span').length).toBeGreaterThanOrEqual(3);
     expect($('[data-edutrack-region][style*="min-height"]').length).toBe(0);
     expect(template.html).not.toContain('Nguyễn Minh Anh');

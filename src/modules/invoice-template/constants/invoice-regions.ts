@@ -41,6 +41,7 @@ const regionContent: Record<InvoiceRegionKey, string> = {
   comment: symbol('Nhận xét chung'),
   total: `<div><strong>${symbol('Tổng tiền')}</strong><div>${symbol('Bằng chữ')}</div></div>`,
   payment: [
+    paymentLine('Ngân hàng', 'Tên ngân hàng + logo'),
     paymentLine('Tên tài khoản', 'Chủ tài khoản'),
     paymentLine('Số tài khoản', 'Số tài khoản'),
     paymentLine('Liên hệ', 'Liên hệ'),

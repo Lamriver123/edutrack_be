@@ -1,17 +1,30 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
+import { createHash } from 'node:crypto';
 import { Model, Types } from 'mongoose';
 import type { UploadImageFile } from '../cloudinary/cloudinary.service';
+import {
+  BankDirectoryService,
+  type PaymentBank,
+} from './bank-directory.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { LookupBankAccountDto } from './dto/lookup-bank-account.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import {
+  PAYMENT_QR_INFO_NOT_FOUND_CODE,
+  PAYMENT_QR_INFO_NOT_FOUND_MESSAGE,
+} from './payment-qr.constants';
 import { User, UserDocument, UserRole } from './schemas/user.schema';
 import { SafeUser } from './types/safe-user.type';
+import { parseVietQrPaymentInfo } from './utils/vietqr-parser';
 
 type CreateTeacherInput = {
   fullName: string;
@@ -24,9 +37,12 @@ type CreateTeacherInput = {
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly configService: ConfigService,
+    private readonly bankDirectoryService: BankDirectoryService,
   ) {}
 
   normalizeEmail(email: string) {
@@ -83,6 +99,70 @@ export class UsersService {
     return this.toSafeUser(user);
   }
 
+  getBanks() {
+    return this.bankDirectoryService.getBanks();
+  }
+
+  async lookupBankAccount(dto: LookupBankAccountDto) {
+    const bank = await this.bankDirectoryService.findBank(dto.bankBin);
+
+    if (!bank) {
+      throw new BadRequestException({
+        code: 'BANK_NOT_FOUND',
+        message: 'Không tìm thấy ngân hàng đã chọn trong danh mục VietQR.',
+      });
+    }
+
+    this.logger.log(
+      `Bank account verification requested bank=${bank.bin}` +
+        ` bankCode=${bank.code} lookupSupported=${bank.lookupSupported !== false}` +
+        ` account=${maskAccountNumber(dto.accountNumber)}` +
+        ` accountLength=${dto.accountNumber.length}`,
+    );
+
+    if (bank.lookupSupported === false) {
+      this.logger.warn(
+        `Bank account verification rejected reason=bank_lookup_unsupported` +
+          ` bank=${bank.bin} bankCode=${bank.code}` +
+          ` account=${maskAccountNumber(dto.accountNumber)}`,
+      );
+      throw new UnprocessableEntityException({
+        code: 'BANK_ACCOUNT_LOOKUP_UNSUPPORTED',
+        message: 'Ngân hàng đã chọn chưa hỗ trợ tra cứu tên chủ tài khoản.',
+      });
+    }
+
+    const account = await this.bankDirectoryService.lookupAccount(
+      bank.bin,
+      dto.accountNumber,
+    );
+
+    if (!account) {
+      this.logger.warn(
+        `Bank account verification rejected reason=provider_not_found` +
+          ` bank=${bank.bin} bankCode=${bank.code}` +
+          ` account=${maskAccountNumber(dto.accountNumber)}`,
+      );
+      throw new UnprocessableEntityException({
+        code: 'BANK_ACCOUNT_NOT_FOUND',
+        message:
+          'Không tìm thấy tên chủ tài khoản. Vui lòng kiểm tra lại ngân hàng và số tài khoản.',
+      });
+    }
+
+    this.logger.log(
+      `Bank account verified bank=${bank.bin} account=${maskAccountNumber(account.accountNumber)}`,
+    );
+
+    return {
+      accountName: account.accountName,
+      accountNumber: account.accountNumber,
+      bankBin: bank.bin,
+      bankLogoUrl: bank.logo,
+      bankName: bank.shortName,
+    };
+  }
+
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const user = await this.findByIdOrThrow(userId);
     const assignOptionalText = (
@@ -120,6 +200,24 @@ export class UsersService {
     assignOptionalText('bankAccountName', dto.bankAccountName);
     assignOptionalText('bankAccountNumber', dto.bankAccountNumber);
 
+    if (dto.bankBin !== undefined) {
+      const bankBin = dto.bankBin.trim();
+
+      if (!bankBin) {
+        this.assignPaymentBank(user, null);
+      } else if (bankBin !== user.bankBin) {
+        const bank = await this.bankDirectoryService.findBank(bankBin);
+
+        if (!bank) {
+          throw new BadRequestException(
+            'Không tìm thấy ngân hàng trong danh mục VietQR.',
+          );
+        }
+
+        this.assignPaymentBank(user, bank);
+      }
+    }
+
     await user.save();
 
     return this.toSafeUser(user);
@@ -156,31 +254,97 @@ export class UsersService {
     };
   }
 
-  async updatePaymentQr(userId: string, file: UploadImageFile) {
+  async updatePaymentQr(
+    userId: string,
+    file: UploadImageFile,
+    qrContent?: string,
+    allowUnrecognized = false,
+  ) {
     if (!Types.ObjectId.isValid(userId)) {
       throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
     }
 
-    const user = await this.userModel
-      .findByIdAndUpdate(
-        userId,
-        {
-          $set: {
-            paymentQrImageContentType: file.mimetype,
-            paymentQrImageData: file.buffer,
-            paymentQrImageSize: file.size,
-            paymentQrImageUpdatedAt: new Date(),
-          },
-        },
-        { returnDocument: 'after' },
-      )
-      .exec();
+    const user = await this.userModel.findById(userId).exec();
 
     if (!user) {
       throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
     }
 
-    return this.toSafeUser(user);
+    const paymentInfo = parseVietQrPaymentInfo(qrContent);
+    const accountNumber = paymentInfo?.accountNumber?.trim();
+    const qrTrace = createPaymentQrTrace(qrContent);
+    let failureReason = paymentInfo
+      ? 'payment_information_incomplete'
+      : qrContent?.trim()
+        ? 'unrecognized_payload'
+        : 'missing_qr_content';
+    let resolvedBank: PaymentBank | null = null;
+
+    this.logger.log(
+      `Payment QR inspection started format=${qrTrace.format} length=${qrTrace.length} fingerprint=${qrTrace.fingerprint} parsed=${Boolean(paymentInfo)} bank=${paymentInfo?.bankIdentifier ?? 'missing'} account=${maskAccountNumber(accountNumber)}`,
+    );
+
+    if (!paymentInfo?.bankIdentifier) {
+      failureReason = paymentInfo ? 'missing_bank_identifier' : failureReason;
+    } else if (!isValidQrAccountIdentifier(accountNumber)) {
+      failureReason = 'invalid_account_number';
+    } else {
+      try {
+        resolvedBank = await this.bankDirectoryService.findBank(
+          paymentInfo.bankIdentifier,
+        );
+
+        if (!resolvedBank) {
+          failureReason = 'bank_not_found';
+        }
+      } catch (error) {
+        failureReason = 'bank_directory_error';
+        this.logger.warn(
+          `Payment QR bank resolution failed fingerprint=${qrTrace.fingerprint} bank=${paymentInfo.bankIdentifier} account=${maskAccountNumber(accountNumber)} error=${error instanceof Error ? error.message : 'unknown'}`,
+        );
+      }
+    }
+
+    if (!resolvedBank && !allowUnrecognized) {
+      this.logger.warn(
+        `Payment QR rejected reason=${failureReason} format=${qrTrace.format} fingerprint=${qrTrace.fingerprint} bank=${paymentInfo?.bankIdentifier ?? 'missing'} account=${maskAccountNumber(accountNumber)}`,
+      );
+      throw new UnprocessableEntityException({
+        code: PAYMENT_QR_INFO_NOT_FOUND_CODE,
+        message: PAYMENT_QR_INFO_NOT_FOUND_MESSAGE,
+        reason: failureReason,
+      });
+    }
+
+    if (resolvedBank) {
+      this.assignPaymentBank(user, resolvedBank);
+    } else {
+      this.logger.warn(
+        `Payment QR saved without detected bank reason=${failureReason} fingerprint=${qrTrace.fingerprint} action=preserve_existing_bank_profile`,
+      );
+    }
+
+    user.paymentQrImageContentType = file.mimetype;
+    user.paymentQrImageData = file.buffer;
+    user.paymentQrImageSize = file.size;
+    user.paymentQrImageUpdatedAt = new Date();
+
+    await user.save();
+
+    this.logger.log(
+      `Payment QR saved fingerprint=${qrTrace.fingerprint} detectionSource=${resolvedBank ? 'bank_from_qr' : 'image_only'} bank=${resolvedBank?.shortName ?? user.bankName ?? 'unchanged'} manualAccountPreserved=true`,
+    );
+
+    return {
+      ...this.toSafeUser(user),
+      paymentQrBankDetection: resolvedBank
+        ? {
+            bankBin: resolvedBank.bin,
+            bankLogoUrl: resolvedBank.logo,
+            bankName: resolvedBank.shortName,
+          }
+        : undefined,
+    };
   }
 
   async getPaymentQr(userId: string) {
@@ -246,6 +410,10 @@ export class UsersService {
       bio: user.bio,
       bankAccountName: user.bankAccountName,
       bankAccountNumber: user.bankAccountNumber,
+      bankName: user.bankName,
+      bankCode: user.bankCode,
+      bankBin: user.bankBin,
+      bankLogoUrl: user.bankLogoUrl,
       email: user.email,
       role: user.role,
       isEmailVerified: user.isEmailVerified,
@@ -268,7 +436,49 @@ export class UsersService {
     return user;
   }
 
+  private assignPaymentBank(user: UserDocument, bank: PaymentBank | null) {
+    user.bankName = bank?.shortName;
+    user.bankCode = bank?.code;
+    user.bankBin = bank?.bin;
+    user.bankLogoUrl = bank?.logo;
+  }
+
   private getPasswordSaltRounds() {
     return this.configService.get<number>('security.passwordSaltRounds') ?? 12;
   }
+}
+
+function isValidQrAccountIdentifier(value?: string) {
+  return Boolean(value?.match(/^[a-z0-9]{3,19}$/i));
+}
+
+function createPaymentQrTrace(rawValue?: string) {
+  const value = rawValue?.trim() ?? '';
+  const format = !value
+    ? 'missing'
+    : value.startsWith('000201')
+      ? 'vietqr_emv'
+      : /^https?:\/\//i.test(value)
+        ? 'url'
+        : 'unknown';
+
+  return {
+    fingerprint: value
+      ? createHash('sha256').update(value).digest('hex').slice(0, 12)
+      : 'none',
+    format,
+    length: value.length,
+  };
+}
+
+function maskAccountNumber(value?: string) {
+  const normalized = value?.replace(/[\s-]/g, '') ?? '';
+
+  if (!normalized) {
+    return 'missing';
+  }
+
+  return normalized.length <= 4
+    ? '*'.repeat(normalized.length)
+    : `${'*'.repeat(Math.min(8, normalized.length - 4))}${normalized.slice(-4)}`;
 }

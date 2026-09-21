@@ -85,6 +85,24 @@ export const INVOICE_DYNAMIC_FIELDS = [
     previewValue: 'Hà Nội',
   },
   {
+    key: 'teacher.bankName',
+    label: 'Bank Name',
+    category: 'TEACHER',
+    previewValue: 'Vietcombank',
+  },
+  {
+    key: 'teacher.bankAccountName',
+    label: 'Bank Account Name',
+    category: 'TEACHER',
+    previewValue: 'NGUYEN VAN A',
+  },
+  {
+    key: 'teacher.bankAccountNumber',
+    label: 'Bank Account Number',
+    category: 'TEACHER',
+    previewValue: '0000000000',
+  },
+  {
     key: 'invoice.invoiceCode',
     label: 'Invoice Code',
     category: 'INVOICE',

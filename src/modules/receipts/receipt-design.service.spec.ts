@@ -64,6 +64,7 @@ describe('receipt template selection and snapshots', () => {
   it('fills regions from real multi-class receipt data and embeds built-in assets and QR', async () => {
     const snapshot = await service.resolve('teacher');
     const qr = 'data:image/png;base64,AA==';
+    const bankLogo = 'data:image/png;base64,AQID';
     const html = service.render(
       {
         ...PREVIEW_RECEIPT,
@@ -73,6 +74,7 @@ describe('receipt template selection and snapshots', () => {
       },
       snapshot,
       qr,
+      bankLogo,
     );
     const $ = load(html);
     expect($.text()).toContain('Student <unsafe>');
@@ -84,6 +86,27 @@ describe('receipt template selection and snapshots', () => {
       /^data:image\/svg\+xml/,
     );
     expect($('.qr img').attr('src')).toBe(qr);
+    expect($('.bank-logo').attr('src')).toBe(bankLogo);
+    expect($('.payment-bank-line')).toHaveLength(1);
+    expect($('.payment-bank-line').text()).toContain('Vietcombank');
+  });
+
+  it('adds bank information to older custom templates without a payment region', async () => {
+    templates.findOne.mockResolvedValue({
+      ...SYSTEM_INVOICE_TEMPLATE,
+      html: `<main class="old-template"><div class="payment-card"><h3>Thông tin thanh toán</h3><div class="payment-line"><span>Tên tài khoản:</span><strong data-edutrack-field="teacher.bankAccountName">Chủ tài khoản</strong></div><div class="payment-line"><span>Số tài khoản:</span><strong data-edutrack-field="teacher.bankAccountNumber">0000000000</strong></div></div></main>`,
+      css: '.payment-line { display: grid; grid-template-columns: 110px 1fr; }',
+    });
+    const snapshot = await service.resolve('teacher', 'old-template');
+    const bankLogo = 'data:image/png;base64,AQID';
+    const html = service.render(PREVIEW_RECEIPT, snapshot, undefined, bankLogo);
+    const $ = load(html);
+
+    expect($('.payment-bank-line')).toHaveLength(1);
+    expect($('.payment-bank-line').text()).toContain('Vietcombank');
+    expect($('.bank-logo').attr('src')).toBe(bankLogo);
+    expect($('.bank-logo').attr('width')).toBe('26');
+    expect($('.payment-line').first().hasClass('payment-bank-line')).toBe(true);
   });
 
   it('marks one-on-one lessons in receipt previews and issued template HTML', async () => {

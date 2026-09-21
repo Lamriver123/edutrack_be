@@ -31,6 +31,18 @@ export class User {
   @Prop({ trim: true, maxlength: 50 })
   bankAccountNumber?: string;
 
+  @Prop({ trim: true, maxlength: 120 })
+  bankName?: string;
+
+  @Prop({ trim: true, maxlength: 30 })
+  bankCode?: string;
+
+  @Prop({ trim: true, maxlength: 20 })
+  bankBin?: string;
+
+  @Prop({ trim: true, maxlength: 500 })
+  bankLogoUrl?: string;
+
   @Prop({ type: Buffer, select: false })
   paymentQrImageData?: Buffer;
 

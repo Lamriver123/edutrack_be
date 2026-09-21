@@ -18,7 +18,7 @@ export class ReceiptPdfService {
     html: string,
     receipt: Record<string, any>,
     paymentQrDataUrl?: string,
-    options: { requireHtml?: boolean } = {},
+    options: { bankLogoDataUrl?: string; requireHtml?: boolean } = {},
   ) {
     const browserAutomation = await this.tryLoadBrowserAutomation();
 
@@ -31,7 +31,11 @@ export class ReceiptPdfService {
         );
       } catch (error) {
         if (options.requireHtml) throw error;
-        return this.renderFallbackPdf(receipt, paymentQrDataUrl);
+        return this.renderFallbackPdf(
+          receipt,
+          paymentQrDataUrl,
+          options.bankLogoDataUrl,
+        );
       }
     }
 
@@ -40,7 +44,11 @@ export class ReceiptPdfService {
         'Không có trình kết xuất HTML/PDF. Vui lòng cấu hình Chromium rồi tạo lại PDF để giữ đúng mẫu đã chọn.',
       );
     }
-    return this.renderFallbackPdf(receipt, paymentQrDataUrl);
+    return this.renderFallbackPdf(
+      receipt,
+      paymentQrDataUrl,
+      options.bankLogoDataUrl,
+    );
   }
 
   private async renderWithBrowser(
@@ -252,11 +260,17 @@ export class ReceiptPdfService {
   private async renderFallbackPdf(
     receipt: Record<string, any>,
     paymentQrDataUrl?: string,
+    bankLogoDataUrl?: string,
   ) {
     const PDFDocument = await this.tryLoadPdfKit();
 
     if (PDFDocument) {
-      return this.renderPdfKitReceipt(PDFDocument, receipt, paymentQrDataUrl);
+      return this.renderPdfKitReceipt(
+        PDFDocument,
+        receipt,
+        paymentQrDataUrl,
+        bankLogoDataUrl,
+      );
     }
 
     return this.renderBasicFallbackPdf(receipt);
@@ -276,6 +290,7 @@ export class ReceiptPdfService {
     PDFDocument: any,
     receipt: Record<string, any>,
     paymentQrDataUrl?: string,
+    bankLogoDataUrl?: string,
   ) {
     return new Promise<Buffer>((resolve, reject) => {
       const doc = new PDFDocument({
@@ -294,7 +309,13 @@ export class ReceiptPdfService {
       doc.on('error', reject);
 
       const fonts = this.registerVietnameseFonts(doc);
-      this.drawPdfKitReceipt(doc, receipt, paymentQrDataUrl, fonts);
+      this.drawPdfKitReceipt(
+        doc,
+        receipt,
+        paymentQrDataUrl,
+        bankLogoDataUrl,
+        fonts,
+      );
       doc.end();
     });
   }
@@ -337,6 +358,7 @@ export class ReceiptPdfService {
     doc: any,
     receipt: Record<string, any>,
     paymentQrDataUrl?: string,
+    bankLogoDataUrl?: string,
     fonts?: {
       boldFont: string;
       regularFont: string;
@@ -432,7 +454,7 @@ export class ReceiptPdfService {
       boldFont,
     });
     y += 40;
-    this.drawPaymentArea(doc, receipt, paymentQrDataUrl, y, {
+    this.drawPaymentArea(doc, receipt, paymentQrDataUrl, bankLogoDataUrl, y, {
       boldFont,
       left,
       regularFont,
@@ -764,6 +786,7 @@ export class ReceiptPdfService {
     doc: any,
     receipt: Record<string, any>,
     paymentQrDataUrl: string | undefined,
+    bankLogoDataUrl: string | undefined,
     y: number,
     options: {
       boldFont: string;
@@ -841,22 +864,44 @@ export class ReceiptPdfService {
       .text('THÔNG TIN THANH TOÁN', infoX, y + 10, {
         align: 'center',
         width: widths[1] - 24,
-      })
+      });
+
+    let bankTextX = infoX;
+    let bankTextWidth = widths[1] - 24;
+    const bankLogoBuffer = bankLogoDataUrl
+      ? this.dataUrlToBuffer(bankLogoDataUrl)
+      : null;
+
+    if (bankLogoBuffer) {
+      try {
+        doc.image(bankLogoBuffer, infoX, y + 28, { fit: [18, 18] });
+        bankTextX += 24;
+        bankTextWidth -= 24;
+      } catch {
+        // Keep the bank name visible when PDFKit cannot decode the logo.
+      }
+    }
+
+    doc
       .font(options.regularFont)
-      .fontSize(8)
+      .fontSize(7.5)
       .fillColor('#1f2937')
+      .text(
+        `Ngân hàng: ${receipt.teacherSnapshot?.bankName || 'Chưa cập nhật'}`,
+        bankTextX,
+        y + 31,
+        { width: bankTextWidth },
+      )
       .text(
         `Tên tài khoản: ${receipt.teacherSnapshot?.bankAccountName || receipt.teacherSnapshot?.fullName || 'Chưa cập nhật'}`,
         infoX,
-        y + 34,
-        {
-          width: widths[1] - 24,
-        },
+        y + 49,
+        { width: widths[1] - 24 },
       )
       .text(
         `Số tài khoản: ${receipt.teacherSnapshot?.bankAccountNumber || 'Chưa cập nhật'}`,
         infoX,
-        y + 52,
+        y + 65,
         {
           width: widths[1] - 24,
         },
@@ -864,16 +909,17 @@ export class ReceiptPdfService {
       .text(
         `Liên hệ: ${receipt.teacherSnapshot?.phone || receipt.teacherSnapshot?.email || 'Chưa cập nhật'}`,
         infoX,
-        y + 70,
+        y + 81,
         {
           width: widths[1] - 24,
         },
       )
       .text(
-        `Ghi chú: ${receipt.paymentNote || 'Vui lòng ghi nội dung chuyển khoản theo mã hóa đơn.'}`,
+        `Ghi chú: ${receipt.paymentNote || 'Nếu có thắc mắc gì vui lòng liên hệ giáo viên.'}`,
         infoX,
-        y + 88,
+        y + 97,
         {
+          height: 22,
           width: widths[1] - 24,
         },
       );

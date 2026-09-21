@@ -338,6 +338,20 @@ export const RECEIPT_TEMPLATE_CSS = `
       font-weight: 800;
     }
     .payment-line:last-child { border-bottom: 0; }
+    .payment-bank-line { align-items: center; }
+    .payment-bank-value {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      gap: 7px;
+    }
+    .payment-bank-value span { min-width: 0; }
+    .bank-logo {
+      width: 50px;
+      height: 50px;
+      flex: 0 0 50px;
+      object-fit: contain;
+    }
     .qr {
       display: grid;
       height: 132px;

@@ -9,6 +9,10 @@ export type SafeUser = {
   bio?: string;
   bankAccountName?: string;
   bankAccountNumber?: string;
+  bankName?: string;
+  bankCode?: string;
+  bankBin?: string;
+  bankLogoUrl?: string;
   email: string;
   role: UserRole;
   isEmailVerified: boolean;

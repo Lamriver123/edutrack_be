@@ -85,6 +85,7 @@ export class ReceiptDesignService {
     receipt: Record<string, unknown>,
     template: ReceiptTemplateSnapshot,
     qr?: string,
+    bankLogo?: string,
   ) {
     const sessions = Array.isArray(receipt.sessions)
       ? receipt.sessions.map(record)
@@ -138,6 +139,7 @@ export class ReceiptDesignService {
         receipt,
         { html, css: template.css },
         qr,
+        bankLogo,
       ),
     );
   }

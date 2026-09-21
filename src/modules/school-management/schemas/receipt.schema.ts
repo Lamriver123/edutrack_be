@@ -77,6 +77,18 @@ export class ReceiptTeacherSnapshot {
   @Prop({ trim: true })
   bankAccountNumber?: string;
 
+  @Prop({ trim: true })
+  bankName?: string;
+
+  @Prop({ trim: true })
+  bankCode?: string;
+
+  @Prop({ trim: true })
+  bankBin?: string;
+
+  @Prop({ trim: true })
+  bankLogoUrl?: string;
+
   @Prop({ default: false })
   hasPaymentQr: boolean;
 }
