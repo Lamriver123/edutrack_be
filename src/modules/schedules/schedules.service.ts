@@ -214,16 +214,19 @@ export class SchedulesService {
           .exec(),
       ]);
 
-    const events = this.attachSessionContent(
-      this.applyTemporarySchedules(
-        this.buildFixedEvents(days, fixedSchedules, classMap, colorMap),
-        temporarySchedules,
-        classMap,
-        colorMap,
-        weekStart,
-        weekEndExclusive,
-      ),
+    const eventsWithScheduleSources = this.applyTemporarySchedules(
+      this.buildFixedEvents(days, fixedSchedules, classMap, colorMap),
+      temporarySchedules,
+      classMap,
+      colorMap,
+      weekStart,
+      weekEndExclusive,
+    );
+    const events = this.appendStandaloneClassSessions(
+      this.attachSessionContent(eventsWithScheduleSources, classSessions),
       classSessions,
+      classMap,
+      colorMap,
     );
 
     return {

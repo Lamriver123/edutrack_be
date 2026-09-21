@@ -249,4 +249,48 @@ describe('Teacher calendar source exclusion', () => {
       jest.useRealTimers();
     }
   });
+
+  it('keeps standalone class sessions visible in the teacher week calendar', async () => {
+    const teacherId = new Types.ObjectId().toString();
+    const classId = new Types.ObjectId();
+    const sessionId = new Types.ObjectId();
+    const service = new SchedulesService(
+      model([
+        {
+          _id: classId,
+          name: 'Lớp đã điểm danh',
+          colorIndex: 1,
+          colorHex: '#0f766e',
+        },
+      ]),
+      model([]),
+      model([]),
+      model([
+        {
+          _id: sessionId,
+          classId,
+          date: new Date('2026-09-07T00:00:00+07:00'),
+          timeStorage: 'vietnam',
+          startTime: '11:11',
+          endTime: '13:00',
+          scheduleType: 'extra',
+        },
+      ]),
+    );
+
+    const result = await service.getTeacherWeekSchedule(teacherId, {
+      weekStart: '2026-09-07',
+    });
+
+    expect(result.events).toHaveLength(1);
+    expect(result.events[0]).toMatchObject({
+      id: `session:${sessionId.toString()}:2026-09-07:11:11:13:00`,
+      classId: classId.toString(),
+      className: 'Lớp đã điểm danh',
+      date: '2026-09-07',
+      startTime: '11:11',
+      endTime: '13:00',
+      type: 'extra',
+    });
+  });
 });
