@@ -38,7 +38,9 @@ import { TakeAttendanceDto } from './dto/take-attendance.dto';
 import { CreateExamDto } from './dto/create-exam.dto';
 import { UpdateExamDto } from './dto/update-exam.dto';
 import { TakeExamScoresBatchDto } from './dto/take-exam-scores-batch.dto';
-
+import { SuspendFixedScheduleDto } from './dto/suspend-fixed-schedule.dto';
+import { ResumeFixedScheduleDto } from './dto/resume-fixed-schedule.dto';
+import { UpdateEnrollmentStatusDto } from './dto/update-enrollment-status.dto';
 @Controller('classes')
 @UseGuards(JwtAuthGuard)
 export class ClassesController {
@@ -114,6 +116,33 @@ export class ClassesController {
     @Body() dto: CreateFixedScheduleDto,
   ) {
     return this.classesService.saveFixedSchedule(user.userId, classId, dto);
+  }
+
+  @Post(':classId/schedules/fixed/suspend-preview')
+  previewSuspendFixedSchedule(
+    @CurrentUser() user: JwtUser,
+    @Param('classId') classId: string,
+    @Body() dto: SuspendFixedScheduleDto,
+  ) {
+    return this.classesService.previewSuspendFixedSchedule(user.userId, classId, dto.suspendFrom);
+  }
+
+  @Post(':classId/schedules/fixed/suspend')
+  suspendFixedSchedule(
+    @CurrentUser() user: JwtUser,
+    @Param('classId') classId: string,
+    @Body() dto: SuspendFixedScheduleDto,
+  ) {
+    return this.classesService.suspendFixedSchedule(user.userId, classId, dto);
+  }
+
+  @Post(':classId/schedules/fixed/resume')
+  resumeFixedSchedule(
+    @CurrentUser() user: JwtUser,
+    @Param('classId') classId: string,
+    @Body() dto: ResumeFixedScheduleDto,
+  ) {
+    return this.classesService.resumeFixedSchedule(user.userId, classId, dto);
   }
 
   @Post(':classId/schedules/temporary')
@@ -215,6 +244,34 @@ export class ClassesController {
       user.userId,
       classId,
       dto.studentIds,
+    );
+  }
+
+  @Patch(':classId/students/:studentId/status')
+  updateStudentEnrollmentStatus(
+    @CurrentUser() user: JwtUser,
+    @Param('classId') classId: string,
+    @Param('studentId') studentId: string,
+    @Body() dto: UpdateEnrollmentStatusDto,
+  ) {
+    return this.classesService.updateStudentEnrollmentStatus(
+      user.userId,
+      classId,
+      studentId,
+      dto,
+    );
+  }
+
+  @Delete(':classId/students/:studentId/hard')
+  hardDeleteStudentFromClass(
+    @CurrentUser() user: JwtUser,
+    @Param('classId') classId: string,
+    @Param('studentId') studentId: string,
+  ) {
+    return this.classesService.hardDeleteStudentFromClass(
+      user.userId,
+      classId,
+      studentId,
     );
   }
 

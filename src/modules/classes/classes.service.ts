@@ -84,6 +84,9 @@ import { TakeAttendanceBatchDto } from './dto/take-attendance-batch.dto';
 import { CreateExamDto } from './dto/create-exam.dto';
 import { UpdateExamDto } from './dto/update-exam.dto';
 import { TakeExamScoresBatchDto } from './dto/take-exam-scores-batch.dto';
+import { SuspendFixedScheduleDto } from './dto/suspend-fixed-schedule.dto';
+import { ResumeFixedScheduleDto } from './dto/resume-fixed-schedule.dto';
+import { UpdateEnrollmentStatusDto } from './dto/update-enrollment-status.dto';
 import { resolveAttendanceTuition } from './attendance-tuition';
 
 const DEFAULT_CLASS_IMAGE_URL =
@@ -153,6 +156,7 @@ export type ClassDetailResponse = ClassResponse & {
 export type ClassScheduleOverviewResponse = {
   fixedSchedules: LatestFixedScheduleResponse[];
   latestFixedSchedule: LatestFixedScheduleResponse | null;
+  isFixedScheduleSuspended: boolean;
   temporarySchedules: ScheduleOverrideResponse[];
 };
 
@@ -614,7 +618,7 @@ export class ClassesService {
           teacherId: teacherObjectId,
           classId: classroom._id,
         })
-        .sort({ effectiveFrom: -1, version: -1 })
+        .sort({ version: -1 })
         .lean<LeanScheduleVersion[]>()
         .exec(),
       this.scheduleOverrideModel
@@ -630,9 +634,14 @@ export class ClassesService {
       this.toLatestFixedScheduleResponse(schedule),
     );
 
+    const latestFixedSchedule = fixedScheduleResponses[0] ?? null;
+    const isFixedScheduleSuspended =
+      latestFixedSchedule !== null && latestFixedSchedule.effectiveTo != null;
+
     return {
       fixedSchedules: fixedScheduleResponses,
-      latestFixedSchedule: fixedScheduleResponses[0] ?? null,
+      latestFixedSchedule,
+      isFixedScheduleSuspended,
       temporarySchedules: temporarySchedules.map((schedule) =>
         this.toScheduleOverrideResponse(schedule),
       ),
@@ -737,6 +746,149 @@ export class ClassesService {
       }
       throw error;
     }
+  }
+
+  async suspendFixedSchedule(
+    teacherId: string,
+    classId: string,
+    dto: SuspendFixedScheduleDto,
+  ) {
+    return this.scheduleConflicts.withTeacherWrite(teacherId, async () => {
+      const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
+      const classroom = await this.findClassForTeacherOrThrow(
+        teacherId,
+        classId,
+      );
+      
+      const suspendFrom = this.parseDate(dto.suspendFrom, 'Ngày bắt đầu tạm hoãn');
+
+      const activeVersion = await this.scheduleVersionModel
+        .findOne({
+          teacherId: teacherObjectId,
+          classId: classroom._id,
+          effectiveTo: null,
+        })
+        .exec();
+
+      if (!activeVersion) {
+        throw new BadRequestException('Không có lịch cố định nào đang hoạt động để tạm hoãn.');
+      }
+
+      // Lấy danh sách lịch tạm thời nằm trong hoặc sau ngày bắt đầu tạm hoãn
+      const orphanedOverrides = await this.scheduleOverrideModel.find({
+        teacherId: teacherObjectId,
+        classId: classroom._id,
+        $or: [
+          { originalDate: { $gte: suspendFrom } },
+          { newDate: { $gte: suspendFrom } }
+        ]
+      }).exec();
+
+      if (orphanedOverrides.length > 0) {
+        // Xoá tự động các lịch tạm bơ vơ
+        await this.scheduleOverrideModel.deleteMany({
+          _id: { $in: orphanedOverrides.map(o => o._id) }
+        }).exec();
+      }
+
+      activeVersion.effectiveTo = this.getPreviousMoment(suspendFrom);
+      await activeVersion.save();
+
+      return this.toLatestFixedScheduleResponse(activeVersion);
+    });
+  }
+
+  async previewSuspendFixedSchedule(teacherId: string, classId: string, suspendFromDate: string) {
+    const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
+    const classroom = await this.findClassForTeacherOrThrow(teacherId, classId);
+    const suspendFrom = this.parseDate(suspendFromDate, 'Ngày bắt đầu tạm hoãn');
+
+    const orphanedOverrides = await this.scheduleOverrideModel.find({
+      teacherId: teacherObjectId,
+      classId: classroom._id,
+      $or: [
+        { originalDate: { $gte: suspendFrom } },
+        { newDate: { $gte: suspendFrom } }
+      ]
+    }).lean().exec();
+
+    return {
+      orphanedOverrides: orphanedOverrides.map(o => this.toScheduleOverrideResponse(o))
+    };
+  }
+
+  async resumeFixedSchedule(teacherId: string, classId: string, dto: ResumeFixedScheduleDto) {
+    return this.scheduleConflicts.withTeacherWrite(teacherId, async () => {
+      const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
+      const classroom = await this.findClassForTeacherOrThrow(
+        teacherId,
+        classId,
+      );
+
+      const latestSuspendedVersion = await this.scheduleVersionModel
+        .findOne({
+          teacherId: teacherObjectId,
+          classId: classroom._id,
+        })
+        .sort({ version: -1 })
+        .exec();
+
+      if (!latestSuspendedVersion) {
+        throw new BadRequestException('Không tìm thấy lịch cố định.');
+      }
+
+      if (latestSuspendedVersion.effectiveTo == null) {
+        throw new BadRequestException('Lớp học đang có lịch cố định hoạt động.');
+      }
+
+      const resumeFrom = this.parseDate(dto.resumeFrom, 'Ngày khôi phục');
+
+      if (resumeFrom < latestSuspendedVersion.effectiveTo) {
+        throw new BadRequestException('Ngày khôi phục phải từ hoặc sau ngày tạm hoãn.');
+      }
+
+      const schedules = latestSuspendedVersion.schedules.map((s) => {
+        if (latestSuspendedVersion.timeStorage === 'utc') {
+          const start = convertUtcWeeklyTimeToVietnam(s.dayOfWeek, s.startTime);
+          return {
+            dayOfWeek: start.dayOfWeek,
+            startTime: start.time,
+            endTime: convertUtcTimeToVietnam(s.endTime)!,
+          };
+        }
+        return {
+          dayOfWeek: s.dayOfWeek,
+          startTime: s.startTime,
+          endTime: s.endTime,
+        };
+      });
+
+      const check = await this.scheduleConflicts.checkFixed(
+        teacherId,
+        classId,
+        { effectiveFrom: dto.resumeFrom, schedules }
+      );
+      this.scheduleConflicts.assertAvailable(check);
+
+      // We clone the schedules and create a new version
+      const newVersion = new this.scheduleVersionModel({
+        teacherId: teacherObjectId,
+        classId: classroom._id,
+        version: latestSuspendedVersion.version + 1,
+        effectiveFrom: resumeFrom,
+        effectiveTo: null,
+        schedules: latestSuspendedVersion.schedules.map((s) => ({
+          dayOfWeek: s.dayOfWeek,
+          startTime: s.startTime,
+          endTime: s.endTime,
+        })),
+        timeStorage: latestSuspendedVersion.timeStorage ?? 'utc',
+      });
+
+      await newVersion.save();
+
+      return this.toLatestFixedScheduleResponse(newVersion);
+    });
   }
 
   async createTemporarySchedule(
@@ -2415,7 +2567,7 @@ export class ClassesService {
         teacherId,
         classId: { $in: classIds },
       })
-      .sort({ effectiveFrom: -1, createdAt: -1 })
+      .sort({ version: -1 })
       .lean<LeanScheduleVersion[]>()
       .exec();
 
@@ -2442,7 +2594,7 @@ export class ClassesService {
         teacherId,
         classId,
       })
-      .sort({ effectiveFrom: -1, createdAt: -1 })
+      .sort({ version: -1 })
       .lean<LeanScheduleVersion>()
       .exec();
 
@@ -2664,6 +2816,102 @@ export class ClassesService {
     endTime: string,
   ) {
     return `${classId}:${date}:${startTime}:${endTime}`;
+  }
+
+  async updateStudentEnrollmentStatus(
+    teacherId: string,
+    classId: string,
+    studentId: string,
+    dto: UpdateEnrollmentStatusDto,
+  ) {
+    const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
+    const classObjectId = this.toObjectId(classId, 'classId');
+    const studentObjectId = this.toObjectId(studentId, 'studentId');
+
+    const enrollment = await this.enrollmentModel.findOne({
+      teacherId: teacherObjectId,
+      classId: classObjectId,
+      studentId: studentObjectId,
+    });
+
+    if (!enrollment) {
+      throw new NotFoundException('Không tìm thấy học sinh trong lớp này.');
+    }
+
+    if (enrollment.status === dto.status) {
+      return this.getEnrollmentDetail(enrollment);
+    }
+
+    enrollment.status = dto.status;
+
+    if (dto.status === EnrollmentStatus.Inactive) {
+      enrollment.leftAt = new Date();
+    } else {
+      enrollment.leftAt = undefined;
+    }
+
+    await enrollment.save();
+
+    return this.getEnrollmentDetail(enrollment);
+  }
+
+  private getEnrollmentDetail(enrollment: ClassEnrollmentDocument) {
+    return {
+      id: enrollment._id.toString(),
+      classId: enrollment.classId.toString(),
+      studentId: enrollment.studentId.toString(),
+      status: enrollment.status,
+      joinedAt: enrollment.joinedAt,
+      leftAt: enrollment.leftAt,
+    };
+  }
+
+  async hardDeleteStudentFromClass(
+    teacherId: string,
+    classId: string,
+    studentId: string,
+  ) {
+    const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
+    const classObjectId = this.toObjectId(classId, 'classId');
+    const studentObjectId = this.toObjectId(studentId, 'studentId');
+
+    const enrollment = await this.enrollmentModel.findOne({
+      teacherId: teacherObjectId,
+      classId: classObjectId,
+      studentId: studentObjectId,
+    });
+
+    if (!enrollment) {
+      throw new NotFoundException('Không tìm thấy học sinh trong lớp này.');
+    }
+
+    const hasAttendance = await this.attendanceModel.exists({
+      teacherId: teacherObjectId,
+      classId: classObjectId,
+      studentId: studentObjectId,
+    });
+
+    const hasTuition = await this.tuitionEntryModel.exists({
+      teacherId: teacherObjectId,
+      classId: classObjectId,
+      studentId: studentObjectId,
+    });
+
+    const hasExam = await this.examScoreModel.exists({
+      teacherId: teacherObjectId,
+      classId: classObjectId,
+      studentId: studentObjectId,
+    });
+
+    if (hasAttendance || hasTuition || hasExam) {
+      throw new BadRequestException(
+        'Không thể xóa vì học sinh đã có dữ liệu điểm danh, học phí hoặc điểm số. Vui lòng chọn "Cho nghỉ học" để giữ lại lịch sử.',
+      );
+    }
+
+    await this.enrollmentModel.deleteOne({ _id: enrollment._id }).exec();
+
+    return { message: 'Đã xóa hoàn toàn học sinh khỏi lớp.' };
   }
 
   // --- Exam Management ---
