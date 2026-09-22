@@ -110,6 +110,9 @@ export class User {
 
   @Prop({ type: Date })
   lastLoginAt?: Date;
+
+  @Prop({ type: [String], default: [] })
+  recentMediaUrls: string[];
 }
 
 export type UserDocument = HydratedDocument<User>;

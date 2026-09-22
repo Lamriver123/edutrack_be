@@ -142,6 +142,29 @@ export class UsersController {
     return this.usersService.removePaymentQr(user.userId);
   }
 
+  @Post('me/media')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB
+      },
+    }),
+  )
+  uploadMedia(
+    @CurrentUser() user: JwtUser,
+    @UploadedFile() file?: UploadImageFile,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Vui lòng chọn file để tải lên.');
+    }
+    return this.usersService.uploadMedia(user.userId, file);
+  }
+
+  @Get('me/media')
+  getMediaHistory(@CurrentUser() user: JwtUser) {
+    return this.usersService.getMediaHistory(user.userId);
+  }
+
   private assertImageFile(
     file: UploadImageFile | undefined,
     options: {

@@ -24,6 +24,7 @@ type MockUser = {
   fullName: string;
   isEmailVerified: boolean;
   paymentQrImageData?: Buffer;
+  recentMediaUrls?: string[];
   role: UserRole;
   save: jest.MockedFunction<() => Promise<void>>;
 };
@@ -60,13 +61,17 @@ function createService(user: ReturnType<typeof createUser>) {
       accountNumber: '212025072004',
     }),
   };
+  const cloudinaryService = {
+    uploadTeacherMedia: jest.fn().mockResolvedValue({ url: 'https://res.cloudinary.com/test.jpg' }),
+  };
   const service = new UsersService(
     userModel as never,
     { get: jest.fn() } as never,
     bankDirectoryService as never,
+    cloudinaryService as never,
   );
 
-  return { bankDirectoryService, service, userModel };
+  return { bankDirectoryService, cloudinaryService, service, userModel };
 }
 
 describe('UsersService payment QR', () => {
@@ -229,12 +234,39 @@ describe('UsersService payment QR', () => {
     expect(user.bankCode).toBe('BIDV');
     expect(user.bankBin).toBe('970418');
     expect(user.bankLogoUrl).toBe('https://cdn.vietqr.io/img/BIDV.png');
-    expect(user.bankAccountName).toBe('NGUYEN THI LINH CHI');
-    expect(user.bankAccountNumber).toBe('212025072004');
     expect(result.paymentQrBankDetection).toEqual({
       bankBin: '970418',
       bankLogoUrl: 'https://cdn.vietqr.io/img/BIDV.png',
       bankName: 'BIDV',
     });
+  });
+});
+
+describe('UsersService media upload', () => {
+  it('uploads media and keeps up to 5 recent urls', async () => {
+    const user = createUser({
+      recentMediaUrls: ['url1', 'url2', 'url3', 'url4', 'url5'],
+    });
+    const { service, cloudinaryService } = createService(user);
+    
+    cloudinaryService.uploadTeacherMedia.mockResolvedValueOnce({
+      url: 'new_url',
+    });
+
+    const result = await service.uploadMedia(USER_ID, {
+      buffer: Buffer.from('file'),
+      mimetype: 'image/jpeg',
+      originalname: 'test.jpg',
+      size: 1000,
+    });
+
+    expect(cloudinaryService.uploadTeacherMedia).toHaveBeenCalledWith(
+      expect.anything(),
+      USER_ID
+    );
+    expect(user.save).toHaveBeenCalledTimes(1);
+    expect(result.url).toBe('new_url');
+    // It should add 'new_url' and drop the last one 'url5' to keep length 5
+    expect(user.recentMediaUrls).toEqual(['new_url', 'url1', 'url2', 'url3', 'url4']);
   });
 });

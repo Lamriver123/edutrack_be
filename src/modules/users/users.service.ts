@@ -10,7 +10,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { createHash } from 'node:crypto';
 import { Model, Types } from 'mongoose';
-import type { UploadImageFile } from '../cloudinary/cloudinary.service';
+import { CloudinaryService, type UploadImageFile } from '../cloudinary/cloudinary.service';
 import {
   BankDirectoryService,
   type PaymentBank,
@@ -43,6 +43,7 @@ export class UsersService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly configService: ConfigService,
     private readonly bankDirectoryService: BankDirectoryService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   normalizeEmail(email: string) {
@@ -398,6 +399,29 @@ export class UsersService {
     }
 
     return this.toSafeUser(user);
+  }
+
+  async uploadMedia(userId: string, file: UploadImageFile) {
+    const user = await this.findByIdOrThrow(userId);
+    const result = await this.cloudinaryService.uploadTeacherMedia(file, userId);
+    
+    // Thêm URL mới vào đầu mảng và giữ tối đa 5 phần tử
+    const currentUrls = user.recentMediaUrls || [];
+    user.recentMediaUrls = [result.url, ...currentUrls.filter(u => u !== result.url)].slice(0, 5);
+    
+    await user.save();
+    
+    return {
+      url: result.url,
+      recentMediaUrls: user.recentMediaUrls
+    };
+  }
+
+  async getMediaHistory(userId: string) {
+    const user = await this.findByIdOrThrow(userId);
+    return {
+      recentMediaUrls: user.recentMediaUrls || []
+    };
   }
 
   toSafeUser(user: UserDocument): SafeUser {
