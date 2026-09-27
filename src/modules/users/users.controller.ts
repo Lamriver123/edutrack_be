@@ -34,15 +34,12 @@ const PAYMENT_QR_MIME_TYPES = new Set([
   'image/webp',
 ]);
 
-import { EventEmitter2 } from '@nestjs/event-emitter';
-
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly cloudinaryService: CloudinaryService,
-    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @Get('me')
@@ -166,42 +163,6 @@ export class UsersController {
   @Get('me/media')
   getMediaHistory(@CurrentUser() user: JwtUser) {
     return this.usersService.getMediaHistory(user.userId);
-  }
-
-  @Post('me/push-subscription')
-  addPushSubscription(
-    @CurrentUser() user: JwtUser,
-    @Body()
-    subscription: { endpoint: string; keys?: { p256dh: string; auth: string } },
-  ) {
-    if (!subscription || !subscription.endpoint) {
-      throw new BadRequestException('Invalid subscription payload');
-    }
-    return this.usersService.addPushSubscription(user.userId, subscription);
-  }
-
-  @Post('me/push-subscription/test')
-  testPushSubscription(@CurrentUser() user: JwtUser) {
-    this.eventEmitter.emit('notification.push', {
-      userId: user.userId,
-      payload: {
-        title: 'Test thông báo EduTrack!',
-        body: 'Hệ thống thông báo đang hoạt động rất tốt!',
-        url: '/dashboard',
-      },
-    });
-    return { message: 'Đã gửi thông báo test' };
-  }
-
-  @Delete('me/push-subscription')
-  removePushSubscription(
-    @CurrentUser() user: JwtUser,
-    @Body('endpoint') endpoint: string,
-  ) {
-    if (!endpoint) {
-      throw new BadRequestException('Endpoint is required');
-    }
-    return this.usersService.removePushSubscription(user.userId, endpoint);
   }
 
   private assertImageFile(

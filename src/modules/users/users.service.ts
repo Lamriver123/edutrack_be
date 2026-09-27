@@ -20,6 +20,7 @@ import {
 } from './bank-directory.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LookupBankAccountDto } from './dto/lookup-bank-account.dto';
+import { PushSubscriptionDto } from './dto/push-subscription.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
   PAYMENT_QR_INFO_NOT_FOUND_CODE,
@@ -433,39 +434,66 @@ export class UsersService {
     };
   }
 
-  async addPushSubscription(
-    userId: string,
-    subscription: { endpoint: string; keys?: { p256dh: string; auth: string } },
-  ) {
+  async getPushSubscriptions(userId: string) {
     const user = await this.userModel
       .findById(userId)
-      .select('+pushSubscriptions')
+      .select('_id +pushSubscriptions')
       .exec();
     if (!user)
       throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
+    return user.pushSubscriptions ?? [];
+  }
 
-    const subs = user.pushSubscriptions || [];
-    // Check if exists
-    const exists = subs.find((s) => s.endpoint === subscription.endpoint);
-    if (!exists) {
-      user.pushSubscriptions = [...subs, subscription];
-      await user.save();
-    }
+  async addPushSubscription(userId: string, subscription: PushSubscriptionDto) {
+    // Replace this endpoint in one atomic write: rotate keys, deduplicate old
+    // records, and preserve concurrently registered devices.
+    const result = await this.userModel
+      .updateOne(
+        { _id: userId },
+        [
+          {
+            $set: {
+              pushSubscriptions: {
+                $concatArrays: [
+                  {
+                    $filter: {
+                      input: { $ifNull: ['$pushSubscriptions', []] },
+                      as: 'subscription',
+                      cond: {
+                        $ne: ['$$subscription.endpoint', subscription.endpoint],
+                      },
+                    },
+                  },
+                  {
+                    $literal: [
+                      {
+                        endpoint: subscription.endpoint,
+                        keys: subscription.keys,
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ],
+        { updatePipeline: true },
+      )
+      .exec();
+    if (!result.matchedCount)
+      throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
     return { success: true };
   }
 
   async removePushSubscription(userId: string, endpoint: string) {
-    const user = await this.userModel
-      .findById(userId)
-      .select('+pushSubscriptions')
+    const result = await this.userModel
+      .updateOne(
+        { _id: userId },
+        { $pull: { pushSubscriptions: { endpoint } } },
+      )
       .exec();
-    if (!user)
+    if (!result.matchedCount)
       throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
-
-    user.pushSubscriptions = (user.pushSubscriptions || []).filter(
-      (s) => s.endpoint !== endpoint,
-    );
-    await user.save();
     return { success: true };
   }
 

@@ -5,6 +5,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { QueryTeacherWeekScheduleDto } from './dto/query-teacher-week-schedule.dto';
 import { SchedulesService } from './schedules.service';
 import { ScheduleConflictsService } from './schedule-conflicts.service';
+import { SchedulesCronService } from './schedules-cron.service';
 import {
   CheckFixedScheduleDto,
   CheckTemporaryScheduleDto,
@@ -17,7 +18,13 @@ export class SchedulesController {
   constructor(
     private readonly schedulesService: SchedulesService,
     private readonly conflicts: ScheduleConflictsService,
+    private readonly reminders: SchedulesCronService,
   ) {}
+
+  @Get('reminders/status')
+  getReminderStatus() {
+    return this.reminders.getStatus();
+  }
 
   @Post('conflicts/check-fixed')
   checkFixed(@CurrentUser() user: JwtUser, @Body() dto: CheckFixedScheduleDto) {

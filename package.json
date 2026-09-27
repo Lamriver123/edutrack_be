@@ -103,7 +103,7 @@
       ]
     },
     "transformIgnorePatterns": [
-      "node_modules/(?!@nestjs/mongoose/)"
+      "node_modules/(?!@nestjs/(mongoose|schedule|event-emitter|passport|jwt)/)"
     ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"

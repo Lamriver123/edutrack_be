@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron, CronExpression, Timeout } from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import {
@@ -9,15 +9,23 @@ import {
   ClassSessionDocument,
 } from '../school-management/schemas/class-session.schema';
 import { SessionStatus } from '../school-management/enums/session-status.enum';
-import { SchedulesService } from './schedules.service';
+import {
+  SchedulesService,
+  TeacherScheduleEventResponse,
+} from './schedules.service';
 import { convertVietnamTimeToUtc } from '../../common/utils/vietnam-time';
+import { PushReminderStore } from './push-reminder-store.service';
+
+const MINUTE = 60_000;
+const VIETNAM_OFFSET = 7 * 60 * MINUTE;
 
 @Injectable()
 export class SchedulesCronService {
   private readonly logger = new Logger(SchedulesCronService.name);
-  private notifiedPreClass = new Set<string>();
-  private notifiedAttendance = new Set<string>();
-  private lastClearedDateStr: string = '';
+  private running = false;
+  private lastStartedAt: string | null = null;
+  private lastCompletedAt: string | null = null;
+  private lastError: string | null = null;
 
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
@@ -25,122 +33,220 @@ export class SchedulesCronService {
     private readonly classSessionModel: Model<ClassSessionDocument>,
     private readonly eventEmitter: EventEmitter2,
     private readonly schedulesService: SchedulesService,
+    private readonly reminders: PushReminderStore,
   ) {}
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  getStatus() {
+    return {
+      running: this.running,
+      lastStartedAt: this.lastStartedAt,
+      lastCompletedAt: this.lastCompletedAt,
+      lastError: this.lastError,
+      serverTime: new Date().toISOString(),
+    };
+  }
+
+  @Timeout('initial-push-reminders', 5_000)
+  async scanAfterStartup() {
+    await this.handleCron();
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE, {
+    name: 'push-reminders',
+    waitForCompletion: true,
+  })
   async handleCron() {
-    this.logger.debug('Cron job triggered. Checking for teachers with push subscriptions...');
-    
-    // 1. Lấy tất cả giáo viên có đăng ký nhận thông báo
-    const teachers = await this.userModel
-      .find({ 'pushSubscriptions.0': { $exists: true } })
-      .exec();
-      
-    if (teachers.length === 0) {
-      this.logger.debug('No teachers found with push subscriptions. Exiting cron.');
-      return;
-    }
-
-    // Lấy giờ hiện tại theo giờ Việt Nam
+    // Also protects startup and manually invoked scans from overlapping this process.
+    if (this.running) return;
+    this.running = true;
     const now = new Date();
-    const vietnamTime = new Date(now.getTime() + 7 * 60 * 60 * 1000); // UTC+7
+    this.lastStartedAt = now.toISOString();
+    this.lastError = null;
+    let teacherCount = 0;
+    let sentCount = 0;
+    let failedCount = 0;
+    this.logger.log(`Push reminder scan started at ${this.lastStartedAt}`);
 
-    const year = vietnamTime.getUTCFullYear();
-    const month = String(vietnamTime.getUTCMonth() + 1).padStart(2, '0');
-    const date = String(vietnamTime.getUTCDate()).padStart(2, '0');
-    const todayStr = `${year}-${month}-${date}`;
-
-    const hour = String(vietnamTime.getUTCHours()).padStart(2, '0');
-    const minute = String(vietnamTime.getUTCMinutes()).padStart(2, '0');
-    const currentMinutes = this.timeToMinutes(`${hour}:${minute}`);
-
-    if (this.lastClearedDateStr !== todayStr) {
-      this.logger.debug(`New day detected (${todayStr}). Clearing in-memory notification sets.`);
-      this.notifiedPreClass.clear();
-      this.notifiedAttendance.clear();
-      this.lastClearedDateStr = todayStr;
-    }
-
-    for (const teacher of teachers) {
-      try {
-        const schedule = await this.schedulesService.getTeacherWeekSchedule(
-          teacher._id.toString(),
-          {
-            weekStart: todayStr,
-          },
-        );
-
-        const todayEvents = schedule.events.filter(
-          (e) => e.date === todayStr && e.type !== 'cancel' && !!e.startTime,
-        );
-
-        this.logger.debug(
-          `Cron run at ${hour}:${minute} (${currentMinutes} mins). Teacher ${teacher._id.toString()}: Found ${todayEvents.length} events today.`,
-        );
-
-        for (const event of todayEvents) {
-          const eventMinutes = this.timeToMinutes(event.startTime!);
-          const diffMins = eventMinutes - currentMinutes;
-
-          this.logger.debug(
-            `Event: ${event.className} at ${event.startTime} (${eventMinutes} mins) -> Diff: ${diffMins} mins`,
+    try {
+      const teachers = await this.userModel
+        .find({ 'pushSubscriptions.0': { $exists: true } })
+        .select('_id')
+        .exec();
+      teacherCount = teachers.length;
+      for (const teacher of teachers) {
+        try {
+          const events = await this.getNearbyEvents(
+            teacher._id.toString(),
+            new Date(),
           );
+          for (const event of events) {
+            if (event.type === 'cancel' || !event.startTime || !event.endTime)
+              continue;
+            const start = new Date(
+              `${event.date}T${event.startTime}:00+07:00`,
+            ).getTime();
+            const end = new Date(
+              `${event.date}T${event.endTime}:00+07:00`,
+            ).getTime();
+            const window = this.reminderWindow(start, end);
+            if (!window) continue;
+            const { kind } = window;
+            if (
+              kind === 'attendance' &&
+              (await this.isSessionFinished(teacher._id, event))
+            )
+              continue;
 
-          // Báo trước 30 phút (quét trong khoảng 25-30 phút để bù trừ độ trễ server)
-          const preClassKey = `${teacher._id.toString()}:${event.classId}:${todayStr}:${event.startTime}`;
-          if (diffMins > 25 && diffMins <= 30 && !this.notifiedPreClass.has(preClassKey)) {
-            this.notifiedPreClass.add(preClassKey);
-            this.logger.log(`Firing 30m push for ${event.classId}`);
-            this.eventEmitter.emit('notification.push', {
-              userId: teacher._id.toString(),
-              payload: {
-                title: 'Chuẩn bị đến giờ dạy!',
-                body: `Lớp ${event.className} sẽ bắt đầu lúc ${event.startTime} (tầm ${diffMins} phút nữa).`,
-                url: `/dashboard/classes/${event.classId}`,
-              },
-            });
-          }
-
-          // Trễ 10 phút chưa điểm danh (quét trong khoảng trễ 10-15 phút)
-          const attendanceKey = `${teacher._id.toString()}:${event.classId}:${todayStr}:${event.startTime}`;
-          if (diffMins >= -15 && diffMins <= -10 && !this.notifiedAttendance.has(attendanceKey)) {
-            const sourceKey = `${event.classId}:${event.date}:${convertVietnamTimeToUtc(event.startTime!)}:${convertVietnamTimeToUtc(event.endTime!)}`;
-            const session = await this.classSessionModel
-              .findOne({
-                teacherId: teacher._id,
-                sourceKey,
-              })
-              .exec();
-
-            // Nếu session chưa được tạo hoặc trạng thái chưa hoàn thành -> Chưa điểm danh
-            if (!session || session.status !== SessionStatus.Completed) {
-              this.notifiedAttendance.add(attendanceKey);
-              this.logger.log(
-                `Firing -10m attendance push for ${event.classId}`,
-              );
-              this.eventEmitter.emit('notification.push', {
-                userId: teacher._id.toString(),
-                payload: {
-                  title: 'Nhắc nhở điểm danh',
-                  body: `Lớp ${event.className} đã bắt đầu được ${-diffMins} phút. Thầy/Cô nhớ điểm danh nhé!`,
-                  url: `/dashboard/classes/${event.classId}?tab=attendance`,
+            const key = `${teacher._id.toString()}:${event.classId}:${event.date}:${event.startTime}:${event.endTime}:${kind}`;
+            const token = await this.reminders.claim(key, new Date());
+            if (!token) continue;
+            let sent = false;
+            try {
+              // Database/calendar lookups can span the boundary of a reminder window.
+              const deliveryWindow = this.reminderWindow(start, end);
+              if (deliveryWindow?.kind !== kind) continue;
+              const { minutesUntilStart } = deliveryWindow;
+              // No listener or all gateway failures must remain retryable.
+              const results: unknown[] = await this.eventEmitter.emitAsync(
+                'notification.push',
+                {
+                  userId: teacher._id.toString(),
+                  payload: {
+                    title:
+                      kind === 'pre-class'
+                        ? 'Chuẩn bị đến giờ dạy!'
+                        : 'Nhắc nhở điểm danh',
+                    body:
+                      kind === 'pre-class'
+                        ? `Lớp ${event.className} sẽ bắt đầu lúc ${event.startTime} (còn ${Math.ceil(minutesUntilStart)} phút).`
+                        : `Lớp ${event.className} đã bắt đầu được ${Math.floor(-minutesUntilStart)} phút. Thầy/Cô nhớ điểm danh nhé!`,
+                    url: `/classes/${event.classId}${kind === 'attendance' ? '?tab=attendance' : ''}`,
+                    tag: key,
+                  },
                 },
-              });
+              );
+              sent = results.some(
+                (result) =>
+                  typeof result === 'object' &&
+                  result !== null &&
+                  'sent' in result &&
+                  typeof result.sent === 'number' &&
+                  result.sent > 0,
+              );
+              if (sent) sentCount++;
+              else {
+                failedCount++;
+                this.lastError = 'push_delivery_failed';
+                this.logger.warn(
+                  `Push reminder not accepted; will retry while relevant: ${key}`,
+                );
+              }
+            } finally {
+              await this.reminders.finish(key, token, sent);
             }
           }
+        } catch (error) {
+          failedCount++;
+          this.lastError = 'teacher_scan_failed';
+          this.logger.error(
+            `Push reminder scan failed for teacher ${teacher._id.toString()}`,
+            error instanceof Error ? error.stack : undefined,
+          );
         }
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        this.logger.error(
-          `Error processing push cron for teacher ${teacher._id.toString()}: ${errorMessage}`,
-        );
       }
+    } catch (error) {
+      failedCount++;
+      this.lastError = 'scan_failed';
+      this.logger.error(
+        'Push reminder scan failed',
+        error instanceof Error ? error.stack : undefined,
+      );
+    } finally {
+      this.lastCompletedAt = new Date().toISOString();
+      this.running = false;
+      this.logger.log(
+        `Push reminder scan completed: teachers=${teacherCount}, sent=${sentCount}, failed=${failedCount}`,
+      );
     }
   }
 
-  private timeToMinutes(time: string) {
-    const [h, m] = time.split(':').map(Number);
-    return h * 60 + m;
+  private reminderWindow(start: number, end: number) {
+    const now = Date.now();
+    const minutesUntilStart = (start - now) / MINUTE;
+    if (minutesUntilStart > 0 && minutesUntilStart <= 30) {
+      return { kind: 'pre-class' as const, minutesUntilStart };
+    }
+    if (minutesUntilStart <= -10 && minutesUntilStart >= -30 && now < end) {
+      return { kind: 'attendance' as const, minutesUntilStart };
+    }
+    return null;
+  }
+
+  private async getNearbyEvents(teacherId: string, now: Date) {
+    // Include adjacent days/weeks around midnight; event times are Vietnam wall time.
+    const dates = new Set([
+      this.vietnamDate(now.getTime() - 30 * MINUTE),
+      this.vietnamDate(now.getTime() + 30 * MINUTE),
+    ]);
+    const events = new Map<string, TeacherScheduleEventResponse>();
+    const coveredDates = new Set<string>();
+    for (const date of dates) {
+      if (coveredDates.has(date)) continue;
+      const schedule = await this.schedulesService.getTeacherWeekSchedule(
+        teacherId,
+        { weekStart: date },
+      );
+      for (const day of schedule.days) coveredDates.add(day.date);
+      for (const event of schedule.events) {
+        if (dates.has(event.date))
+          events.set(
+            `${event.classId}:${event.date}:${event.startTime}:${event.endTime}`,
+            event,
+          );
+      }
+    }
+    return [...events.values()];
+  }
+
+  private async isSessionFinished(
+    teacherId: Types.ObjectId,
+    event: TeacherScheduleEventResponse,
+  ) {
+    const utcStart = convertVietnamTimeToUtc(event.startTime!);
+    const utcEnd = convertVietnamTimeToUtc(event.endTime!);
+    const dateStart = new Date(`${event.date}T00:00:00+07:00`);
+    const session = await this.classSessionModel
+      .findOne({
+        teacherId,
+        classId: new Types.ObjectId(event.classId),
+        status: { $in: [SessionStatus.Completed, SessionStatus.Cancelled] },
+        $or: [
+          // ClassesService builds sourceKey before converting Vietnam input to stored UTC.
+          {
+            sourceKey: `${event.classId}:${event.date}:${event.startTime}:${event.endTime}`,
+          },
+          {
+            date: {
+              $gte: dateStart,
+              $lt: new Date(dateStart.getTime() + 86_400_000),
+            },
+            $or: [
+              { timeStorage: 'utc', startTime: utcStart, endTime: utcEnd },
+              {
+                timeStorage: { $ne: 'utc' },
+                startTime: event.startTime,
+                endTime: event.endTime,
+              },
+            ],
+          },
+        ],
+      })
+      .select('_id')
+      .exec();
+    return !!session;
+  }
+
+  private vietnamDate(timestamp: number) {
+    return new Date(timestamp + VIETNAM_OFFSET).toISOString().slice(0, 10);
   }
 }

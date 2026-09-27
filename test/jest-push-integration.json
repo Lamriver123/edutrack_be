@@ -1,0 +1,22 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testEnvironment": "node",
+  "testMatch": ["<rootDir>/test/push-storage.integration-spec.ts"],
+  "testTimeout": 15000,
+  "transform": {
+    "^.+\\.(t|j)s$": [
+      "ts-jest",
+      {
+        "tsconfig": {
+          "module": "commonjs",
+          "moduleResolution": "node",
+          "resolvePackageJsonExports": false,
+          "isolatedModules": false,
+          "allowJs": true
+        }
+      }
+    ]
+  },
+  "transformIgnorePatterns": ["node_modules/(?!@nestjs/mongoose/)"]
+}
