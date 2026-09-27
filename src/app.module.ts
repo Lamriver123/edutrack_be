@@ -16,6 +16,7 @@ import { SchedulesModule } from './modules/schedules/schedules.module';
 import { SchoolManagementModule } from './modules/school-management/school-management.module';
 import { StudentsModule } from './modules/students/students.module';
 import { UsersModule } from './modules/users/users.module';
+import { PushModule } from './modules/push/push.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { UsersModule } from './modules/users/users.module';
     InvoiceTemplateModule,
     DashboardModule,
     AiModule,
+    PushModule,
   ],
   controllers: [AppController],
   providers: [AppService],
