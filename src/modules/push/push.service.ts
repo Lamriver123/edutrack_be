@@ -32,15 +32,20 @@ export class PushService {
   }
 
   async sendNotification(userId: string, payload: Record<string, unknown>) {
+    this.logger.log(`Handling notification.push event for userId: ${userId}`);
     const user = await this.usersService.findByIdWithSecrets(userId);
     if (
       !user ||
       !user.pushSubscriptions ||
       user.pushSubscriptions.length === 0
     ) {
+      this.logger.debug(`User ${userId} has no push subscriptions. Skipping.`);
       return;
     }
 
+    this.logger.log(
+      `Sending push notification to ${user.pushSubscriptions.length} subscriptions for user ${userId}`,
+    );
     const deadSubscriptions: string[] = [];
 
     const promises = user.pushSubscriptions.map(async (sub) => {
@@ -49,10 +54,11 @@ export class PushService {
           sub as webpush.PushSubscription,
           JSON.stringify(payload),
         );
+        this.logger.log(`Successfully sent push to endpoint: ${sub.endpoint}`);
       } catch (error) {
         if (error instanceof webpush.WebPushError) {
           if (error.statusCode === 410 || error.statusCode === 404) {
-            // Subscription has expired or is no longer valid
+            this.logger.warn(`Subscription dead (410/404) for endpoint: ${sub.endpoint}`);
             deadSubscriptions.push(sub.endpoint);
           } else {
             this.logger.error(

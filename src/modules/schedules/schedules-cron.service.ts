@@ -58,12 +58,21 @@ export class SchedulesCronService {
           (e) => e.date === todayStr && e.type !== 'cancel' && !!e.startTime,
         );
 
+        this.logger.debug(
+          `Cron run at ${hour}:${minute} (${currentMinutes} mins). Teacher ${teacher._id}: Found ${todayEvents.length} events today.`,
+        );
+
         for (const event of todayEvents) {
           const eventMinutes = this.timeToMinutes(event.startTime!);
           const diffMins = eventMinutes - currentMinutes;
 
+          this.logger.debug(
+            `Event: ${event.className} at ${event.startTime} (${eventMinutes} mins) -> Diff: ${diffMins} mins`,
+          );
+
           // Báo trước 30 phút
           if (diffMins === 30) {
+            this.logger.log(`Firing 30m push for ${event.classId}`);
             this.eventEmitter.emit('notification.push', {
               userId: teacher._id.toString(),
               payload: {
@@ -86,6 +95,7 @@ export class SchedulesCronService {
 
             // Nếu session chưa được tạo hoặc trạng thái chưa hoàn thành -> Chưa điểm danh
             if (!session || session.status !== SessionStatus.Completed) {
+              this.logger.log(`Firing -10m attendance push for ${event.classId}`);
               this.eventEmitter.emit('notification.push', {
                 userId: teacher._id.toString(),
                 payload: {
