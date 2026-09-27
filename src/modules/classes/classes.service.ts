@@ -792,6 +792,12 @@ export class ClassesService {
         .exec();
 
       if (orphanedOverrides.length > 0) {
+        await this.scheduleConflicts.assertOverridesNotAttended(
+          teacherId,
+          classId,
+          orphanedOverrides.map((override) => override._id.toString()),
+        );
+
         // Xoá tự động các lịch tạm bơ vơ
         await this.scheduleOverrideModel
           .deleteMany({
@@ -1556,6 +1562,16 @@ export class ClassesService {
     classId: string,
     dto: TakeAttendanceBatchDto,
   ) {
+    return this.scheduleConflicts.withTeacherWrite(teacherId, () =>
+      this.takeAttendanceBatchLocked(teacherId, classId, dto),
+    );
+  }
+
+  private async takeAttendanceBatchLocked(
+    teacherId: string,
+    classId: string,
+    dto: TakeAttendanceBatchDto,
+  ) {
     if (!dto.sessions.length) {
       return {
         message: 'Không có buổi học nào cần cập nhật.',
@@ -1599,6 +1615,16 @@ export class ClassesService {
   }
 
   async takeAttendance(
+    teacherId: string,
+    classId: string,
+    dto: TakeAttendanceDto,
+  ) {
+    return this.scheduleConflicts.withTeacherWrite(teacherId, () =>
+      this.takeAttendanceLocked(teacherId, classId, dto),
+    );
+  }
+
+  private async takeAttendanceLocked(
     teacherId: string,
     classId: string,
     dto: TakeAttendanceDto,

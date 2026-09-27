@@ -297,6 +297,22 @@ describe('Schedule conflicts: Vietnam local time', () => {
       checkFixed(snapshot([]), 'a', '2026-02-30', [slot()]),
     ).toThrow();
   });
+  it('requires a valid source date when cancelling a lesson', () => {
+    for (const originalDate of [
+      undefined,
+      '2026-02-30',
+      '2026-09-07T00:00:00Z',
+    ]) {
+      expect(() =>
+        checkTemporary(snapshot([]), {
+          id: 'cancel',
+          classId: 'a',
+          action: 'cancel',
+          originalDate,
+        }),
+      ).toThrow('Ngày học phải hợp lệ');
+    }
+  });
   it('finds free intervals after merging occupied ranges and respects minimum duration', () => {
     expect(
       freeIntervals(

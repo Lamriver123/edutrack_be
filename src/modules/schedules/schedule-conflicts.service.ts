@@ -10,12 +10,21 @@ import { Connection, Model, Types } from 'mongoose';
 import {
   convertUtcTimeToVietnam,
   convertUtcWeeklyTimeToVietnam,
+  convertVietnamTimeToUtc,
 } from '../../common/utils/vietnam-time';
-import { ClassStatus } from '../school-management/enums';
+import { ClassStatus, SessionStatus } from '../school-management/enums';
+import {
+  Attendance,
+  AttendanceDocument,
+} from '../school-management/schemas/attendance.schema';
 import {
   Class,
   ClassDocument,
 } from '../school-management/schemas/class.schema';
+import {
+  ClassSession,
+  ClassSessionDocument,
+} from '../school-management/schemas/class-session.schema';
 import {
   ScheduleVersion,
   ScheduleVersionDocument,
@@ -39,9 +48,15 @@ import {
   sourceMatches,
   validDate,
   type ConflictResult,
+  type OccupiedSlot,
   type ScheduleSnapshot,
   type TemporarySlot,
 } from './schedule-conflict.engine';
+
+type AttendanceOccurrence = Pick<
+  OccupiedSlot,
+  'date' | 'startTime' | 'endTime'
+>;
 
 @Injectable()
 export class ScheduleConflictsService {
@@ -51,6 +66,10 @@ export class ScheduleConflictsService {
     private readonly versions: Model<ScheduleVersionDocument>,
     @InjectModel(ScheduleOverride.name)
     private readonly overrides: Model<ScheduleOverrideDocument>,
+    @InjectModel(ClassSession.name)
+    private readonly classSessions: Model<ClassSessionDocument>,
+    @InjectModel(Attendance.name)
+    private readonly attendances: Model<AttendanceDocument>,
     @InjectConnection() private readonly connection: Connection,
   ) {}
 
@@ -136,9 +155,17 @@ export class ScheduleConflictsService {
       { ...dto, id: ignoreId ?? 'draft', classId },
       ignoreId,
     );
-    const result = checkTemporary(snapshot, draft, ignoreId);
-    // Changing the source/action can restore an old occurrence; validate that too.
     const old = snapshot.overrides.find((s) => s.id === ignoreId);
+    const result = checkTemporary(snapshot, draft, ignoreId);
+    await this.assertOccurrencesNotAttended(
+      teacherId,
+      classId,
+      this.uniqueOccurrences([
+        ...(old ? this.affectedOccurrences(snapshot, old) : []),
+        ...this.affectedOccurrences(snapshot, draft),
+      ]),
+    );
+    // Changing the source/action can restore an old occurrence; validate that too.
     if (old?.originalDate) {
       const before = occupiedOnDate(snapshot, old.originalDate);
       const after = occupiedOnDate(
@@ -247,6 +274,11 @@ export class ScheduleConflictsService {
     const snapshot = await this.snapshot(teacherId, classId);
     this.checkOwnedOverride(snapshot, classId, id);
     const old = snapshot.overrides.find((s) => s.id === id)!;
+    await this.assertOccurrencesNotAttended(
+      teacherId,
+      classId,
+      this.affectedOccurrences(snapshot, old),
+    );
     if (
       old.action === 'extra' ||
       old.action === 'one_on_one' ||
@@ -277,6 +309,174 @@ export class ScheduleConflictsService {
           .map((other) => conflict(snapshot, other)),
       );
     this.assertAvailable({ blockingConflicts, warnings: [] });
+  }
+
+  async assertOverridesNotAttended(
+    teacherId: string,
+    classId: string,
+    ids: string[],
+  ) {
+    if (!ids.length) {
+      return;
+    }
+
+    const snapshot = await this.snapshot(teacherId, classId);
+    const idSet = new Set(ids);
+    const schedules = snapshot.overrides.filter(
+      (schedule) => schedule.classId === classId && idSet.has(schedule.id),
+    );
+
+    if (schedules.length !== idSet.size) {
+      throw new NotFoundException('Không tìm thấy lịch tạm thời.');
+    }
+
+    await this.assertOccurrencesNotAttended(
+      teacherId,
+      classId,
+      this.uniqueOccurrences(
+        schedules.flatMap((schedule) =>
+          this.affectedOccurrences(snapshot, schedule),
+        ),
+      ),
+    );
+  }
+
+  private affectedOccurrences(
+    snapshot: ScheduleSnapshot,
+    schedule: TemporarySlot,
+  ): AttendanceOccurrence[] {
+    const occurrences: AttendanceOccurrence[] = [];
+
+    if (schedule.originalDate) {
+      const originalStartTime =
+        schedule.originalStartTime ??
+        (schedule.action === 'cancel' ? schedule.startTime : undefined);
+      const originalEndTime =
+        schedule.originalEndTime ??
+        (schedule.action === 'cancel' ? schedule.endTime : undefined);
+
+      if (originalStartTime && originalEndTime) {
+        occurrences.push({
+          date: schedule.originalDate,
+          startTime: originalStartTime,
+          endTime: originalEndTime,
+        });
+      } else {
+        occurrences.push(
+          ...fixedOnDate(snapshot, schedule.originalDate)
+            .filter((event) => sourceMatches(event, schedule))
+            .map(({ date, startTime, endTime }) => ({
+              date,
+              startTime,
+              endTime,
+            })),
+        );
+      }
+    }
+
+    if (
+      schedule.action !== 'cancel' &&
+      schedule.newDate &&
+      schedule.startTime &&
+      schedule.endTime
+    ) {
+      occurrences.push({
+        date: schedule.newDate,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+      });
+    }
+
+    return this.uniqueOccurrences(occurrences);
+  }
+
+  private uniqueOccurrences(occurrences: AttendanceOccurrence[]) {
+    return [
+      ...new Map(
+        occurrences.map((occurrence) => [
+          `${occurrence.date}:${occurrence.startTime}:${occurrence.endTime}`,
+          occurrence,
+        ]),
+      ).values(),
+    ];
+  }
+
+  private async assertOccurrencesNotAttended(
+    teacherId: string,
+    classId: string,
+    occurrences: AttendanceOccurrence[],
+  ) {
+    if (!occurrences.length) {
+      return;
+    }
+
+    const teacherObjectId = new Types.ObjectId(teacherId);
+    const classObjectId = new Types.ObjectId(classId);
+    const sessions = await this.classSessions
+      .find({
+        teacherId: teacherObjectId,
+        classId: classObjectId,
+        $or: occurrences.flatMap((occurrence) =>
+          this.occurrenceSessionFilters(classId, occurrence),
+        ),
+      })
+      .select('_id status')
+      .lean<Array<{ _id: Types.ObjectId; status: SessionStatus }>>()
+      .exec();
+
+    if (!sessions.length) {
+      return;
+    }
+
+    const hasCompletedSession = sessions.some(
+      (session) => session.status === SessionStatus.Completed,
+    );
+    const hasAttendance = hasCompletedSession
+      ? false
+      : Boolean(
+          await this.attendances
+            .exists({
+              teacherId: teacherObjectId,
+              classId: classObjectId,
+              sessionId: { $in: sessions.map((session) => session._id) },
+            })
+            .exec(),
+        );
+
+    if (hasCompletedSession || hasAttendance) {
+      throw new ConflictException({
+        code: 'SCHEDULE_ATTENDANCE_LOCKED',
+        message:
+          'Buổi học đã được điểm danh, không thể hủy, dời hoặc thu hồi lịch.',
+      });
+    }
+  }
+
+  private occurrenceSessionFilters(
+    classId: string,
+    occurrence: AttendanceOccurrence,
+  ) {
+    const [year, month, day] = occurrence.date.split('-').map(Number);
+    const dateStart = new Date(Date.UTC(year, month - 1, day) - 7 * 3600000);
+    const dateEnd = new Date(dateStart.getTime() + 24 * 3600000);
+
+    return [
+      {
+        sourceKey: `${classId}:${occurrence.date}:${occurrence.startTime}:${occurrence.endTime}`,
+      },
+      {
+        date: { $gte: dateStart, $lt: dateEnd },
+        timeStorage: 'utc' as const,
+        startTime: convertVietnamTimeToUtc(occurrence.startTime),
+        endTime: convertVietnamTimeToUtc(occurrence.endTime),
+      },
+      {
+        date: { $gte: dateStart, $lt: dateEnd },
+        timeStorage: { $ne: 'utc' as const },
+        startTime: occurrence.startTime,
+        endTime: occurrence.endTime,
+      },
+    ];
   }
   private checkOwnedOverride(
     snapshot: ScheduleSnapshot,

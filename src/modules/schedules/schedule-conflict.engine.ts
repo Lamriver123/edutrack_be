@@ -342,7 +342,9 @@ export function checkTemporary(
   ignoreId?: string,
 ): ConflictResult {
   const blockingConflicts: ScheduleConflict[] = [];
-  if (draft.action !== 'cancel') {
+  if (draft.action === 'cancel') {
+    validDate(draft.originalDate);
+  } else {
     validateTime(draft);
     const date = validDate(draft.newDate);
     const normalized = resolveSource(snapshot, draft, ignoreId);
