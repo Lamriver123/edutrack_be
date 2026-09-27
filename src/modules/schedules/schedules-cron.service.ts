@@ -15,6 +15,9 @@ import { convertVietnamTimeToUtc } from '../../common/utils/vietnam-time';
 @Injectable()
 export class SchedulesCronService {
   private readonly logger = new Logger(SchedulesCronService.name);
+  private notifiedPreClass = new Set<string>();
+  private notifiedAttendance = new Set<string>();
+  private lastClearedDateStr: string = '';
 
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
@@ -51,6 +54,13 @@ export class SchedulesCronService {
     const minute = String(vietnamTime.getUTCMinutes()).padStart(2, '0');
     const currentMinutes = this.timeToMinutes(`${hour}:${minute}`);
 
+    if (this.lastClearedDateStr !== todayStr) {
+      this.logger.debug(`New day detected (${todayStr}). Clearing in-memory notification sets.`);
+      this.notifiedPreClass.clear();
+      this.notifiedAttendance.clear();
+      this.lastClearedDateStr = todayStr;
+    }
+
     for (const teacher of teachers) {
       try {
         const schedule = await this.schedulesService.getTeacherWeekSchedule(
@@ -76,21 +86,24 @@ export class SchedulesCronService {
             `Event: ${event.className} at ${event.startTime} (${eventMinutes} mins) -> Diff: ${diffMins} mins`,
           );
 
-          // Báo trước 30 phút
-          if (diffMins === 30) {
+          // Báo trước 30 phút (quét trong khoảng 25-30 phút để bù trừ độ trễ server)
+          const preClassKey = `${teacher._id.toString()}:${event.classId}:${todayStr}:${event.startTime}`;
+          if (diffMins > 25 && diffMins <= 30 && !this.notifiedPreClass.has(preClassKey)) {
+            this.notifiedPreClass.add(preClassKey);
             this.logger.log(`Firing 30m push for ${event.classId}`);
             this.eventEmitter.emit('notification.push', {
               userId: teacher._id.toString(),
               payload: {
                 title: 'Chuẩn bị đến giờ dạy!',
-                body: `Lớp ${event.className} sẽ bắt đầu lúc ${event.startTime} (30 phút nữa).`,
+                body: `Lớp ${event.className} sẽ bắt đầu lúc ${event.startTime} (tầm ${diffMins} phút nữa).`,
                 url: `/dashboard/classes/${event.classId}`,
               },
             });
           }
 
-          // Trễ 10 phút chưa điểm danh
-          if (diffMins === -10) {
+          // Trễ 10 phút chưa điểm danh (quét trong khoảng trễ 10-15 phút)
+          const attendanceKey = `${teacher._id.toString()}:${event.classId}:${todayStr}:${event.startTime}`;
+          if (diffMins >= -15 && diffMins <= -10 && !this.notifiedAttendance.has(attendanceKey)) {
             const sourceKey = `${event.classId}:${event.date}:${convertVietnamTimeToUtc(event.startTime!)}:${convertVietnamTimeToUtc(event.endTime!)}`;
             const session = await this.classSessionModel
               .findOne({
@@ -101,6 +114,7 @@ export class SchedulesCronService {
 
             // Nếu session chưa được tạo hoặc trạng thái chưa hoàn thành -> Chưa điểm danh
             if (!session || session.status !== SessionStatus.Completed) {
+              this.notifiedAttendance.add(attendanceKey);
               this.logger.log(
                 `Firing -10m attendance push for ${event.classId}`,
               );
@@ -108,7 +122,7 @@ export class SchedulesCronService {
                 userId: teacher._id.toString(),
                 payload: {
                   title: 'Nhắc nhở điểm danh',
-                  body: `Lớp ${event.className} đã bắt đầu được 10 phút. Thầy/Cô nhớ điểm danh nhé!`,
+                  body: `Lớp ${event.className} đã bắt đầu được ${-diffMins} phút. Thầy/Cô nhớ điểm danh nhé!`,
                   url: `/dashboard/classes/${event.classId}?tab=attendance`,
                 },
               });
