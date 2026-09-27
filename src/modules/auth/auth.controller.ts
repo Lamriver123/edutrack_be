@@ -153,7 +153,8 @@ export class AuthController {
   }
 
   private getRefreshTokenCookieOptions(expires?: Date): CookieOptions {
-    const isProd = this.configService.get<string>('app.nodeEnv') === 'production';
+    const isProd =
+      this.configService.get<string>('app.nodeEnv') === 'production';
     return {
       httpOnly: true,
       secure: isProd,

@@ -58,7 +58,9 @@ export class PushService {
       } catch (error) {
         if (error instanceof webpush.WebPushError) {
           if (error.statusCode === 410 || error.statusCode === 404) {
-            this.logger.warn(`Subscription dead (410/404) for endpoint: ${sub.endpoint}`);
+            this.logger.warn(
+              `Subscription dead (410/404) for endpoint: ${sub.endpoint}`,
+            );
             deadSubscriptions.push(sub.endpoint);
           } else {
             this.logger.error(
