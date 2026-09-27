@@ -165,6 +165,22 @@ export class UsersController {
     return this.usersService.getMediaHistory(user.userId);
   }
 
+  @Post('me/push-subscriptions')
+  addPushSubscription(@CurrentUser() user: JwtUser, @Body() subscription: any) {
+    if (!subscription || !subscription.endpoint) {
+      throw new BadRequestException('Invalid subscription payload');
+    }
+    return this.usersService.addPushSubscription(user.userId, subscription);
+  }
+
+  @Delete('me/push-subscriptions')
+  removePushSubscription(@CurrentUser() user: JwtUser, @Body('endpoint') endpoint: string) {
+    if (!endpoint) {
+      throw new BadRequestException('Endpoint is required');
+    }
+    return this.usersService.removePushSubscription(user.userId, endpoint);
+  }
+
   private assertImageFile(
     file: UploadImageFile | undefined,
     options: {

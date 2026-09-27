@@ -424,6 +424,29 @@ export class UsersService {
     };
   }
 
+  async addPushSubscription(userId: string, subscription: any) {
+    const user = await this.userModel.findById(userId).select('+pushSubscriptions').exec();
+    if (!user) throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
+
+    const subs = user.pushSubscriptions || [];
+    // Check if exists
+    const exists = subs.find(s => s.endpoint === subscription.endpoint);
+    if (!exists) {
+      user.pushSubscriptions = [...subs, subscription];
+      await user.save();
+    }
+    return { success: true };
+  }
+
+  async removePushSubscription(userId: string, endpoint: string) {
+    const user = await this.userModel.findById(userId).select('+pushSubscriptions').exec();
+    if (!user) throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
+
+    user.pushSubscriptions = (user.pushSubscriptions || []).filter(s => s.endpoint !== endpoint);
+    await user.save();
+    return { success: true };
+  }
+
   toSafeUser(user: UserDocument): SafeUser {
     return {
       id: user._id.toString(),

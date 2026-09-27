@@ -113,6 +113,9 @@ export class User {
 
   @Prop({ type: [String], default: [] })
   recentMediaUrls: string[];
+
+  @Prop({ type: [{ type: Object }], default: [], select: false })
+  pushSubscriptions: any[];
 }
 
 export type UserDocument = HydratedDocument<User>;
