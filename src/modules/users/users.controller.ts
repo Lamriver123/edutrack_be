@@ -165,7 +165,7 @@ export class UsersController {
     return this.usersService.getMediaHistory(user.userId);
   }
 
-  @Post('me/push-subscriptions')
+  @Post('me/push-subscription')
   addPushSubscription(
     @CurrentUser() user: JwtUser,
     @Body()
@@ -177,7 +177,7 @@ export class UsersController {
     return this.usersService.addPushSubscription(user.userId, subscription);
   }
 
-  @Delete('me/push-subscriptions')
+  @Delete('me/push-subscription')
   removePushSubscription(
     @CurrentUser() user: JwtUser,
     @Body('endpoint') endpoint: string,
