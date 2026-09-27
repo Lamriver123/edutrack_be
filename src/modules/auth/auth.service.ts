@@ -34,10 +34,15 @@ export class AuthService {
 
   async register(registerDto: RegisterDto) {
     const email = this.usersService.normalizeEmail(registerDto.email);
-    const existingUser = await this.usersService.findByEmailWithSecrets(email);
+    let existingUser = await this.usersService.findByEmailWithSecrets(email);
 
     if (existingUser?.isEmailVerified) {
       throw new ConflictException('Email đã được sử dụng.');
+    }
+
+    if (existingUser && this.isUnverifiedAccountExpired(existingUser)) {
+      await this.usersService.deleteById(existingUser._id);
+      existingUser = null;
     }
 
     const passwordHash = await bcrypt.hash(
@@ -62,6 +67,8 @@ export class AuthService {
       existingUser.otpExpiresAt = otpBundle.otpExpiresAt;
       existingUser.otpAttempts = 0;
       existingUser.otpResendAvailableAt = otpBundle.otpResendAvailableAt;
+      existingUser.emailVerificationExpiresAt =
+        otpBundle.emailVerificationExpiresAt;
       await existingUser.save();
     }
 
@@ -91,6 +98,7 @@ export class AuthService {
       return this.createAuthSession(user);
     }
 
+    await this.assertUnverifiedAccountIsActive(user);
     this.assertOtpIsUsable(user);
 
     const isOtpValid = await bcrypt.compare(
@@ -110,6 +118,7 @@ export class AuthService {
     user.otpExpiresAt = undefined;
     user.otpAttempts = 0;
     user.otpResendAvailableAt = undefined;
+    user.emailVerificationExpiresAt = undefined;
 
     return this.createAuthSession(user);
   }
@@ -123,6 +132,8 @@ export class AuthService {
         message: 'Nếu email tồn tại và chưa xác thực, mã OTP mới sẽ được gửi.',
       };
     }
+
+    await this.assertUnverifiedAccountIsActive(user);
 
     const now = new Date();
     if (user.otpResendAvailableAt && user.otpResendAvailableAt > now) {
@@ -144,6 +155,7 @@ export class AuthService {
     user.otpExpiresAt = otpBundle.otpExpiresAt;
     user.otpAttempts = 0;
     user.otpResendAvailableAt = otpBundle.otpResendAvailableAt;
+    user.emailVerificationExpiresAt = otpBundle.emailVerificationExpiresAt;
     await user.save();
 
     this.eventEmitter.emit('auth.user_registered', {
@@ -296,12 +308,14 @@ export class AuthService {
     }
 
     if (!user.isEmailVerified) {
-      await this.ensurePendingOtp(user);
+      await this.assertUnverifiedAccountIsActive(user);
+      const pendingOtp = await this.ensurePendingOtp(user);
 
       throw new ForbiddenException({
         code: 'EMAIL_NOT_VERIFIED',
         message: 'Email chưa được xác thực. Vui lòng nhập mã OTP.',
         email: user.email,
+        ...pendingOtp,
       });
     }
 
@@ -374,7 +388,10 @@ export class AuthService {
     const now = new Date();
 
     if (user.otpHash && user.otpExpiresAt && user.otpExpiresAt > now) {
-      return;
+      return {
+        otpExpiresAt: user.otpExpiresAt,
+        otpResendAvailableAt: user.otpResendAvailableAt,
+      };
     }
 
     const otpBundle = await this.createOtpBundle(user.email);
@@ -382,6 +399,7 @@ export class AuthService {
     user.otpExpiresAt = otpBundle.otpExpiresAt;
     user.otpAttempts = 0;
     user.otpResendAvailableAt = otpBundle.otpResendAvailableAt;
+    user.emailVerificationExpiresAt = otpBundle.emailVerificationExpiresAt;
     await user.save();
 
     this.eventEmitter.emit('auth.user_registered', {
@@ -389,6 +407,11 @@ export class AuthService {
       otp: otpBundle.otp,
       fullName: user.fullName,
     });
+
+    return {
+      otpExpiresAt: otpBundle.otpExpiresAt,
+      otpResendAvailableAt: otpBundle.otpResendAvailableAt,
+    };
   }
 
   private async createAuthSession(user: UserDocument): Promise<AuthSession> {
@@ -482,10 +505,12 @@ export class AuthService {
   private async createOtpBundle(email: string) {
     const otp = this.generateOtp();
     const now = new Date();
-    const expiresMinutes =
-      this.configService.get<number>('otp.expiresMinutes') ?? 10;
-    const resendCooldownSeconds =
-      this.configService.get<number>('otp.resendCooldownSeconds') ?? 60;
+    const expiresMinutes = this.getOtpExpiresMinutes();
+    const resendCooldownSeconds = Math.max(
+      this.getOtpResendCooldownSeconds(),
+      expiresMinutes * 60,
+    );
+    const unverifiedAccountTtlMinutes = this.getUnverifiedAccountTtlMinutes();
 
     return {
       otp,
@@ -497,16 +522,17 @@ export class AuthService {
       otpResendAvailableAt: new Date(
         now.getTime() + resendCooldownSeconds * 1000,
       ),
+      emailVerificationExpiresAt: new Date(
+        now.getTime() + unverifiedAccountTtlMinutes * 60 * 1000,
+      ),
     };
   }
 
   private async createPasswordResetOtpBundle(email: string) {
     const otp = this.generateOtp();
     const now = new Date();
-    const expiresMinutes =
-      this.configService.get<number>('otp.expiresMinutes') ?? 10;
-    const resendCooldownSeconds =
-      this.configService.get<number>('otp.resendCooldownSeconds') ?? 60;
+    const expiresMinutes = this.getOtpExpiresMinutes();
+    const resendCooldownSeconds = this.getOtpResendCooldownSeconds();
 
     return {
       otp,
@@ -519,6 +545,43 @@ export class AuthService {
         now.getTime() + resendCooldownSeconds * 1000,
       ),
     };
+  }
+
+  private async assertUnverifiedAccountIsActive(user: UserDocument) {
+    if (user.isEmailVerified || !this.isUnverifiedAccountExpired(user)) {
+      return;
+    }
+
+    await this.usersService.deleteById(user._id);
+
+    throw new BadRequestException(
+      'Tài khoản chưa xác thực đã hết hạn. Vui lòng đăng ký lại.',
+    );
+  }
+
+  private isUnverifiedAccountExpired(user: UserDocument) {
+    if (user.isEmailVerified) {
+      return false;
+    }
+
+    const expiresAt =
+      user.emailVerificationExpiresAt ??
+      this.getLegacyEmailVerificationExpiresAt(user);
+
+    return Boolean(expiresAt && expiresAt <= new Date());
+  }
+
+  private getLegacyEmailVerificationExpiresAt(user: UserDocument) {
+    if (!user.otpExpiresAt) {
+      return null;
+    }
+
+    const issuedAt =
+      user.otpExpiresAt.getTime() - this.getOtpExpiresMinutes() * 60 * 1000;
+
+    return new Date(
+      issuedAt + this.getUnverifiedAccountTtlMinutes() * 60 * 1000,
+    );
   }
 
   private assertOtpIsUsable(user: UserDocument) {
@@ -617,6 +680,20 @@ export class AuthService {
 
   private getOtpSaltRounds() {
     return this.configService.get<number>('security.otpSaltRounds') ?? 10;
+  }
+
+  private getOtpExpiresMinutes() {
+    return this.configService.get<number>('otp.expiresMinutes') ?? 2;
+  }
+
+  private getOtpResendCooldownSeconds() {
+    return this.configService.get<number>('otp.resendCooldownSeconds') ?? 120;
+  }
+
+  private getUnverifiedAccountTtlMinutes() {
+    return (
+      this.configService.get<number>('otp.unverifiedAccountTtlMinutes') ?? 5
+    );
   }
 
   private getRefreshTokenSaltRounds() {

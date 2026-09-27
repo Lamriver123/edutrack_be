@@ -86,12 +86,16 @@ export default () => {
       apiUrl: process.env.MAIL_API_URL ?? '',
     },
     otp: {
-      expiresMinutes: toNumber(process.env.OTP_EXPIRES_MINUTES, 10),
+      expiresMinutes: toNumber(process.env.OTP_EXPIRES_MINUTES, 2),
       resendCooldownSeconds: toNumber(
         process.env.OTP_RESEND_COOLDOWN_SECONDS,
-        60,
+        120,
       ),
       maxAttempts: toNumber(process.env.OTP_MAX_ATTEMPTS, 5),
+      unverifiedAccountTtlMinutes: toNumber(
+        process.env.OTP_UNVERIFIED_ACCOUNT_TTL_MINUTES,
+        5,
+      ),
     },
     security: {
       passwordSaltRounds: toNumber(process.env.PASSWORD_SALT_ROUNDS, 12),

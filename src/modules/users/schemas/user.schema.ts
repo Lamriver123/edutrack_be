@@ -87,6 +87,9 @@ export class User {
   @Prop({ type: Date, select: false })
   otpResendAvailableAt?: Date;
 
+  @Prop({ type: Date, select: false })
+  emailVerificationExpiresAt?: Date;
+
   @Prop({ select: false })
   pendingPasswordHash?: string;
 
@@ -123,3 +126,10 @@ export class User {
 
 export type UserDocument = HydratedDocument<User>;
 export const UserSchema = SchemaFactory.createForClass(User);
+UserSchema.index(
+  { emailVerificationExpiresAt: 1 },
+  {
+    expireAfterSeconds: 0,
+    partialFilterExpression: { isEmailVerified: false },
+  },
+);

@@ -37,6 +37,7 @@ type CreateTeacherInput = {
   otpHash: string;
   otpExpiresAt: Date;
   otpResendAvailableAt: Date;
+  emailVerificationExpiresAt: Date;
 };
 
 @Injectable()
@@ -72,7 +73,7 @@ export class UsersService {
     return this.userModel
       .findOne({ email: this.normalizeEmail(email) })
       .select(
-        '+passwordHash +otpHash +otpExpiresAt +otpAttempts +otpResendAvailableAt +pendingPasswordHash +passwordResetOtpHash +passwordResetOtpExpiresAt +passwordResetOtpAttempts +passwordResetOtpResendAvailableAt +refreshTokenHash +refreshTokenExpiresAt',
+        '+passwordHash +otpHash +otpExpiresAt +otpAttempts +otpResendAvailableAt +emailVerificationExpiresAt +pendingPasswordHash +passwordResetOtpHash +passwordResetOtpExpiresAt +passwordResetOtpAttempts +passwordResetOtpResendAvailableAt +refreshTokenHash +refreshTokenExpiresAt',
       )
       .exec();
   }
@@ -85,7 +86,7 @@ export class UsersService {
     return this.userModel
       .findById(id)
       .select(
-        '+passwordHash +otpHash +otpExpiresAt +otpAttempts +otpResendAvailableAt +pendingPasswordHash +passwordResetOtpHash +passwordResetOtpExpiresAt +passwordResetOtpAttempts +passwordResetOtpResendAvailableAt +refreshTokenHash +refreshTokenExpiresAt',
+        '+passwordHash +otpHash +otpExpiresAt +otpAttempts +otpResendAvailableAt +emailVerificationExpiresAt +pendingPasswordHash +passwordResetOtpHash +passwordResetOtpExpiresAt +passwordResetOtpAttempts +passwordResetOtpResendAvailableAt +refreshTokenHash +refreshTokenExpiresAt',
       )
       .exec();
   }
@@ -96,6 +97,10 @@ export class UsersService {
     }
 
     return this.userModel.findById(id).exec();
+  }
+
+  deleteById(id: string | Types.ObjectId) {
+    return this.userModel.deleteOne({ _id: id }).exec();
   }
 
   async getProfile(userId: string) {
