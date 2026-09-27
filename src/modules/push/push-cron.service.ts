@@ -78,8 +78,9 @@ export class PushCronService {
             }
           }
         }
-      } catch (error: any) {
-        this.logger.error(`Error processing push cron for teacher ${teacher._id}: ${error.message}`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Error processing push cron for teacher ${teacher._id.toString()}: ${errorMessage}`);
       }
     }
   }

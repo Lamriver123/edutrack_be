@@ -166,7 +166,10 @@ export class UsersController {
   }
 
   @Post('me/push-subscriptions')
-  addPushSubscription(@CurrentUser() user: JwtUser, @Body() subscription: any) {
+  addPushSubscription(
+    @CurrentUser() user: JwtUser,
+    @Body() subscription: { endpoint: string; keys?: { p256dh: string; auth: string } },
+  ) {
     if (!subscription || !subscription.endpoint) {
       throw new BadRequestException('Invalid subscription payload');
     }

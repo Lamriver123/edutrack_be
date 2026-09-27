@@ -22,7 +22,7 @@ export class PushService {
     }
   }
 
-  async sendNotification(userId: string, payload: any) {
+  async sendNotification(userId: string, payload: Record<string, unknown>) {
     const user = await this.usersService.findByIdWithSecrets(userId);
     if (!user || !user.pushSubscriptions || user.pushSubscriptions.length === 0) {
       return;
@@ -32,12 +32,16 @@ export class PushService {
 
     const promises = user.pushSubscriptions.map(async (sub) => {
       try {
-        await webpush.sendNotification(sub, JSON.stringify(payload));
-      } catch (error: any) {
-        if (error.statusCode === 410 || error.statusCode === 404) {
-          // Subscription has expired or is no longer valid
-          deadSubscriptions.push(sub.endpoint);
-        } else {
+        await webpush.sendNotification(sub as webpush.PushSubscription, JSON.stringify(payload));
+      } catch (error) {
+        if (error instanceof webpush.WebPushError) {
+          if (error.statusCode === 410 || error.statusCode === 404) {
+            // Subscription has expired or is no longer valid
+            deadSubscriptions.push(sub.endpoint);
+          } else {
+            this.logger.error(`Failed to send push notification to ${userId}: ${error.message}`);
+          }
+        } else if (error instanceof Error) {
           this.logger.error(`Failed to send push notification to ${userId}: ${error.message}`);
         }
       }

@@ -424,7 +424,7 @@ export class UsersService {
     };
   }
 
-  async addPushSubscription(userId: string, subscription: any) {
+  async addPushSubscription(userId: string, subscription: { endpoint: string; keys?: { p256dh: string; auth: string } }) {
     const user = await this.userModel.findById(userId).select('+pushSubscriptions').exec();
     if (!user) throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
 

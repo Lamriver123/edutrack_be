@@ -115,7 +115,7 @@ export class User {
   recentMediaUrls: string[];
 
   @Prop({ type: [{ type: Object }], default: [], select: false })
-  pushSubscriptions: any[];
+  pushSubscriptions: { endpoint: string; keys?: { p256dh: string; auth: string } }[];
 }
 
 export type UserDocument = HydratedDocument<User>;
