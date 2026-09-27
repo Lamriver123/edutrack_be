@@ -3,90 +3,139 @@ const toNumber = (value: string | undefined, fallback: number) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-export default () => ({
-  app: {
-    port: toNumber(process.env.PORT, 3000),
-    frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:3000',
-    nodeEnv: process.env.NODE_ENV ?? 'development',
-  },
-  database: {
-    uri: process.env.MONGO_URI ?? process.env.MONGODB_URI ?? '',
-  },
-  jwt: {
-    secret:
-      process.env.JWT_SECRET ??
-      process.env.JWT_ACCESS_SECRET ??
-      'change-me-in-env',
-    expiresIn:
-      process.env.JWT_EXPIRATION ?? process.env.JWT_ACCESS_EXPIRES_IN ?? '1d',
-    refreshSecret:
-      process.env.JWT_REFRESH_SECRET ??
-      `${process.env.JWT_SECRET ?? process.env.JWT_ACCESS_SECRET ?? 'change-me-in-env'}:refresh`,
-    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRATION ?? '7d',
-    refreshCookieName:
-      process.env.JWT_REFRESH_COOKIE_NAME ?? 'edutrack_refresh_token',
-  },
-  mail: {
-    host: process.env.MAIL_HOST ?? process.env.SMTP_HOST ?? '',
-    port: toNumber(process.env.MAIL_PORT ?? process.env.SMTP_PORT, 587),
-    secure:
-      (process.env.MAIL_SECURE ?? process.env.SMTP_SECURE) === 'true' ||
-      (process.env.MAIL_PORT ?? process.env.SMTP_PORT) === '465',
-    user: process.env.MAIL_USER ?? process.env.SMTP_USER ?? '',
-    pass: process.env.MAIL_PASS ?? process.env.SMTP_PASS ?? '',
-    from:
-      process.env.MAIL_FROM ??
-      process.env.SMTP_FROM ??
-      'Edutrack <no-reply@edutrack.local>',
-    apiUrl: process.env.MAIL_API_URL ?? '',
-  },
-  otp: {
-    expiresMinutes: toNumber(process.env.OTP_EXPIRES_MINUTES, 10),
-    resendCooldownSeconds: toNumber(
-      process.env.OTP_RESEND_COOLDOWN_SECONDS,
-      60,
-    ),
-    maxAttempts: toNumber(process.env.OTP_MAX_ATTEMPTS, 5),
-  },
-  security: {
-    passwordSaltRounds: toNumber(process.env.PASSWORD_SALT_ROUNDS, 12),
-    otpSaltRounds: toNumber(process.env.OTP_SALT_ROUNDS, 10),
-    refreshTokenSaltRounds: toNumber(process.env.REFRESH_TOKEN_SALT_ROUNDS, 10),
-    defaultRefreshTokenExpiresMs: toNumber(
-      process.env.DEFAULT_REFRESH_TOKEN_EXPIRES_MS,
-      7 * 24 * 60 * 60 * 1000,
-    ),
-  },
-  gemini: {
-    apiKey: process.env.GEMINI_API_KEY ?? '',
-  },
-  vietQr: {
-    accountLookupUrl:
-      process.env.VIETQR_ACCOUNT_LOOKUP_URL ??
-      'https://api.vietqr.io/v2/lookup',
-    clientId: process.env.VIETQR_CLIENT_ID ?? '',
-    apiKey: process.env.VIETQR_API_KEY ?? '',
-  },
-  cloudinary: {
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? '',
-    apiKey: process.env.CLOUDINARY_API_KEY ?? '',
-    apiSecret: process.env.CLOUDINARY_API_SECRET ?? '',
-    studentAvatarFolder:
-      process.env.CLOUDINARY_STUDENT_AVATAR_FOLDER ??
-      'edutrack/student-avatars',
-    teacherAvatarFolder:
-      process.env.CLOUDINARY_TEACHER_AVATAR_FOLDER ??
-      'edutrack/teacher-avatars',
-    classImageFolder:
-      process.env.CLOUDINARY_CLASS_IMAGE_FOLDER ?? 'edutrack/class-images',
-    examFileFolder:
-      process.env.CLOUDINARY_EXAM_FILE_FOLDER ?? 'edutrack/exam-files',
-    examEvidenceFolder:
-      process.env.CLOUDINARY_EXAM_EVIDENCE_FOLDER ?? 'edutrack/exam-evidence',
-    receiptPdfFolder:
-      process.env.CLOUDINARY_RECEIPT_PDF_FOLDER ?? 'edutrack/receipts',
-    receiptPaymentProofFolder:
-      process.env.CLOUDINARY_RECEIPT_PAYMENT_PROOF_FOLDER ??
-      'edutrack/receipt-payment-proofs',
-  },
-});
+const toBoolean = (value: string | undefined, fallback: boolean) => {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+
+  if (normalizedValue === 'true') {
+    return true;
+  }
+
+  if (normalizedValue === 'false') {
+    return false;
+  }
+
+  return fallback;
+};
+
+const toSameSite = (
+  value: string | undefined,
+  fallback: 'lax' | 'none' | 'strict',
+) => {
+  const normalizedValue = value?.trim().toLowerCase();
+
+  return normalizedValue === 'lax' ||
+    normalizedValue === 'none' ||
+    normalizedValue === 'strict'
+    ? normalizedValue
+    : fallback;
+};
+
+export default () => {
+  const nodeEnv = process.env.NODE_ENV ?? 'development';
+  const isProduction = nodeEnv === 'production';
+  const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+  const refreshCookieSecure = toBoolean(
+    process.env.JWT_REFRESH_COOKIE_SECURE,
+    isProduction || frontendUrl.toLowerCase().startsWith('https://'),
+  );
+
+  return {
+    app: {
+      port: toNumber(process.env.PORT, 3000),
+      frontendUrl,
+      nodeEnv,
+    },
+    database: {
+      uri: process.env.MONGO_URI ?? process.env.MONGODB_URI ?? '',
+    },
+    jwt: {
+      secret:
+        process.env.JWT_SECRET ??
+        process.env.JWT_ACCESS_SECRET ??
+        'change-me-in-env',
+      expiresIn:
+        process.env.JWT_EXPIRATION ?? process.env.JWT_ACCESS_EXPIRES_IN ?? '1d',
+      refreshSecret:
+        process.env.JWT_REFRESH_SECRET ??
+        `${process.env.JWT_SECRET ?? process.env.JWT_ACCESS_SECRET ?? 'change-me-in-env'}:refresh`,
+      refreshExpiresIn: process.env.JWT_REFRESH_EXPIRATION ?? '7d',
+      refreshCookieName:
+        process.env.JWT_REFRESH_COOKIE_NAME ?? 'edutrack_refresh_token',
+      refreshCookieSecure,
+      refreshCookieSameSite: toSameSite(
+        process.env.JWT_REFRESH_COOKIE_SAME_SITE,
+        refreshCookieSecure ? 'none' : 'lax',
+      ),
+    },
+    mail: {
+      host: process.env.MAIL_HOST ?? process.env.SMTP_HOST ?? '',
+      port: toNumber(process.env.MAIL_PORT ?? process.env.SMTP_PORT, 587),
+      secure:
+        (process.env.MAIL_SECURE ?? process.env.SMTP_SECURE) === 'true' ||
+        (process.env.MAIL_PORT ?? process.env.SMTP_PORT) === '465',
+      user: process.env.MAIL_USER ?? process.env.SMTP_USER ?? '',
+      pass: process.env.MAIL_PASS ?? process.env.SMTP_PASS ?? '',
+      from:
+        process.env.MAIL_FROM ??
+        process.env.SMTP_FROM ??
+        'Edutrack <no-reply@edutrack.local>',
+      apiUrl: process.env.MAIL_API_URL ?? '',
+    },
+    otp: {
+      expiresMinutes: toNumber(process.env.OTP_EXPIRES_MINUTES, 10),
+      resendCooldownSeconds: toNumber(
+        process.env.OTP_RESEND_COOLDOWN_SECONDS,
+        60,
+      ),
+      maxAttempts: toNumber(process.env.OTP_MAX_ATTEMPTS, 5),
+    },
+    security: {
+      passwordSaltRounds: toNumber(process.env.PASSWORD_SALT_ROUNDS, 12),
+      otpSaltRounds: toNumber(process.env.OTP_SALT_ROUNDS, 10),
+      refreshTokenSaltRounds: toNumber(
+        process.env.REFRESH_TOKEN_SALT_ROUNDS,
+        10,
+      ),
+      defaultRefreshTokenExpiresMs: toNumber(
+        process.env.DEFAULT_REFRESH_TOKEN_EXPIRES_MS,
+        7 * 24 * 60 * 60 * 1000,
+      ),
+    },
+    gemini: {
+      apiKey: process.env.GEMINI_API_KEY ?? '',
+    },
+    vietQr: {
+      accountLookupUrl:
+        process.env.VIETQR_ACCOUNT_LOOKUP_URL ??
+        'https://api.vietqr.io/v2/lookup',
+      clientId: process.env.VIETQR_CLIENT_ID ?? '',
+      apiKey: process.env.VIETQR_API_KEY ?? '',
+    },
+    cloudinary: {
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? '',
+      apiKey: process.env.CLOUDINARY_API_KEY ?? '',
+      apiSecret: process.env.CLOUDINARY_API_SECRET ?? '',
+      studentAvatarFolder:
+        process.env.CLOUDINARY_STUDENT_AVATAR_FOLDER ??
+        'edutrack/student-avatars',
+      teacherAvatarFolder:
+        process.env.CLOUDINARY_TEACHER_AVATAR_FOLDER ??
+        'edutrack/teacher-avatars',
+      classImageFolder:
+        process.env.CLOUDINARY_CLASS_IMAGE_FOLDER ?? 'edutrack/class-images',
+      examFileFolder:
+        process.env.CLOUDINARY_EXAM_FILE_FOLDER ?? 'edutrack/exam-files',
+      examEvidenceFolder:
+        process.env.CLOUDINARY_EXAM_EVIDENCE_FOLDER ?? 'edutrack/exam-evidence',
+      receiptPdfFolder:
+        process.env.CLOUDINARY_RECEIPT_PDF_FOLDER ?? 'edutrack/receipts',
+      receiptPaymentProofFolder:
+        process.env.CLOUDINARY_RECEIPT_PAYMENT_PROOF_FOLDER ??
+        'edutrack/receipt-payment-proofs',
+    },
+  };
+};

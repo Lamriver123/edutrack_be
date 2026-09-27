@@ -155,10 +155,21 @@ export class AuthController {
   private getRefreshTokenCookieOptions(expires?: Date): CookieOptions {
     const isProd =
       this.configService.get<string>('app.nodeEnv') === 'production';
+    const frontendUrl = this.configService.get<string>('app.frontendUrl') ?? '';
+    const defaultSecure =
+      isProd || frontendUrl.toLowerCase().startsWith('https://');
+    const secure =
+      this.configService.get<boolean>('jwt.refreshCookieSecure') ??
+      defaultSecure;
+    const sameSite =
+      this.configService.get<'lax' | 'none' | 'strict'>(
+        'jwt.refreshCookieSameSite',
+      ) ?? (secure ? 'none' : 'lax');
+
     return {
       httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? 'none' : 'lax',
+      secure,
+      sameSite,
       path: '/api/auth',
       expires,
     };
