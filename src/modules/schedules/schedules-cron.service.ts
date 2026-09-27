@@ -26,11 +26,17 @@ export class SchedulesCronService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleCron() {
+    this.logger.debug('Cron job triggered. Checking for teachers with push subscriptions...');
+    
     // 1. Lấy tất cả giáo viên có đăng ký nhận thông báo
     const teachers = await this.userModel
       .find({ 'pushSubscriptions.0': { $exists: true } })
       .exec();
-    if (teachers.length === 0) return;
+      
+    if (teachers.length === 0) {
+      this.logger.debug('No teachers found with push subscriptions. Exiting cron.');
+      return;
+    }
 
     // Lấy giờ hiện tại theo giờ Việt Nam
     const now = new Date();
