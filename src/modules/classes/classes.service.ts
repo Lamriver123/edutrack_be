@@ -759,8 +759,11 @@ export class ClassesService {
         teacherId,
         classId,
       );
-      
-      const suspendFrom = this.parseDate(dto.suspendFrom, 'Ngày bắt đầu tạm hoãn');
+
+      const suspendFrom = this.parseDate(
+        dto.suspendFrom,
+        'Ngày bắt đầu tạm hoãn',
+      );
 
       const activeVersion = await this.scheduleVersionModel
         .findOne({
@@ -771,24 +774,30 @@ export class ClassesService {
         .exec();
 
       if (!activeVersion) {
-        throw new BadRequestException('Không có lịch cố định nào đang hoạt động để tạm hoãn.');
+        throw new BadRequestException(
+          'Không có lịch cố định nào đang hoạt động để tạm hoãn.',
+        );
       }
 
       // Lấy danh sách lịch tạm thời nằm trong hoặc sau ngày bắt đầu tạm hoãn
-      const orphanedOverrides = await this.scheduleOverrideModel.find({
-        teacherId: teacherObjectId,
-        classId: classroom._id,
-        $or: [
-          { originalDate: { $gte: suspendFrom } },
-          { newDate: { $gte: suspendFrom } }
-        ]
-      }).exec();
+      const orphanedOverrides = await this.scheduleOverrideModel
+        .find({
+          teacherId: teacherObjectId,
+          classId: classroom._id,
+          $or: [
+            { originalDate: { $gte: suspendFrom } },
+            { newDate: { $gte: suspendFrom } },
+          ],
+        })
+        .exec();
 
       if (orphanedOverrides.length > 0) {
         // Xoá tự động các lịch tạm bơ vơ
-        await this.scheduleOverrideModel.deleteMany({
-          _id: { $in: orphanedOverrides.map(o => o._id) }
-        }).exec();
+        await this.scheduleOverrideModel
+          .deleteMany({
+            _id: { $in: orphanedOverrides.map((o) => o._id) },
+          })
+          .exec();
       }
 
       activeVersion.effectiveTo = this.getPreviousMoment(suspendFrom);
@@ -798,26 +807,42 @@ export class ClassesService {
     });
   }
 
-  async previewSuspendFixedSchedule(teacherId: string, classId: string, suspendFromDate: string) {
+  async previewSuspendFixedSchedule(
+    teacherId: string,
+    classId: string,
+    suspendFromDate: string,
+  ) {
     const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
     const classroom = await this.findClassForTeacherOrThrow(teacherId, classId);
-    const suspendFrom = this.parseDate(suspendFromDate, 'Ngày bắt đầu tạm hoãn');
+    const suspendFrom = this.parseDate(
+      suspendFromDate,
+      'Ngày bắt đầu tạm hoãn',
+    );
 
-    const orphanedOverrides = await this.scheduleOverrideModel.find({
-      teacherId: teacherObjectId,
-      classId: classroom._id,
-      $or: [
-        { originalDate: { $gte: suspendFrom } },
-        { newDate: { $gte: suspendFrom } }
-      ]
-    }).lean().exec();
+    const orphanedOverrides = await this.scheduleOverrideModel
+      .find({
+        teacherId: teacherObjectId,
+        classId: classroom._id,
+        $or: [
+          { originalDate: { $gte: suspendFrom } },
+          { newDate: { $gte: suspendFrom } },
+        ],
+      })
+      .lean()
+      .exec();
 
     return {
-      orphanedOverrides: orphanedOverrides.map(o => this.toScheduleOverrideResponse(o))
+      orphanedOverrides: orphanedOverrides.map((o) =>
+        this.toScheduleOverrideResponse(o),
+      ),
     };
   }
 
-  async resumeFixedSchedule(teacherId: string, classId: string, dto: ResumeFixedScheduleDto) {
+  async resumeFixedSchedule(
+    teacherId: string,
+    classId: string,
+    dto: ResumeFixedScheduleDto,
+  ) {
     return this.scheduleConflicts.withTeacherWrite(teacherId, async () => {
       const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
       const classroom = await this.findClassForTeacherOrThrow(
@@ -838,13 +863,17 @@ export class ClassesService {
       }
 
       if (latestSuspendedVersion.effectiveTo == null) {
-        throw new BadRequestException('Lớp học đang có lịch cố định hoạt động.');
+        throw new BadRequestException(
+          'Lớp học đang có lịch cố định hoạt động.',
+        );
       }
 
       const resumeFrom = this.parseDate(dto.resumeFrom, 'Ngày khôi phục');
 
       if (resumeFrom < latestSuspendedVersion.effectiveTo) {
-        throw new BadRequestException('Ngày khôi phục phải từ hoặc sau ngày tạm hoãn.');
+        throw new BadRequestException(
+          'Ngày khôi phục phải từ hoặc sau ngày tạm hoãn.',
+        );
       }
 
       const schedules = latestSuspendedVersion.schedules.map((s) => {
@@ -853,7 +882,7 @@ export class ClassesService {
           return {
             dayOfWeek: start.dayOfWeek,
             startTime: start.time,
-            endTime: convertUtcTimeToVietnam(s.endTime)!,
+            endTime: convertUtcTimeToVietnam(s.endTime),
           };
         }
         return {
@@ -866,7 +895,7 @@ export class ClassesService {
       const check = await this.scheduleConflicts.checkFixed(
         teacherId,
         classId,
-        { effectiveFrom: dto.resumeFrom, schedules }
+        { effectiveFrom: dto.resumeFrom, schedules },
       );
       this.scheduleConflicts.assertAvailable(check);
 

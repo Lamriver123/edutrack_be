@@ -124,7 +124,11 @@ export class ClassesController {
     @Param('classId') classId: string,
     @Body() dto: SuspendFixedScheduleDto,
   ) {
-    return this.classesService.previewSuspendFixedSchedule(user.userId, classId, dto.suspendFrom);
+    return this.classesService.previewSuspendFixedSchedule(
+      user.userId,
+      classId,
+      dto.suspendFrom,
+    );
   }
 
   @Post(':classId/schedules/fixed/suspend')

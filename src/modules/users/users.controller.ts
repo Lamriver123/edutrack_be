@@ -168,7 +168,8 @@ export class UsersController {
   @Post('me/push-subscriptions')
   addPushSubscription(
     @CurrentUser() user: JwtUser,
-    @Body() subscription: { endpoint: string; keys?: { p256dh: string; auth: string } },
+    @Body()
+    subscription: { endpoint: string; keys?: { p256dh: string; auth: string } },
   ) {
     if (!subscription || !subscription.endpoint) {
       throw new BadRequestException('Invalid subscription payload');
@@ -177,7 +178,10 @@ export class UsersController {
   }
 
   @Delete('me/push-subscriptions')
-  removePushSubscription(@CurrentUser() user: JwtUser, @Body('endpoint') endpoint: string) {
+  removePushSubscription(
+    @CurrentUser() user: JwtUser,
+    @Body('endpoint') endpoint: string,
+  ) {
     if (!endpoint) {
       throw new BadRequestException('Endpoint is required');
     }

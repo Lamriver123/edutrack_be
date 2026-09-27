@@ -6,7 +6,10 @@ import { PushCronService } from './push-cron.service';
 import { UsersModule } from '../users/users.module';
 import { SchedulesModule } from '../schedules/schedules.module';
 import { User, UserSchema } from '../users/schemas/user.schema';
-import { ClassSession, ClassSessionSchema } from '../school-management/schemas/class-session.schema';
+import {
+  ClassSession,
+  ClassSessionSchema,
+} from '../school-management/schemas/class-session.schema';
 
 @Module({
   imports: [

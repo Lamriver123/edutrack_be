@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { OnEvent } from '@nestjs/event-emitter';
 import * as webpush from 'web-push';
 import { UsersService } from '../users/users.service';
 
@@ -22,9 +23,21 @@ export class PushService {
     }
   }
 
+  @OnEvent('notification.push')
+  async handleNotificationEvent(data: {
+    userId: string;
+    payload: Record<string, unknown>;
+  }) {
+    await this.sendNotification(data.userId, data.payload);
+  }
+
   async sendNotification(userId: string, payload: Record<string, unknown>) {
     const user = await this.usersService.findByIdWithSecrets(userId);
-    if (!user || !user.pushSubscriptions || user.pushSubscriptions.length === 0) {
+    if (
+      !user ||
+      !user.pushSubscriptions ||
+      user.pushSubscriptions.length === 0
+    ) {
       return;
     }
 
@@ -32,17 +45,24 @@ export class PushService {
 
     const promises = user.pushSubscriptions.map(async (sub) => {
       try {
-        await webpush.sendNotification(sub as webpush.PushSubscription, JSON.stringify(payload));
+        await webpush.sendNotification(
+          sub as webpush.PushSubscription,
+          JSON.stringify(payload),
+        );
       } catch (error) {
         if (error instanceof webpush.WebPushError) {
           if (error.statusCode === 410 || error.statusCode === 404) {
             // Subscription has expired or is no longer valid
             deadSubscriptions.push(sub.endpoint);
           } else {
-            this.logger.error(`Failed to send push notification to ${userId}: ${error.message}`);
+            this.logger.error(
+              `Failed to send push notification to ${userId}: ${error.message}`,
+            );
           }
         } else if (error instanceof Error) {
-          this.logger.error(`Failed to send push notification to ${userId}: ${error.message}`);
+          this.logger.error(
+            `Failed to send push notification to ${userId}: ${error.message}`,
+          );
         }
       }
     });

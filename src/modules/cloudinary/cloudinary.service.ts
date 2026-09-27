@@ -91,19 +91,24 @@ export class CloudinaryService {
 
   async uploadTeacherMedia(file: UploadImageFile, teacherId: string) {
     if (file.size > 10 * 1024 * 1024) {
-      throw new BadRequestException('Kích thước file không được vượt quá 10MB.');
+      throw new BadRequestException(
+        'Kích thước file không được vượt quá 10MB.',
+      );
     }
     const folder = `edutrack/media/${teacherId}`;
     let resourceType: 'image' | 'raw' | 'video' | 'auto' = 'auto';
-    
+
     if (file.mimetype.startsWith('image/')) {
       resourceType = 'image';
-    } else if (file.mimetype.startsWith('video/') || file.mimetype.startsWith('audio/')) {
+    } else if (
+      file.mimetype.startsWith('video/') ||
+      file.mimetype.startsWith('audio/')
+    ) {
       resourceType = 'video';
     } else {
       resourceType = 'raw';
     }
-    
+
     return this.uploadFile(file, folder, resourceType);
   }
 

@@ -214,8 +214,7 @@ export class ReceiptTemplateService {
       ),
       this.paymentLine(
         'Ghi chú',
-        receipt.paymentNote ||
-          'Nếu có thắc mắc gì vui lòng liên hệ giáo viên.',
+        receipt.paymentNote || 'Nếu có thắc mắc gì vui lòng liên hệ giáo viên.',
       ),
     ].join(''),
     qr: paymentQrDataUrl

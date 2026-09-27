@@ -62,7 +62,9 @@ function createService(user: ReturnType<typeof createUser>) {
     }),
   };
   const cloudinaryService = {
-    uploadTeacherMedia: jest.fn().mockResolvedValue({ url: 'https://res.cloudinary.com/test.jpg' }),
+    uploadTeacherMedia: jest
+      .fn()
+      .mockResolvedValue({ url: 'https://res.cloudinary.com/test.jpg' }),
   };
   const service = new UsersService(
     userModel as never,
@@ -248,7 +250,7 @@ describe('UsersService media upload', () => {
       recentMediaUrls: ['url1', 'url2', 'url3', 'url4', 'url5'],
     });
     const { service, cloudinaryService } = createService(user);
-    
+
     cloudinaryService.uploadTeacherMedia.mockResolvedValueOnce({
       url: 'new_url',
     });
@@ -262,11 +264,17 @@ describe('UsersService media upload', () => {
 
     expect(cloudinaryService.uploadTeacherMedia).toHaveBeenCalledWith(
       expect.anything(),
-      USER_ID
+      USER_ID,
     );
     expect(user.save).toHaveBeenCalledTimes(1);
     expect(result.url).toBe('new_url');
     // It should add 'new_url' and drop the last one 'url5' to keep length 5
-    expect(user.recentMediaUrls).toEqual(['new_url', 'url1', 'url2', 'url3', 'url4']);
+    expect(user.recentMediaUrls).toEqual([
+      'new_url',
+      'url1',
+      'url2',
+      'url3',
+      'url4',
+    ]);
   });
 });

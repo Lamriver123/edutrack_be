@@ -10,7 +10,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { createHash } from 'node:crypto';
 import { Model, Types } from 'mongoose';
-import { CloudinaryService, type UploadImageFile } from '../cloudinary/cloudinary.service';
+import {
+  CloudinaryService,
+  type UploadImageFile,
+} from '../cloudinary/cloudinary.service';
 import {
   BankDirectoryService,
   type PaymentBank,
@@ -403,34 +406,47 @@ export class UsersService {
 
   async uploadMedia(userId: string, file: UploadImageFile) {
     const user = await this.findByIdOrThrow(userId);
-    const result = await this.cloudinaryService.uploadTeacherMedia(file, userId);
-    
+    const result = await this.cloudinaryService.uploadTeacherMedia(
+      file,
+      userId,
+    );
+
     // Thêm URL mới vào đầu mảng và giữ tối đa 5 phần tử
     const currentUrls = user.recentMediaUrls || [];
-    user.recentMediaUrls = [result.url, ...currentUrls.filter(u => u !== result.url)].slice(0, 5);
-    
+    user.recentMediaUrls = [
+      result.url,
+      ...currentUrls.filter((u) => u !== result.url),
+    ].slice(0, 5);
+
     await user.save();
-    
+
     return {
       url: result.url,
-      recentMediaUrls: user.recentMediaUrls
+      recentMediaUrls: user.recentMediaUrls,
     };
   }
 
   async getMediaHistory(userId: string) {
     const user = await this.findByIdOrThrow(userId);
     return {
-      recentMediaUrls: user.recentMediaUrls || []
+      recentMediaUrls: user.recentMediaUrls || [],
     };
   }
 
-  async addPushSubscription(userId: string, subscription: { endpoint: string; keys?: { p256dh: string; auth: string } }) {
-    const user = await this.userModel.findById(userId).select('+pushSubscriptions').exec();
-    if (!user) throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
+  async addPushSubscription(
+    userId: string,
+    subscription: { endpoint: string; keys?: { p256dh: string; auth: string } },
+  ) {
+    const user = await this.userModel
+      .findById(userId)
+      .select('+pushSubscriptions')
+      .exec();
+    if (!user)
+      throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
 
     const subs = user.pushSubscriptions || [];
     // Check if exists
-    const exists = subs.find(s => s.endpoint === subscription.endpoint);
+    const exists = subs.find((s) => s.endpoint === subscription.endpoint);
     if (!exists) {
       user.pushSubscriptions = [...subs, subscription];
       await user.save();
@@ -439,10 +455,16 @@ export class UsersService {
   }
 
   async removePushSubscription(userId: string, endpoint: string) {
-    const user = await this.userModel.findById(userId).select('+pushSubscriptions').exec();
-    if (!user) throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
+    const user = await this.userModel
+      .findById(userId)
+      .select('+pushSubscriptions')
+      .exec();
+    if (!user)
+      throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
 
-    user.pushSubscriptions = (user.pushSubscriptions || []).filter(s => s.endpoint !== endpoint);
+    user.pushSubscriptions = (user.pushSubscriptions || []).filter(
+      (s) => s.endpoint !== endpoint,
+    );
     await user.save();
     return { success: true };
   }

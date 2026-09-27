@@ -623,9 +623,11 @@ export class ReceiptsService {
       throw new BadRequestException('Không thể phát hành hóa đơn.');
     }
 
-    this.renderAndUploadReceiptPdf(teacherIdStr, receiptId.toString()).catch((err) => {
-      console.error('Lỗi khi tạo PDF ngầm:', err);
-    });
+    this.renderAndUploadReceiptPdf(teacherIdStr, receiptId.toString()).catch(
+      (err) => {
+        console.error('Lỗi khi tạo PDF ngầm:', err);
+      },
+    );
 
     return this.findReceiptById(teacherIdStr, receiptId.toString());
   }
@@ -680,9 +682,11 @@ export class ReceiptsService {
       throw new BadRequestException('Không thể phát hành hóa đơn.');
     }
 
-    this.renderAndUploadReceiptPdf(teacherIdStr, receiptId.toString()).catch((err) => {
-      console.error('Lỗi khi tạo PDF ngầm:', err);
-    });
+    this.renderAndUploadReceiptPdf(teacherIdStr, receiptId.toString()).catch(
+      (err) => {
+        console.error('Lỗi khi tạo PDF ngầm:', err);
+      },
+    );
 
     return this.findReceiptById(teacherIdStr, receiptId.toString());
   }
@@ -2035,9 +2039,7 @@ export class ReceiptsService {
     }
 
     const activeClasses = await query.lean().exec();
-    const activeIdSet = new Set(
-      activeClasses.map((cls) => cls._id.toString()),
-    );
+    const activeIdSet = new Set(activeClasses.map((cls) => cls._id.toString()));
 
     return classIds.filter((classId) => activeIdSet.has(classId.toString()));
   }
@@ -2561,12 +2563,16 @@ export class ReceiptsService {
     if (!receipt || !receipt.periodStart || !receipt.periodEnd) {
       return '';
     }
-    const start = new Date(new Date(receipt.periodStart).getTime() + VIETNAM_TIMEZONE_OFFSET_MS);
-    const end = new Date(new Date(receipt.periodEnd).getTime() + VIETNAM_TIMEZONE_OFFSET_MS);
-    
+    const start = new Date(
+      new Date(receipt.periodStart).getTime() + VIETNAM_TIMEZONE_OFFSET_MS,
+    );
+    const end = new Date(
+      new Date(receipt.periodEnd).getTime() + VIETNAM_TIMEZONE_OFFSET_MS,
+    );
+
     const startStr = `${String(start.getUTCDate()).padStart(2, '0')}${String(start.getUTCMonth() + 1).padStart(2, '0')}${start.getUTCFullYear()}`;
     const endStr = `${String(end.getUTCDate()).padStart(2, '0')}${String(end.getUTCMonth() + 1).padStart(2, '0')}${end.getUTCFullYear()}`;
-    
+
     return `${startStr}-${endStr}`;
   }
 
