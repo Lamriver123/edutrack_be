@@ -34,12 +34,15 @@ const PAYMENT_QR_MIME_TYPES = new Set([
   'image/webp',
 ]);
 
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @Get('me')
@@ -175,6 +178,19 @@ export class UsersController {
       throw new BadRequestException('Invalid subscription payload');
     }
     return this.usersService.addPushSubscription(user.userId, subscription);
+  }
+
+  @Post('me/push-subscription/test')
+  testPushSubscription(@CurrentUser() user: JwtUser) {
+    this.eventEmitter.emit('notification.push', {
+      userId: user.userId,
+      payload: {
+        title: 'Test thông báo EduTrack!',
+        body: 'Hệ thống thông báo đang hoạt động rất tốt!',
+        url: '/dashboard',
+      },
+    });
+    return { message: 'Đã gửi thông báo test' };
   }
 
   @Delete('me/push-subscription')
