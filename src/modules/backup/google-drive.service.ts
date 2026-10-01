@@ -3,6 +3,20 @@ import { ConfigService } from '@nestjs/config';
 import { google, drive_v3 } from 'googleapis';
 import { Readable } from 'stream';
 
+/** Expected shape of a Google Service Account JSON key */
+interface ServiceAccountCredentials {
+  type: string;
+  project_id: string;
+  private_key_id: string;
+  private_key: string;
+  client_email: string;
+  client_id: string;
+  auth_uri: string;
+  token_uri: string;
+  auth_provider_x509_cert_url: string;
+  client_x509_cert_url: string;
+}
+
 @Injectable()
 export class GoogleDriveService {
   private readonly logger = new Logger(GoogleDriveService.name);
@@ -27,7 +41,9 @@ export class GoogleDriveService {
     }
 
     try {
-      const credentials = JSON.parse(credentialsJson);
+      const credentials: ServiceAccountCredentials = JSON.parse(
+        credentialsJson,
+      ) as ServiceAccountCredentials;
 
       const auth = new google.auth.GoogleAuth({
         credentials,
@@ -88,7 +104,10 @@ export class GoogleDriveService {
         webViewLink: response.data.webViewLink ?? '',
       };
     } catch (error) {
-      this.logger.error(`Failed to upload "${fileName}" to Google Drive`, error);
+      this.logger.error(
+        `Failed to upload "${fileName}" to Google Drive`,
+        error,
+      );
       throw error;
     }
   }

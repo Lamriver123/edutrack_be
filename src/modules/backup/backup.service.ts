@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import * as zlib from 'zlib';
@@ -23,8 +23,7 @@ export class BackupService {
     private readonly configService: ConfigService,
     private readonly googleDriveService: GoogleDriveService,
   ) {
-    this.maxBackups =
-      this.configService.get<number>('backup.maxBackups') ?? 30;
+    this.maxBackups = this.configService.get<number>('backup.maxBackups') ?? 30;
   }
 
   /**
@@ -66,9 +65,10 @@ export class BackupService {
       const rawSizeMb = (Buffer.byteLength(jsonString) / (1024 * 1024)).toFixed(
         2,
       );
-      const compressedSizeMb = (compressedBuffer.length / (1024 * 1024)).toFixed(
-        2,
-      );
+      const compressedSizeMb = (
+        compressedBuffer.length /
+        (1024 * 1024)
+      ).toFixed(2);
 
       this.logger.log(
         `Backup data: ${rawSizeMb} MB raw → ${compressedSizeMb} MB compressed (${Object.keys(backupData.collections).length} collections, ${backupData.metadata.totalDocuments} documents)`,
@@ -85,8 +85,9 @@ export class BackupService {
       );
 
       // 4) Prune old backups
-      const pruned =
-        await this.googleDriveService.pruneOldBackups(this.maxBackups);
+      const pruned = await this.googleDriveService.pruneOldBackups(
+        this.maxBackups,
+      );
 
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       this.logger.log(
@@ -159,17 +160,19 @@ export class BackupService {
       date.toLocaleString('en-US', { timeZone: VIETNAM_TZ }),
     );
 
-    return [
-      vnDate.getFullYear(),
-      pad(vnDate.getMonth() + 1),
-      pad(vnDate.getDate()),
-    ].join('-') +
+    return (
+      [
+        vnDate.getFullYear(),
+        pad(vnDate.getMonth() + 1),
+        pad(vnDate.getDate()),
+      ].join('-') +
       '_' +
       [
         pad(vnDate.getHours()),
         pad(vnDate.getMinutes()),
         pad(vnDate.getSeconds()),
-      ].join('-');
+      ].join('-')
+    );
   }
 }
 
