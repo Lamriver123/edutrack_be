@@ -16,6 +16,7 @@ import { SchedulesModule } from './modules/schedules/schedules.module';
 import { SchoolManagementModule } from './modules/school-management/school-management.module';
 import { StudentsModule } from './modules/students/students.module';
 import { UsersModule } from './modules/users/users.module';
+import { BackupModule } from './modules/backup/backup.module';
 import { PushModule } from './modules/push/push.module';
 
 import { ScheduleModule } from '@nestjs/schedule';
@@ -41,6 +42,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     DashboardModule,
     AiModule,
     PushModule,
+    BackupModule,
   ],
   controllers: [AppController],
   providers: [AppService],

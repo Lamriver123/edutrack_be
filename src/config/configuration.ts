@@ -119,6 +119,13 @@ export default () => {
       clientId: process.env.VIETQR_CLIENT_ID ?? '',
       apiKey: process.env.VIETQR_API_KEY ?? '',
     },
+    backup: {
+      googleServiceAccountKey:
+        process.env.GOOGLE_SERVICE_ACCOUNT_KEY ?? '',
+      googleDriveFolderId:
+        process.env.GOOGLE_DRIVE_BACKUP_FOLDER_ID ?? '',
+      maxBackups: toNumber(process.env.BACKUP_MAX_COUNT, 30),
+    },
     cloudinary: {
       cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? '',
       apiKey: process.env.CLOUDINARY_API_KEY ?? '',
