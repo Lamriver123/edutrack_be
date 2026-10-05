@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Cron } from '@nestjs/schedule';
+import { Cron, Timeout } from '@nestjs/schedule';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import * as zlib from 'zlib';
@@ -24,6 +24,44 @@ export class BackupService {
     private readonly googleDriveService: GoogleDriveService,
   ) {
     this.maxBackups = this.configService.get<number>('backup.maxBackups') ?? 30;
+  }
+
+  // A sleeping web service can miss 02:00. On its next startup, create the
+  // current day's backup only if no successful upload exists since 02:00 VN.
+  @Timeout('backup-catch-up', 15_000)
+  async catchUpAfterStartup(): Promise<void> {
+    if (
+      !this.configService.get<boolean>('backup.catchUpOnStartup') ||
+      !this.googleDriveService.isConfigured() ||
+      this.isRunning
+    )
+      return;
+    const now = new Date();
+    const vnNow = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+    if (vnNow.getUTCHours() < 2) return;
+    const dueAt =
+      Date.UTC(
+        vnNow.getUTCFullYear(),
+        vnNow.getUTCMonth(),
+        vnNow.getUTCDate(),
+        2,
+      ) -
+      7 * 60 * 60 * 1000;
+    try {
+      const files = await this.googleDriveService.listBackupFiles();
+      if (
+        files.some(
+          (file) => file.createdTime && Date.parse(file.createdTime) >= dueAt,
+        )
+      )
+        return;
+      await this.handleScheduledBackup();
+    } catch (error) {
+      this.logger.error(
+        'Backup catch-up check failed',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+    }
   }
 
   /**
@@ -51,6 +89,12 @@ export class BackupService {
 
     try {
       this.logger.log('=== Starting scheduled database backup ===');
+      if (!Number.isInteger(this.maxBackups) || this.maxBackups < 1) {
+        throw new Error('BACKUP_MAX_COUNT must be a positive integer');
+      }
+
+      // Fail before exporting the DB if the destination cannot accept files.
+      await this.googleDriveService.checkBackupFolder();
 
       // 1) Export all collections to JSON
       const backupData = await this.exportAllCollections();
@@ -78,11 +122,13 @@ export class BackupService {
       const timestamp = this.formatTimestamp(new Date());
       const fileName = `edutrack_backup_${timestamp}.json.gz`;
 
-      await this.googleDriveService.uploadFile(
+      const uploaded = await this.googleDriveService.uploadFile(
         fileName,
         compressedBuffer,
         'application/gzip',
       );
+      if (!uploaded?.fileId)
+        throw new Error('Backup upload did not create a file');
 
       // 4) Prune old backups
       const pruned = await this.googleDriveService.pruneOldBackups(
@@ -95,7 +141,10 @@ export class BackupService {
       );
     } catch (error) {
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-      this.logger.error(`Backup failed after ${elapsed}s`, error);
+      this.logger.error(
+        `Backup failed after ${elapsed}s`,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     } finally {
       this.isRunning = false;
     }
@@ -132,8 +181,9 @@ export class BackupService {
 
         this.logger.debug(`  ✓ ${name}: ${docs.length} document(s)`);
       } catch (error) {
-        this.logger.error(`  ✗ Failed to export collection "${name}"`, error);
-        collections[name] = [];
+        throw new Error(
+          `Failed to export collection "${name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
     }
 

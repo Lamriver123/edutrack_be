@@ -24,13 +24,13 @@ services:
       - key: JWT_REFRESH_COOKIE_NAME
         value: edutrack_refresh_token
       - key: JWT_REFRESH_COOKIE_SECURE
-        value: "true"
+        value: 'true'
       - key: JWT_REFRESH_COOKIE_SAME_SITE
         value: none
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
-        value: "587"
+        value: '587'
       - key: SMTP_USER
         sync: false
       - key: SMTP_PASS
@@ -38,9 +38,9 @@ services:
       - key: SMTP_FROM
         sync: false
       - key: OTP_EXPIRES_MINUTES
-        value: "5"
+        value: '5'
       - key: OTP_RESEND_COOLDOWN_SECONDS
-        value: "60"
+        value: '60'
       - key: FRONTEND_URL
         sync: false
       # Keep the same VAPID pair across deploys; enter values in Render.
@@ -64,3 +64,17 @@ services:
         sync: false
       - key: CLOUDINARY_STUDENT_AVATAR_FOLDER
         value: edutrack/student-avatars
+      # My Drive backups use the owner's OAuth credentials.
+      # Shared Drive deployments can set GOOGLE_SERVICE_ACCOUNT_KEY instead.
+      - key: GOOGLE_DRIVE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_DRIVE_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_DRIVE_OAUTH_REFRESH_TOKEN
+        sync: false
+      - key: GOOGLE_DRIVE_BACKUP_FOLDER_ID
+        sync: false
+      - key: BACKUP_MAX_COUNT
+        value: '30'
+      - key: BACKUP_CATCH_UP_ON_STARTUP
+        value: 'true'

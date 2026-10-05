@@ -120,10 +120,17 @@ export default () => {
       apiKey: process.env.VIETQR_API_KEY ?? '',
     },
     backup: {
-      googleServiceAccountKey:
-        process.env.GOOGLE_SERVICE_ACCOUNT_KEY ?? '',
-      googleDriveFolderId:
-        process.env.GOOGLE_DRIVE_BACKUP_FOLDER_ID ?? '',
+      googleOAuthClientId: process.env.GOOGLE_DRIVE_OAUTH_CLIENT_ID ?? '',
+      googleOAuthClientSecret:
+        process.env.GOOGLE_DRIVE_OAUTH_CLIENT_SECRET ?? '',
+      googleOAuthRefreshToken:
+        process.env.GOOGLE_DRIVE_OAUTH_REFRESH_TOKEN ?? '',
+      catchUpOnStartup: toBoolean(
+        process.env.BACKUP_CATCH_UP_ON_STARTUP,
+        isProduction,
+      ),
+      googleServiceAccountKey: process.env.GOOGLE_SERVICE_ACCOUNT_KEY ?? '',
+      googleDriveFolderId: process.env.GOOGLE_DRIVE_BACKUP_FOLDER_ID ?? '',
       maxBackups: toNumber(process.env.BACKUP_MAX_COUNT, 30),
     },
     cloudinary: {
