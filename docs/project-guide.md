@@ -2,7 +2,7 @@
 
 Mốc đọc và đối chiếu nghiệp vụ: **06/10/2026, Asia/Ho_Chi_Minh**.
 
-Mốc khảo sát ban đầu: backend tại `ae00d7b508c9a3fdaf5a2f51cca307ed30d1c94a`; frontend tại `12437b0f87f74df9223d5b245cac25536592c176`. Ngày 06/10/2026 tiếp tục bổ sung danh sách thiết bị nhận thông báo ở mục 14.4/14.6 và sửa buổi tạm hiện lại sau thu hồi ở mục 8.4/18.7. Chỉ mục và snapshot phản ánh source local tại lần sinh gần nhất; các mốc này không xác nhận phiên bản đang chạy trên Render/Vercel.
+Mốc khảo sát ban đầu: backend tại `ae00d7b508c9a3fdaf5a2f51cca307ed30d1c94a`; frontend tại `12437b0f87f74df9223d5b245cac25536592c176`. Ngày 06/10/2026 tiếp tục bổ sung danh sách thiết bị nhận thông báo ở mục 14.4/14.6, sửa buổi tạm hiện lại sau thu hồi ở mục 8.4/18.7 và khôi phục lịch cố định có lựa chọn đổi lịch ở mục 8.2/18.8. Chỉ mục và snapshot phản ánh source local tại lần sinh gần nhất; các mốc này không xác nhận phiên bản đang chạy trên Render/Vercel.
 
 Tài liệu này dành cho người bảo trì và coding agent. Mục đích là tìm đúng nơi sửa, hiểu quy tắc đang chạy và chọn kiểm thử phù hợp mà không phải đọc lại dự án từ đầu. Các nhận xét “hiện tại” là kết quả đối chiếu mã ở mốc trên, không phải cam kết mọi trường hợp đã được kiểm thử trên production.
 
@@ -504,7 +504,13 @@ Sửa time helper phải kiểm tra lịch/override/session/attendance/sourceKey
 - Không ghi đè version quá khứ bằng weekly slots mới.
 - Khi tạo version mới lỗi, code có bước hoàn lại việc đóng version trước.
 - Suspend có preview liệt kê tác động; đóng lịch từ ngày chọn và xử lý override không còn nguồn sau đó, có guard điểm danh.
-- Resume clone lịch phù hợp trước đó, giữ timeStorage, tạo version mới.
+- Resume tạo version mới và giữ nguyên version đã tạm hoãn. Nếu không truyền `schedules`, clone các slot cũ và giữ timeStorage; nếu truyền các slot mới, normalize giờ/thứ Việt Nam sang UTC cho version khôi phục.
+
+**Khôi phục có lựa chọn đổi lịch, 06/10/2026:** khi bấm **Khôi phục lịch**, FE hỏi “Bạn có muốn thay đổi lịch học khi khôi phục không?”. Mặc định **Không, giữ lịch cũ**, giáo viên chọn ngày và khôi phục theo lịch trước đó. **Có, thay đổi lịch** mở lại editor thứ/giờ/ca học có dữ liệu cũ, giữ ngày khôi phục đã chọn; chưa ghi DB ở bước mở editor. Hủy editor vẫn giữ trạng thái tạm hoãn. Sau chỉnh sửa, precheck và modal xác nhận chạy như form lịch cố định; chỉ xác nhận cuối mới khôi phục.
+
+`ClassScheduleTab` dùng `fixedEditPurpose = edit | resume` để chọn đúng API: sửa bình thường gọi `/schedules/fixed`, chỉnh khi khôi phục gọi `/schedules/fixed/resume` với `{ resumeFrom, schedules }`. Cả luồng chuyển sang editor vì lịch cũ trùng cũng dùng intent `resume`; không dùng save fixed để bỏ qua guard khôi phục. Mỗi lần mở chooser reset về giữ lịch cũ, mở editor thường reset về intent edit.
+
+`ResumeFixedScheduleDto.schedules?: ScheduleSlotDto[]` có validation nested giống tạo lịch cố định, không cho mảng rỗng/weekday hoặc giờ sai/field lạ. Payload cũ `{ resumeFrom }` vẫn tương thích. Backend kiểm ownership, phải có version tạm hoãn, ngày không trước thời điểm đóng version, check trùng và ghi version mới dưới teacher write lock. Nếu tab khác đã khôi phục, request cũ bị chặn thay vì ghi đè lịch đang hoạt động. Response bổ sung `warnings` theo conflict check; không đổi lịch sử/hóa đơn cũ.
 
 ### 8.3 Lịch tạm thời
 
@@ -1017,6 +1023,10 @@ Hook trả thêm `devices` và `currentDeviceId`. `checkSubscription` lấy stat
 
 `PushDeviceList` dùng cards với icon laptop/điện thoại/tablet/unknown, tên, browser/OS, thời gian **Cập nhật** theo múi giờ Việt Nam. Thẻ hiện tại đứng đầu và màu tím; các thẻ khác có badge **Đã đăng ký**. Đây không phải danh sách thiết bị đang online hoặc bằng chứng từng thiết bị đã hiển thị thông báo. Grid 1 cột mobile, 2 cột `sm`, 3 cột `xl`; có skeleton, empty state, hướng dẫn cập nhật thiết bị cũ. Nếu BE cũ chỉ trả count, FE hiển thị count và trạng thái chưa tải được thông tin thay vì lỗi.
 
+`PushNotificationPanel` mặc định thu gọn khi mount, chỉ hiện tiêu đề **Thông báo trên thiết bị**, mô tả **Nhắc lịch dạy và điểm danh trên các thiết bị của bạn**, công tắc và nút mũi tên mở rộng. Công tắc hoạt động độc lập với việc mở/đóng chi tiết. `isExpanded` là state UI local, không lưu vào storage hoặc gọi API; `useId` nối `aria-controls` với vùng chi tiết và `aria-expanded` mô tả trạng thái. Nút hỗ trợ bàn phím, đổi nhãn **Mở rộng/Thu gọn thông báo trên thiết bị** và xoay mũi tên. Vùng chi tiết chứa trạng thái, toàn bộ cards, hướng dẫn và các nút gửi thử/kiểm tra lại; khi đóng dùng `aria-hidden` + `inert` để không đọc/focus nội dung đã ẩn.
+
+Hiệu ứng trong `push-notification-panel.module.css` chuyển grid row `0fr ↔ 1fr` trong 280ms, kết hợp opacity và visibility trễ khi đóng để nội dung trượt ra/vào theo chiều cao thực tế, không dùng max-height cố định. `prefers-reduced-motion: reduce` tắt hiệu ứng vùng chi tiết và mũi tên. Icon chuông trang trí chỉ hiện từ `sm`, giúp header điện thoại có đủ chỗ cho tiêu đề và công tắc. Hook vẫn kiểm tra/đồng bộ subscription bình thường khi thu gọn.
+
 ### 14.7 Service worker/PWA/offline
 
 `public/sw.js` dùng cache version `edutrack-v3`:
@@ -1422,6 +1432,20 @@ Không coi các kết quả này là mới chạy lại sau mọi chỉnh sửa.
 - MongoDB thật: **3 integration tests pass**, dùng port QA `127.0.0.1:27019`, DB `edutrack_schedule_test_<pid>_<uuid>` riêng được dọn sau suite. Test gọi ClassesService thật để điểm danh 3 học sinh, clear 1 người và xác nhận chặn thu hồi, clear hết rồi thu hồi và đọc lại calendar/history/sheet. Bao phủ orphan legacy có stale completed flag, actual attendance/billed tuition, tenant khác và khôi phục slot cố định khi thu hồi lịch dời.
 - FE: **3 Playwright tests pass** ở 1440px/390px và billed lock, dùng API mock. Sau thu hồi kiểm cả danh sách tạm, nội dung trên calendar, tải lại trang và chuyển về bảng điểm danh. Chọn locator visible khi desktop/mobile cùng tồn tại trong DOM. FE lint và TypeScript pass; source UI không cần sửa vì đã refresh cả hai API.
 - Backend build và lint file thay đổi pass. Thay đổi chỉ là projection lịch, không xóa cứng sessions, không sửa hóa đơn hay chạy migration dữ liệu ứng dụng. Cần deploy backend để dữ liệu sót trên web đang chạy được lọc khi tải lại.
+
+### 18.8 Xác minh lựa chọn đổi lịch khi khôi phục ngày 06/10/2026
+
+- Backend unit: **2 suites, 31 tests pass**, gồm 7 case ResumeFixedScheduleDto qua ValidationPipe và 24 case conflict engine. Payload cũ được chấp nhận, replacement slots transform/validate nested, mảng rỗng/giờ/weekday/field lạ bị chặn.
+- MongoDB thật: **6 integration tests pass** trong suite schedule lifecycle trên port QA 27019. Giữ 3 regression thu hồi buổi tạm; bổ sung giữ/đổi lịch cố định và lỗi ngày/trùng lịch. Cả giữ/đổi đều tạo version 2, version cũ không đổi; buổi sáng sớm chuyển đúng weekday UTC/VN. Khôi phục lại version đã hoạt động bị chặn, không thêm version ngoài ý muốn. DB test UUID đã dọn, không kết nối DB ứng dụng.
+- FE: **6 Playwright tests pass** (`tests/schedule-resume.spec.ts`) với API mock. Bao phủ lựa chọn mặc định, editor 1440/390px không ghi sớm, Hủy giữ tạm hoãn, fallback lịch cũ trùng dùng API resume, conflict phát hiện lúc ghi vẫn giữ editor/tạm hoãn. Đã xem ảnh chooser/editor desktop và mobile; test chọn thứ bằng button/option thực tế của custom SelectField.
+- BE/FE production build và lint file thay đổi pass; FE TypeScript pass. Cảnh báo `metadataBase` trong FE build có sẵn. Guide/index được cập nhật cho DTO, state intent và API payload.
+- Cần deploy cả BE và FE để có lựa chọn mới và hỗ trợ `schedules` trên endpoint resume. Không có thay đổi schema/migration hoặc ghi dữ liệu production trong đợt này.
+
+### 18.9 Xác minh thu gọn phần thông báo thiết bị ngày 06/10/2026
+
+- FE Playwright: **14 tests pass** trong suite push hiện có, dùng API và browser gateway mock. Các regression xem chi tiết mở panel trước; case desktop kiểm mặc định thu gọn, Enter để mở, Space để đóng, vùng đóng inert và reload trở về thu gọn. Case mobile 390px kiểm cả hai trạng thái, không tràn ngang và hỗ trợ reduced motion. Bật/tắt khi panel đóng vẫn cập nhật subscription/cards/empty state đúng.
+- Đã xem ảnh thu gọn/mở rộng desktop và mobile; TypeScript, ESLint file thay đổi và production build FE pass. Cảnh báo metadataBase trong build có sẵn. Guide và chỉ mục source được cập nhật.
+- Chỉ thay đổi giao diện frontend; không đổi API, service worker hoặc backend push. Thay đổi cần deploy FE để xuất hiện trên website; kiểm thử không gửi push ra ngoài.
 
 ## 19. Công thức thay đổi và các bất biến
 

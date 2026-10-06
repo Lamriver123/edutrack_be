@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Connection, createConnection, Model, Types } from 'mongoose';
 import { ClassesService } from '../src/modules/classes/classes.service';
 import { ScheduleConflictsService } from '../src/modules/schedules/schedule-conflicts.service';
@@ -47,7 +47,7 @@ const databaseName = `edutrack_schedule_test_${process.pid}_${randomUUID().repla
 const mongoUri = `mongodb://127.0.0.1:27019/${databaseName}`;
 const lessonDate = new Date('2026-08-26T00:00:00+07:00');
 
-describe('Temporary lesson withdrawal with real isolated MongoDB', () => {
+describe('Class schedule lifecycle with real isolated MongoDB', () => {
   let connection: Connection;
   let classModel: Model<ClassDocument>;
   let overrideModel: Model<ScheduleOverrideDocument>;
@@ -377,5 +377,125 @@ describe('Temporary lesson withdrawal with real isolated MongoDB', () => {
         )
       ).map((event) => event.date),
     ).toEqual(['2026-08-26']);
+  });
+
+  it.each(['keep', 'change'] as const)(
+    'resumes a suspended schedule using the %s choice without changing past versions',
+    async (choice) => {
+      const { teacherId, classId } = await fixture();
+      const versionModel = connection.model<ScheduleVersionDocument>(
+        ScheduleVersion.name,
+      );
+      const previous = await versionModel.create({
+        teacherId,
+        classId,
+        version: 1,
+        effectiveFrom: lessonDate,
+        effectiveTo: new Date('2026-08-30T16:59:59.999Z'),
+        timeStorage: 'utc',
+        schedules: [{ dayOfWeek: 7, startTime: '22:00', endTime: '23:00' }],
+      });
+      const replacement = [
+        { dayOfWeek: 2, startTime: '05:30', endTime: '06:30' },
+      ];
+      const resumed = await classes.resumeFixedSchedule(
+        teacherId.toString(),
+        classId.toString(),
+        {
+          resumeFrom: '2026-10-05',
+          ...(choice === 'change' ? { schedules: replacement } : {}),
+        },
+      );
+      expect(resumed.version).toBe(2);
+      expect(resumed.schedules).toEqual(
+        choice === 'change'
+          ? replacement
+          : [{ dayOfWeek: 1, startTime: '05:00', endTime: '06:00' }],
+      );
+      expect(resumed.effectiveTo).toBeNull();
+      const unchanged = await versionModel.findById(previous._id).lean().exec();
+      expect(unchanged?.effectiveTo).toEqual(previous.effectiveTo);
+      expect(unchanged?.schedules).toEqual([
+        { dayOfWeek: 7, startTime: '22:00', endTime: '23:00' },
+      ]);
+      const stored = await versionModel
+        .findOne({ classId, version: 2 })
+        .lean()
+        .exec();
+      expect(stored?.timeStorage).toBe('utc');
+      expect(stored?.schedules).toEqual(
+        choice === 'change'
+          ? [{ dayOfWeek: 1, startTime: '22:30', endTime: '23:30' }]
+          : [{ dayOfWeek: 7, startTime: '22:00', endTime: '23:00' }],
+      );
+      const week = await schedules.getTeacherWeekSchedule(
+        teacherId.toString(),
+        { weekStart: '2026-10-05' },
+      );
+      expect(week.events).toHaveLength(1);
+      expect(week.events[0]).toMatchObject(
+        choice === 'change'
+          ? { date: '2026-10-06', startTime: '05:30', endTime: '06:30' }
+          : { date: '2026-10-05', startTime: '05:00', endTime: '06:00' },
+      );
+      // A stale second resume must not overwrite the now-active schedule.
+      await expect(
+        classes.resumeFixedSchedule(teacherId.toString(), classId.toString(), {
+          resumeFrom: '2026-10-07',
+          schedules: replacement,
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(await versionModel.countDocuments({ classId })).toBe(2);
+    },
+  );
+
+  it('rejects a changed resume with an invalid date or a conflicting recurring slot without reopening the old version', async () => {
+    const { teacherId, classId } = await fixture();
+    const versionModel = connection.model<ScheduleVersionDocument>(
+      ScheduleVersion.name,
+    );
+    const previous = await versionModel.create({
+      teacherId,
+      classId,
+      version: 1,
+      effectiveFrom: lessonDate,
+      effectiveTo: new Date('2026-08-30T16:59:59.999Z'),
+      timeStorage: 'vietnam',
+      schedules: [{ dayOfWeek: 1, startTime: '09:00', endTime: '10:30' }],
+    });
+    const replacement = [
+      { dayOfWeek: 3, startTime: '19:00', endTime: '20:30' },
+    ];
+    await expect(
+      classes.resumeFixedSchedule(teacherId.toString(), classId.toString(), {
+        resumeFrom: '2026-08-29',
+        schedules: replacement,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    const otherClass = await classModel.create({
+      teacherId,
+      name: 'Lớp đang học',
+      searchText: 'lop dang hoc',
+      regularPrice: 100000,
+      makeupPrice: 120000,
+    });
+    await versionModel.create({
+      teacherId,
+      classId: otherClass._id,
+      version: 1,
+      effectiveFrom: lessonDate,
+      timeStorage: 'vietnam',
+      schedules: replacement,
+    });
+    await expect(
+      classes.resumeFixedSchedule(teacherId.toString(), classId.toString(), {
+        resumeFrom: '2026-10-05',
+        schedules: replacement,
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(await versionModel.countDocuments({ classId })).toBe(1);
+    expect(
+      (await versionModel.findById(previous._id).lean().exec())?.effectiveTo,
+    ).toEqual(previous.effectiveTo);
   });
 });

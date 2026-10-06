@@ -882,21 +882,26 @@ export class ClassesService {
         );
       }
 
-      const schedules = latestSuspendedVersion.schedules.map((s) => {
-        if (latestSuspendedVersion.timeStorage === 'utc') {
-          const start = convertUtcWeeklyTimeToVietnam(s.dayOfWeek, s.startTime);
+      const schedules =
+        dto.schedules ??
+        latestSuspendedVersion.schedules.map((s) => {
+          if (latestSuspendedVersion.timeStorage === 'utc') {
+            const start = convertUtcWeeklyTimeToVietnam(
+              s.dayOfWeek,
+              s.startTime,
+            );
+            return {
+              dayOfWeek: start.dayOfWeek,
+              startTime: start.time,
+              endTime: convertUtcTimeToVietnam(s.endTime),
+            };
+          }
           return {
-            dayOfWeek: start.dayOfWeek,
-            startTime: start.time,
-            endTime: convertUtcTimeToVietnam(s.endTime),
+            dayOfWeek: s.dayOfWeek,
+            startTime: s.startTime,
+            endTime: s.endTime,
           };
-        }
-        return {
-          dayOfWeek: s.dayOfWeek,
-          startTime: s.startTime,
-          endTime: s.endTime,
-        };
-      });
+        });
 
       const check = await this.scheduleConflicts.checkFixed(
         teacherId,
@@ -905,24 +910,32 @@ export class ClassesService {
       );
       this.scheduleConflicts.assertAvailable(check);
 
-      // We clone the schedules and create a new version
+      // Keep the suspended version intact; apply changed slots only to the
+      // resumed version. Client slots use Vietnam time, including weekday shift.
       const newVersion = new this.scheduleVersionModel({
         teacherId: teacherObjectId,
         classId: classroom._id,
         version: latestSuspendedVersion.version + 1,
         effectiveFrom: resumeFrom,
         effectiveTo: null,
-        schedules: latestSuspendedVersion.schedules.map((s) => ({
-          dayOfWeek: s.dayOfWeek,
-          startTime: s.startTime,
-          endTime: s.endTime,
-        })),
-        timeStorage: latestSuspendedVersion.timeStorage ?? 'utc',
+        schedules: dto.schedules
+          ? dto.schedules.map((slot) => this.normalizeSlot(slot))
+          : latestSuspendedVersion.schedules.map((s) => ({
+              dayOfWeek: s.dayOfWeek,
+              startTime: s.startTime,
+              endTime: s.endTime,
+            })),
+        timeStorage: dto.schedules
+          ? 'utc'
+          : (latestSuspendedVersion.timeStorage ?? 'utc'),
       });
 
       await newVersion.save();
 
-      return this.toLatestFixedScheduleResponse(newVersion);
+      return {
+        ...this.toLatestFixedScheduleResponse(newVersion),
+        warnings: check.warnings,
+      };
     });
   }
 

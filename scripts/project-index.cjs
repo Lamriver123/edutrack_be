@@ -122,7 +122,7 @@ if (process.argv.includes('--check')) {
     md.push(`### ${r.file}`, '', `${link(r)} — ${r.lines} dòng.`, '');
     if (r.imports.length) md.push('Dependencies: ' + r.imports.map(i=>`\`${escape(i.from)}\``).join(', ') + '.', '');
     for (const cls of r.classes) {
-      md.push(`**${cls.name}** (dòng ${cls.line}) ${cls.decorators.map(escape).join(' ')}`, '', '| Member | Dòng | Hợp đồng / loại | Validation / metadata |', '| --- | ---: | --- | --- |');
+      md.push(`**${cls.name}** (dòng ${cls.line}) ${cls.decorators.map(escape).join(' ')}`.trimEnd(), '', '| Member | Dòng | Hợp đồng / loại | Validation / metadata |', '| --- | ---: | --- | --- |');
       for (const member of cls.members) md.push(`| ${escape(member.name)} | ${member.line} | ${escape(member.signature ? `${member.visibility} ${member.signature}` : `${member.type}${member.optional ? ' (optional)' : ''}${member.initializer ? ' = ' + member.initializer : ''}`)} | ${escape(member.decorators.join(' '))} |`);
       md.push('');
     }
