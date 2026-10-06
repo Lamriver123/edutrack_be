@@ -1,3 +1,11 @@
+# EduTrack backend và tài liệu toàn dự án
+
+Đọc [hướng dẫn BE + FE](docs/project-guide.md) để tìm file cần sửa, kiến trúc, API, database, nghiệp vụ, env và kiểm thử. [Chỉ mục mã nguồn](docs/project-code-index.md) cung cấp route/schema/DTO/method/test chi tiết.
+
+Kiểm tra tài liệu so với source hiện tại: `node scripts/project-index.cjs --check`. Sau cập nhật hướng dẫn, sinh lại chỉ mục bằng `node scripts/project-index.cjs`. Tool cần repo frontend ở `../edutrack_fe`.
+
+Phần dưới là README khởi tạo NestJS; các lệnh/cấu hình dự án cụ thể nằm trong hướng dẫn.
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
