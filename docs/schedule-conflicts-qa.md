@@ -10,6 +10,7 @@
 - Lịch tạm: xét lịch thực tế sau hủy/dời. Bỏ qua đúng tiết gốc theo lớp/ngày/giờ và override đang sửa. Các tiết khác cùng lớp/ngày vẫn được kiểm tra.
 - Lịch của giáo viên khác và lớp đã lưu trữ không tham gia đối chiếu. Lớp tạm dừng vẫn có lịch trên calendar nên vẫn tham gia.
 - Thu hồi hoặc thay đổi nguồn lịch tạm phải kiểm tra các tiết được khôi phục để tránh tạo trùng.
+- Sau khi xóa hết điểm danh và lưu, buổi học trở về `scheduled` và được phép hủy/dời/thu hồi lịch. Còn bất kỳ bản ghi điểm danh nào (kể cả học sinh đã nghỉ lớp) hoặc học phí đã xuất hóa đơn thì vẫn chặn. Trạng thái `completed` bị lưu dư ở dữ liệu cũ không tự khóa buổi nếu không còn dữ liệu liên quan.
 
 ## Dữ liệu kiểm tra
 
@@ -49,6 +50,10 @@ Mỗi ca bên dưới độc lập; thu hồi dữ liệu thử trước khi chu
 | 25 | Thu nhỏ màn hình 768/390/320px, mở form và tìm giờ trống | Form không tràn ngang; nội dung dài cuộn trong modal, các nút vẫn thao tác được |
 | 26 | Bấm lưu rồi hủy modal xác nhận | Không có yêu cầu tạo/sửa gửi đến API |
 | 27 | Thay đổi giờ hoặc đóng form khi API check còn đang trả lời | Bỏ kết quả kiểm tra cũ; không mở xác nhận cho dữ liệu đã đổi |
+| 28 | Lưu điểm danh một buổi tạo nhầm, sửa tất cả ô về `--`, lưu, reload rồi thu hồi lịch tạm | Điểm danh/học phí chưa xuất đã xóa; buổi về `scheduled`; thu hồi thành công |
+| 29 | Chỉ xóa điểm danh của một học sinh, còn học sinh khác đã lưu | Buổi vẫn `completed`; không cho hủy/dời/thu hồi |
+| 30 | Buổi cũ còn `completed` nhưng đã xóa hết điểm danh và không có học phí đã xuất | Cho hủy/dời/thu hồi mà không cần sửa DB thủ công |
+| 31 | Xóa điểm danh đã xuất hóa đơn, hoặc hủy buổi có học phí đã xuất nhưng thiếu bản ghi điểm danh | Chặn; giữ dữ liệu đã xuất hóa đơn |
 
 ## Kiểm tra tự động
 
@@ -74,3 +79,10 @@ node test/schedule-ui-smoke.cjs
 ```
 
 Ảnh chụp và báo cáo được tạo trong `.schedule-qa` ở thư mục workspace. Script đọc `EDUTRACK_CHROME_EXECUTABLE_PATH` nếu Chrome không nằm ở đường dẫn mặc định Windows.
+
+Hồi quy xóa điểm danh (05/10/2026): `classes-attendance-reset.spec.ts` kiểm tra service lưu/xóa/thu hồi với model giả lập, cả transaction và fallback standalone; `schedule-conflicts.service.spec.ts` kiểm tra hủy/dời/thu hồi với trạng thái cũ và khóa học phí. Test giao diện `edutrack_fe/tests/attendance-reset.spec.ts` dùng API giả lập trên desktop 1440px và mobile 390px, bao gồm reload và ô đã xuất hóa đơn. Không thao tác database thật.
+
+```powershell
+# edutrack_fe; FE phải đang chạy tại PLAYWRIGHT_BASE_URL (mặc định localhost:3000)
+node node_modules/@playwright/test/cli.js test tests/attendance-reset.spec.ts
+```

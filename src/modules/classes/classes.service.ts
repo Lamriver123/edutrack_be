@@ -1707,9 +1707,9 @@ export class ClassesService {
             scheduleType: this.resolveSessionScheduleType(
               dto.scheduleEventType,
             ),
-            status: SessionStatus.Completed,
           },
           $setOnInsert: {
+            status: SessionStatus.Scheduled,
             date,
             startTime: convertVietnamTimeToUtc(startTime),
             endTime: convertVietnamTimeToUtc(endTime),
@@ -1924,6 +1924,37 @@ export class ClassesService {
           .exec();
       }
     }
+
+    // The payload only contains changed cells; other students may still have
+    // saved attendance, including students who are no longer active in class.
+    const remainingAttendanceQuery = this.attendanceModel.exists({
+      teacherId: teacherObjectId,
+      classId: classroom._id,
+      sessionId: session._id,
+    });
+    if (dbSession) {
+      remainingAttendanceQuery.session(dbSession);
+    }
+    const hasAttendance = Boolean(await remainingAttendanceQuery.exec());
+
+    await this.classSessionModel
+      .updateOne(
+        {
+          _id: session._id,
+          teacherId: teacherObjectId,
+          classId: classroom._id,
+        },
+        {
+          $set: {
+            status: hasAttendance
+              ? SessionStatus.Completed
+              : SessionStatus.Scheduled,
+          },
+          ...(!hasAttendance ? { $unset: { completedAt: '' } } : {}),
+        },
+        { session: dbSession },
+      )
+      .exec();
   }
 
   private resolveSessionScheduleType(

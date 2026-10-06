@@ -5,6 +5,7 @@ import { ScheduleConflictsService } from './schedule-conflicts.service';
 import {
   ScheduleOverrideAction,
   SessionStatus,
+  TuitionStatus,
 } from '../school-management/enums';
 import { ScheduleSnapshot } from './schedule-conflict.engine';
 
@@ -40,6 +41,7 @@ describe('ScheduleConflictsService', () => {
   const overrides = { find: jest.fn() };
   const classSessions = { find: jest.fn() };
   const attendances = { exists: jest.fn() };
+  const tuitionEntries = { exists: jest.fn() };
   const locks = { findOneAndUpdate: jest.fn(), deleteOne: jest.fn() };
   const getLastSessionFilter = () => {
     const calls = classSessions.find.mock.calls as unknown as Array<
@@ -62,6 +64,7 @@ describe('ScheduleConflictsService', () => {
     overrides.find.mockReturnValue(query([]));
     classSessions.find.mockReturnValue(query([]));
     attendances.exists.mockReturnValue(query(null));
+    tuitionEntries.exists.mockReturnValue(query(null));
     const module = await Test.createTestingModule({
       providers: [
         ScheduleConflictsService,
@@ -70,6 +73,7 @@ describe('ScheduleConflictsService', () => {
         { provide: getModelToken('ScheduleOverride'), useValue: overrides },
         { provide: getModelToken('ClassSession'), useValue: classSessions },
         { provide: getModelToken('Attendance'), useValue: attendances },
+        { provide: getModelToken('TuitionEntry'), useValue: tuitionEntries },
         {
           provide: getConnectionToken(),
           useValue: { collection: () => locks },
@@ -186,6 +190,7 @@ describe('ScheduleConflictsService', () => {
     ).rejects.toThrow('Trùng lịch');
   });
   it('blocks cancelling every fixed lesson in a day when one was attended', async () => {
+    attendances.exists.mockReturnValue(query({ _id: new Types.ObjectId() }));
     versions.find.mockReturnValue(
       query([
         {
@@ -228,6 +233,7 @@ describe('ScheduleConflictsService', () => {
     );
   });
   it('blocks creating a reschedule for a fixed lesson already attended', async () => {
+    attendances.exists.mockReturnValue(query({ _id: new Types.ObjectId() }));
     versions.find.mockReturnValue(
       query([
         {
@@ -256,6 +262,7 @@ describe('ScheduleConflictsService', () => {
     ).rejects.toThrow('đã được điểm danh');
   });
   it('blocks revoking an attended temporary lesson and normalizes UTC times', async () => {
+    attendances.exists.mockReturnValue(query({ _id: new Types.ObjectId() }));
     const overrideId = new Types.ObjectId().toString();
     overrides.find.mockReturnValue(
       query([
@@ -293,6 +300,7 @@ describe('ScheduleConflictsService', () => {
     );
   });
   it('checks the old target before editing a rescheduled lesson', async () => {
+    attendances.exists.mockReturnValue(query({ _id: new Types.ObjectId() }));
     const overrideId = 'rescheduled-lesson';
     const snapshot: ScheduleSnapshot = {
       classes: new Map([[classId, 'Lớp A']]),
@@ -362,6 +370,66 @@ describe('ScheduleConflictsService', () => {
     ).resolves.toMatchObject({ blockingConflicts: [] });
     expect(attendances.exists).toHaveBeenCalled();
   });
+  it.each([ScheduleOverrideAction.Cancel, ScheduleOverrideAction.Reschedule])(
+    'allows %s of a legacy completed fixed lesson after all attendance was cleared',
+    async (action) => {
+      versions.find.mockReturnValue(
+        query([
+          {
+            _id: new Types.ObjectId(),
+            classId: new Types.ObjectId(classId),
+            version: 1,
+            effectiveFrom: new Date('2026-08-31T17:00:00Z'),
+            schedules: [{ dayOfWeek: 1, startTime: '09:00', endTime: '10:00' }],
+          },
+        ]),
+      );
+      classSessions.find.mockReturnValue(
+        query([{ _id: new Types.ObjectId(), status: SessionStatus.Completed }]),
+      );
+      await expect(
+        service.checkTemporary(teacherId, classId, {
+          action,
+          originalDate: '2026-09-07',
+          originalStartTime: '09:00',
+          originalEndTime: '10:00',
+          ...(action === ScheduleOverrideAction.Reschedule
+            ? {
+                newDate: '2026-09-08',
+                startTime: '11:00',
+                endTime: '12:00',
+              }
+            : { startTime: '09:00', endTime: '10:00' }),
+        }),
+      ).resolves.toMatchObject({ blockingConflicts: [] });
+      expect(attendances.exists).toHaveBeenCalled();
+    },
+  );
+  it('allows revoking an extra lesson with stale completed status but no attendance', async () => {
+    const overrideId = new Types.ObjectId().toString();
+    overrides.find.mockReturnValue(
+      query([
+        {
+          _id: new Types.ObjectId(overrideId),
+          classId: new Types.ObjectId(classId),
+          action: ScheduleOverrideAction.Extra,
+          newDate: new Date('2026-09-06T17:00:00Z'),
+          startTime: '09:00',
+          endTime: '10:00',
+          timeStorage: 'vietnam',
+        },
+      ]),
+    );
+    classSessions.find.mockReturnValue(
+      query([{ _id: new Types.ObjectId(), status: SessionStatus.Completed }]),
+    );
+    await expect(
+      service.assertCanRevoke(teacherId, classId, overrideId),
+    ).resolves.toBeUndefined();
+    await expect(
+      service.assertOverridesNotAttended(teacherId, classId, [overrideId]),
+    ).resolves.toBeUndefined();
+  });
   it('blocks legacy sessions that have attendance records but are not completed', async () => {
     classSessions.find.mockReturnValue(
       query([{ _id: new Types.ObjectId(), status: SessionStatus.Scheduled }]),
@@ -382,7 +450,29 @@ describe('ScheduleConflictsService', () => {
       sessionId: { $in: [expect.any(Types.ObjectId) as Types.ObjectId] },
     });
   });
+  it('keeps billed lessons locked even if their attendance record is missing', async () => {
+    const sessionId = new Types.ObjectId();
+    classSessions.find.mockReturnValue(
+      query([{ _id: sessionId, status: SessionStatus.Scheduled }]),
+    );
+    tuitionEntries.exists.mockReturnValue(query({ _id: new Types.ObjectId() }));
+    await expect(
+      service.checkTemporary(teacherId, classId, {
+        action: ScheduleOverrideAction.Extra,
+        newDate: '2026-09-07',
+        startTime: '09:00',
+        endTime: '10:00',
+      }),
+    ).rejects.toThrow('đã được điểm danh');
+    expect(tuitionEntries.exists).toHaveBeenCalledWith({
+      teacherId: new Types.ObjectId(teacherId),
+      classId: new Types.ObjectId(classId),
+      sessionId: { $in: [sessionId] },
+      status: TuitionStatus.Billed,
+    });
+  });
   it('blocks bulk removal when a suspended schedule would delete an attended override', async () => {
+    attendances.exists.mockReturnValue(query({ _id: new Types.ObjectId() }));
     const firstId = new Types.ObjectId().toString();
     const secondId = new Types.ObjectId().toString();
     overrides.find.mockReturnValue(

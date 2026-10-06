@@ -12,7 +12,7 @@ import {
   convertUtcWeeklyTimeToVietnam,
   convertVietnamTimeToUtc,
 } from '../../common/utils/vietnam-time';
-import { ClassStatus, SessionStatus } from '../school-management/enums';
+import { ClassStatus, TuitionStatus } from '../school-management/enums';
 import {
   Attendance,
   AttendanceDocument,
@@ -33,6 +33,10 @@ import {
   ScheduleOverride,
   ScheduleOverrideDocument,
 } from '../school-management/schemas/schedule-override.schema';
+import {
+  TuitionEntry,
+  TuitionEntryDocument,
+} from '../school-management/schemas/tuition-entry.schema';
 import { CreateFixedScheduleDto } from '../classes/dto/create-fixed-schedule.dto';
 import { CreateTemporaryScheduleDto } from '../classes/dto/create-temporary-schedule.dto';
 import { ScheduleAvailabilityDto } from './dto/check-schedule.dto';
@@ -71,6 +75,8 @@ export class ScheduleConflictsService {
     @InjectModel(Attendance.name)
     private readonly attendances: Model<AttendanceDocument>,
     @InjectConnection() private readonly connection: Connection,
+    @InjectModel(TuitionEntry.name)
+    private readonly tuitionEntries: Model<TuitionEntryDocument>,
   ) {}
 
   async snapshot(
@@ -420,30 +426,30 @@ export class ScheduleConflictsService {
           this.occurrenceSessionFilters(classId, occurrence),
         ),
       })
-      .select('_id status')
-      .lean<Array<{ _id: Types.ObjectId; status: SessionStatus }>>()
+      .select('_id')
+      .lean<Array<{ _id: Types.ObjectId }>>()
       .exec();
 
     if (!sessions.length) {
       return;
     }
 
-    const hasCompletedSession = sessions.some(
-      (session) => session.status === SessionStatus.Completed,
-    );
-    const hasAttendance = hasCompletedSession
-      ? false
-      : Boolean(
-          await this.attendances
-            .exists({
-              teacherId: teacherObjectId,
-              classId: classObjectId,
-              sessionId: { $in: sessions.map((session) => session._id) },
-            })
-            .exec(),
-        );
+    // Older saves could leave status = completed after clearing every cell.
+    // Check the records themselves, and retain the lock for billed tuition
+    // even if its attendance record is missing from legacy data.
+    const filter = {
+      teacherId: teacherObjectId,
+      classId: classObjectId,
+      sessionId: { $in: sessions.map((session) => session._id) },
+    };
+    const [hasAttendance, hasBilledTuition] = await Promise.all([
+      this.attendances.exists(filter).exec(),
+      this.tuitionEntries
+        .exists({ ...filter, status: TuitionStatus.Billed })
+        .exec(),
+    ]);
 
-    if (hasCompletedSession || hasAttendance) {
+    if (hasAttendance || hasBilledTuition) {
       throw new ConflictException({
         code: 'SCHEDULE_ATTENDANCE_LOCKED',
         message:
