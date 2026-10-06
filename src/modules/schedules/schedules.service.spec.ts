@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import { SchedulesService } from './schedules.service';
+import { ScheduleType, SessionStatus } from '../school-management/enums';
 
 type QueryStub = {
   sort: () => QueryStub;
@@ -46,11 +47,30 @@ function model<T>(data: unknown): T {
   } as T;
 }
 
+type ScheduleModels = ConstructorParameters<typeof SchedulesService>;
+function createService(
+  classes: ScheduleModels[0],
+  versions: ScheduleModels[1],
+  overrides: ScheduleModels[2],
+  sessions: ScheduleModels[3],
+  attendance: ScheduleModels[4] = model([]),
+  tuition: ScheduleModels[5] = model([]),
+) {
+  return new SchedulesService(
+    classes,
+    versions,
+    overrides,
+    sessions,
+    attendance,
+    tuition,
+  );
+}
+
 describe('Teacher calendar source exclusion', () => {
   it('moves only the selected fixed slot and returns original Vietnam time to both calendars', async () => {
     const teacherId = new Types.ObjectId().toString();
     const classId = new Types.ObjectId();
-    const service = new SchedulesService(
+    const service = createService(
       model([{ _id: classId, name: 'Lớp A' }]),
       model([
         {
@@ -108,7 +128,7 @@ describe('Teacher calendar source exclusion', () => {
       const teacherId = new Types.ObjectId().toString();
       const classId = new Types.ObjectId();
       const overrideId = new Types.ObjectId();
-      const service = new SchedulesService(
+      const service = createService(
         model({
           findOne: { _id: classId, name: 'Lớp học thêm', colorIndex: 2 },
         }),
@@ -160,7 +180,7 @@ describe('Teacher calendar source exclusion', () => {
       const teacherId = new Types.ObjectId().toString();
       const classId = new Types.ObjectId();
       const overrideId = new Types.ObjectId();
-      const service = new SchedulesService(
+      const service = createService(
         model({ findOne: { _id: classId, name: 'Lớp A', colorIndex: 1 } }),
         model({ find: [], findOne: null }),
         model({
@@ -204,7 +224,7 @@ describe('Teacher calendar source exclusion', () => {
       const teacherId = new Types.ObjectId().toString();
       const classId = new Types.ObjectId();
       const sessionId = new Types.ObjectId();
-      const service = new SchedulesService(
+      const service = createService(
         model({
           findOne: { _id: classId, name: 'Lớp đã điểm danh', colorIndex: 1 },
         }),
@@ -254,7 +274,7 @@ describe('Teacher calendar source exclusion', () => {
     const teacherId = new Types.ObjectId().toString();
     const classId = new Types.ObjectId();
     const sessionId = new Types.ObjectId();
-    const service = new SchedulesService(
+    const service = createService(
       model([
         {
           _id: classId,
@@ -276,6 +296,7 @@ describe('Teacher calendar source exclusion', () => {
           scheduleType: 'extra',
         },
       ]),
+      model([{ sessionId }]),
     );
 
     const result = await service.getTeacherWeekSchedule(teacherId, {
@@ -293,4 +314,40 @@ describe('Teacher calendar source exclusion', () => {
       type: 'extra',
     });
   });
+
+  it.each([ScheduleType.Extra, ScheduleType.OneOnOne, ScheduleType.Temporary])(
+    'does not resurrect a revoked %s lesson after attendance was cleared',
+    async (scheduleType) => {
+      const teacherId = new Types.ObjectId().toString();
+      const classId = new Types.ObjectId();
+      const session = {
+        _id: new Types.ObjectId(),
+        classId,
+        date: new Date('2026-08-26T00:00:00+07:00'),
+        timeStorage: 'utc',
+        startTime: '12:00',
+        endTime: '13:30',
+        scheduleType,
+        // Legacy clearing could leave this flag set even with no records.
+        status: SessionStatus.Completed,
+        topic: 'Buổi tạo nhầm',
+      };
+      const service = createService(
+        model({
+          find: [{ _id: classId, name: 'Lớp kiểm thử' }],
+          findOne: { _id: classId, name: 'Lớp kiểm thử' },
+        }),
+        model({ find: [], findOne: null }),
+        model({ find: [], findOne: null }),
+        model({ find: [session], findOne: { date: session.date } }),
+      );
+      const week = await service.getTeacherWeekSchedule(teacherId, {
+        weekStart: '2026-08-24',
+      });
+      expect(week.events).toEqual([]);
+      expect(
+        await service.getClassScheduleHistory(teacherId, classId.toString()),
+      ).toEqual([]);
+    },
+  );
 });

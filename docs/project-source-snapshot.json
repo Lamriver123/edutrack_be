@@ -1,8 +1,8 @@
 {
   "surveyedAt": "2026-10-06",
   "commits": {
-    "backend": "38ef764855e6f3bbe509628677d3fbf5f13c7ac2",
-    "frontend": "b785bb9bf6e522405805aa0e013616e6418400da"
+    "backend": "b77355d4ab831b51593394caa36012d162c4c808",
+    "frontend": "ca4a87ba02114e46b0402afed582bf21a4775a37"
   },
   "files": [
     {
@@ -15257,8 +15257,8 @@
     },
     {
       "file": "edutrack_be/src/modules/schedules/schedules.service.spec.ts",
-      "lines": 297,
-      "sha256": "4843c12b4de8048db94669cf532bbf9eb16626d6bd6039f8605f1170997e019a",
+      "lines": 354,
+      "sha256": "adf2d0188ca1b35df0a842d7ffc4492a952fb498bab270043fc7ab7310487785",
       "imports": [
         {
           "from": "mongoose",
@@ -15267,6 +15267,10 @@
         {
           "from": "./schedules.service",
           "bindings": "{ SchedulesService }"
+        },
+        {
+          "from": "../school-management/enums",
+          "bindings": "{ ScheduleType, SessionStatus }"
         }
       ],
       "exports": [],
@@ -15275,51 +15279,65 @@
         {
           "name": "query",
           "signature": "query(data: unknown): QueryStub",
-          "line": 16
+          "line": 17
         },
         {
           "name": "model",
           "signature": "model(data: unknown): T",
-          "line": 27
+          "line": 28
+        },
+        {
+          "name": "createService",
+          "signature": "createService(classes: ScheduleModels[0], versions: ScheduleModels[1], overrides: ScheduleModels[2], sessions: ScheduleModels[3], attendance: ScheduleModels[4] = model([]), tuition: ScheduleModels[5] = model([]))",
+          "line": 51
         }
       ],
       "types": [
         {
           "name": "QueryStub",
-          "line": 4,
-          "definition": "type QueryStub = {\r\n  sort: () => QueryStub;\r\n  select: () => QueryStub;\r\n  lean: () => QueryStub;\r\n  exec: () => Promise<unknown>;\r\n};"
+          "line": 5,
+          "definition": "type QueryStub = {\n  sort: () => QueryStub;\n  select: () => QueryStub;\n  lean: () => QueryStub;\n  exec: () => Promise<unknown>;\n};"
         },
         {
           "name": "ModelData",
-          "line": 11,
-          "definition": "type ModelData = {\r\n  find?: unknown;\r\n  findOne?: unknown;\r\n};"
+          "line": 12,
+          "definition": "type ModelData = {\n  find?: unknown;\n  findOne?: unknown;\n};"
+        },
+        {
+          "name": "ScheduleModels",
+          "line": 50,
+          "definition": "type ScheduleModels = ConstructorParameters<typeof SchedulesService>;"
         }
       ],
       "objects": [],
       "tests": [
         {
           "label": "Teacher calendar source exclusion",
-          "line": 49
+          "line": 69
         },
         {
           "label": "moves only the selected fixed slot and returns original Vietnam time to both calendars",
-          "line": 50
+          "line": 70
         },
         {
           "label": "returns extra schedules for attendance even when the class has no fixed version",
-          "line": 103
+          "line": 123
         },
         {
           "label": "keeps one-on-one schedules distinct for attendance and billing",
-          "line": 155
+          "line": 175
         },
         {
           "label": "keeps standalone class sessions visible in attendance history",
-          "line": 199
+          "line": 219
         },
         {
           "label": "keeps standalone class sessions visible in the teacher week calendar",
-          "line": 253
+          "line": 273
+        },
+        {
+          "label": "does not resurrect a revoked %s lesson after attendance was cleared",
+          "line": 318
         }
       ],
       "routes": [],
@@ -15329,8 +15347,8 @@
     },
     {
       "file": "edutrack_be/src/modules/schedules/schedules.service.ts",
-      "lines": 994,
-      "sha256": "4771d85452e3f4a0a2098c77a59cf196048e705488cbcd618bf6f1e453c185ee",
+      "lines": 1093,
+      "sha256": "cd33bcf848e5c5e7da16eb7d556a0ddb78b37afb7329a9c153e1440e7d573da7",
       "imports": [
         {
           "from": "@nestjs/common",
@@ -15350,7 +15368,11 @@
         },
         {
           "from": "../school-management/enums",
-          "bindings": "{ ClassStatus, ScheduleOverrideAction, ScheduleType, }"
+          "bindings": "{ ClassStatus, ScheduleOverrideAction, ScheduleType, SessionStatus, TuitionStatus, }"
+        },
+        {
+          "from": "../school-management/schemas/attendance.schema",
+          "bindings": "{ Attendance, AttendanceDocument, }"
         },
         {
           "from": "../school-management/schemas/class.schema",
@@ -15369,6 +15391,10 @@
           "bindings": "{ ScheduleVersion, ScheduleVersionDocument, }"
         },
         {
+          "from": "../school-management/schemas/tuition-entry.schema",
+          "bindings": "{ TuitionEntry, TuitionEntryDocument, }"
+        },
+        {
           "from": "./dto/query-teacher-week-schedule.dto",
           "bindings": "{ QueryTeacherWeekScheduleDto }"
         }
@@ -15376,27 +15402,27 @@
       "exports": [
         {
           "name": "TeacherScheduleClassResponse",
-          "line": 37
+          "line": 47
         },
         {
           "name": "TeacherScheduleDayResponse",
-          "line": 45
+          "line": 55
         },
         {
           "name": "TeacherScheduleEventType",
-          "line": 50
+          "line": 60
         },
         {
           "name": "TeacherScheduleEventResponse",
-          "line": 53
+          "line": 63
         },
         {
           "name": "TeacherWeekScheduleResponse",
-          "line": 73
+          "line": 83
         },
         {
           "name": "SchedulesService",
-          "line": 129
+          "line": 140
         }
       ],
       "classes": [
@@ -15405,193 +15431,200 @@
           "decorators": [
             "@Injectable()"
           ],
-          "line": 129,
+          "line": 140,
           "members": [
             {
               "name": "getTeacherWeekSchedule",
-              "line": 142,
+              "line": 157,
               "decorators": [],
               "signature": "getTeacherWeekSchedule(teacherId: string, query: QueryTeacherWeekScheduleDto = {}): Promise<TeacherWeekScheduleResponse>",
               "visibility": "public"
             },
             {
               "name": "getClassScheduleHistory",
-              "line": 247,
+              "line": 267,
               "decorators": [],
               "signature": "getClassScheduleHistory(teacherId: string, classId: string): Promise<TeacherScheduleEventResponse[]>",
               "visibility": "public"
             },
             {
               "name": "findClassScheduleHistoryStartDate",
-              "line": 350,
+              "line": 375,
               "decorators": [],
               "signature": "findClassScheduleHistoryStartDate(teacherId: Types.ObjectId, classId: Types.ObjectId, endDateExclusive: Date)",
               "visibility": "private"
             },
             {
               "name": "buildFixedEvents",
-              "line": 410,
+              "line": 435,
               "decorators": [],
               "signature": "buildFixedEvents(days: TeacherScheduleDayResponse[], fixedSchedules: LeanScheduleVersion[], classMap: Map<string, LeanClass>, colorMap: Map<string, number>)",
               "visibility": "private"
             },
             {
+              "name": "excludeRevokedTemporarySessions",
+              "line": 495,
+              "decorators": [],
+              "signature": "excludeRevokedTemporarySessions(teacherId: Types.ObjectId, events: TeacherScheduleEventResponse[], sessions: LeanClassSession[])",
+              "visibility": "private"
+            },
+            {
               "name": "attachSessionContent",
-              "line": 470,
+              "line": 569,
               "decorators": [],
               "signature": "attachSessionContent(events: TeacherScheduleEventResponse[], sessions: LeanClassSession[])",
               "visibility": "private"
             },
             {
               "name": "appendStandaloneClassSessions",
-              "line": 524,
+              "line": 623,
               "decorators": [],
               "signature": "appendStandaloneClassSessions(events: TeacherScheduleEventResponse[], sessions: LeanClassSession[], classMap: Map<string, LeanClass>, colorMap: Map<string, number>)",
               "visibility": "private"
             },
             {
               "name": "mapSessionScheduleTypeToEventType",
-              "line": 581,
+              "line": 680,
               "decorators": [],
               "signature": "mapSessionScheduleTypeToEventType(scheduleType?: ScheduleType): Exclude<TeacherScheduleEventType, 'cancel'>",
               "visibility": "private"
             },
             {
               "name": "applyTemporarySchedules",
-              "line": 603,
+              "line": 702,
               "decorators": [],
               "signature": "applyTemporarySchedules(fixedEvents: TeacherScheduleEventResponse[], temporarySchedules: LeanScheduleOverride[], classMap: Map<string, LeanClass>, colorMap: Map<string, number>, weekStart: Date, weekEndExclusive: Date)",
               "visibility": "private"
             },
             {
               "name": "buildTemporaryEvent",
-              "line": 735,
+              "line": 834,
               "decorators": [],
               "signature": "buildTemporaryEvent({ schedule, classroom, colorIndex, date, originalDate, type, }: { schedule: LeanScheduleOverride; classroom: LeanClass; colorIndex: number; date: string; originalDate?: string; type: TeacherScheduleEventType; }): TeacherScheduleEventResponse",
               "visibility": "private"
             },
             {
               "name": "findActiveSchedulesForDate",
-              "line": 777,
+              "line": 876,
               "decorators": [],
               "signature": "findActiveSchedulesForDate(schedules: LeanScheduleVersion[], dayStart: Date, dayEnd: Date)",
               "visibility": "private"
             },
             {
               "name": "removeFixedEvents",
-              "line": 808,
+              "line": 907,
               "decorators": [],
               "signature": "removeFixedEvents(events: TeacherScheduleEventResponse[], classId: string, date: string, startTime?: string, endTime?: string)",
               "visibility": "private"
             },
             {
               "name": "sortEvents",
-              "line": 838,
+              "line": 937,
               "decorators": [],
               "signature": "sortEvents(events: TeacherScheduleEventResponse[])",
               "visibility": "private"
             },
             {
               "name": "buildWeekDays",
-              "line": 850,
+              "line": 949,
               "decorators": [],
               "signature": "buildWeekDays(weekStart: Date): TeacherScheduleDayResponse[]",
               "visibility": "private"
             },
             {
               "name": "buildDays",
-              "line": 854,
+              "line": 953,
               "decorators": [],
               "signature": "buildDays(startDate: Date, endDateExclusive: Date): TeacherScheduleDayResponse[]",
               "visibility": "private"
             },
             {
               "name": "buildEmptyWeekResponse",
-              "line": 870,
+              "line": 969,
               "decorators": [],
               "signature": "buildEmptyWeekResponse(weekStart: Date, days: TeacherScheduleDayResponse[]): TeacherWeekScheduleResponse",
               "visibility": "private"
             },
             {
               "name": "buildClassMap",
-              "line": 883,
+              "line": 982,
               "decorators": [],
               "signature": "buildClassMap(classes: LeanClass[])",
               "visibility": "private"
             },
             {
               "name": "buildColorMap",
-              "line": 889,
+              "line": 988,
               "decorators": [],
               "signature": "buildColorMap(classes: LeanClass[])",
               "visibility": "private"
             },
             {
               "name": "parseVietnamDateOnly",
-              "line": 898,
+              "line": 997,
               "decorators": [],
               "signature": "parseVietnamDateOnly(value: string, label: string)",
               "visibility": "private"
             },
             {
               "name": "getCurrentVietnamDate",
-              "line": 923,
+              "line": 1022,
               "decorators": [],
               "signature": "getCurrentVietnamDate()",
               "visibility": "private"
             },
             {
               "name": "getVietnamWeekStart",
-              "line": 930,
+              "line": 1029,
               "decorators": [],
               "signature": "getVietnamWeekStart(date: Date)",
               "visibility": "private"
             },
             {
               "name": "getVietnamDayOfWeek",
-              "line": 936,
+              "line": 1035,
               "decorators": [],
               "signature": "getVietnamDayOfWeek(date: Date)",
               "visibility": "private"
             },
             {
               "name": "toVietnamDateKey",
-              "line": 943,
+              "line": 1042,
               "decorators": [],
               "signature": "toVietnamDateKey(date: Date)",
               "visibility": "private"
             },
             {
               "name": "isDateKeyInWeek",
-              "line": 952,
+              "line": 1051,
               "decorators": [],
               "signature": "isDateKeyInWeek(dateKey: string, weekStart: Date, weekEndExclusive: Date)",
               "visibility": "private"
             },
             {
               "name": "addDays",
-              "line": 962,
+              "line": 1061,
               "decorators": [],
               "signature": "addDays(date: Date, days: number)",
               "visibility": "private"
             },
             {
               "name": "buildSessionKey",
-              "line": 966,
+              "line": 1065,
               "decorators": [],
               "signature": "buildSessionKey(classId: string, date: string, startTime: string, endTime: string)",
               "visibility": "private"
             },
             {
               "name": "toVietnamTime",
-              "line": 975,
+              "line": 1074,
               "decorators": [],
               "signature": "toVietnamTime(time: string | undefined, timeStorage?: 'utc' | 'vietnam')",
               "visibility": "private"
             },
             {
               "name": "toObjectId",
-              "line": 986,
+              "line": 1085,
               "decorators": [],
               "signature": "toObjectId(value: string, fieldName: string)",
               "visibility": "private"
@@ -15603,48 +15636,48 @@
       "types": [
         {
           "name": "TeacherScheduleClassResponse",
-          "line": 37,
-          "definition": "export type TeacherScheduleClassResponse = {\r\n  id: string;\r\n  name: string;\r\n  imageUrl: string;\r\n  colorIndex: number;\r\n  colorHex?: string;\r\n};"
+          "line": 47,
+          "definition": "export type TeacherScheduleClassResponse = {\n  id: string;\n  name: string;\n  imageUrl: string;\n  colorIndex: number;\n  colorHex?: string;\n};"
         },
         {
           "name": "TeacherScheduleDayResponse",
-          "line": 45,
-          "definition": "export type TeacherScheduleDayResponse = {\r\n  date: string;\r\n  dayOfWeek: number;\r\n};"
+          "line": 55,
+          "definition": "export type TeacherScheduleDayResponse = {\n  date: string;\n  dayOfWeek: number;\n};"
         },
         {
           "name": "TeacherScheduleEventType",
-          "line": 50,
-          "definition": "export type TeacherScheduleEventType =\r\n  'fixed' | 'extra' | 'one_on_one' | 'reschedule' | 'cancel' | 'manual';"
+          "line": 60,
+          "definition": "export type TeacherScheduleEventType =\n  'fixed' | 'extra' | 'one_on_one' | 'reschedule' | 'cancel' | 'manual';"
         },
         {
           "name": "TeacherScheduleEventResponse",
-          "line": 53,
-          "definition": "export type TeacherScheduleEventResponse = {\r\n  id: string;\r\n  classId: string;\r\n  className: string;\r\n  classImageUrl: string;\r\n  colorIndex: number;\r\n  colorHex?: string;\r\n  date: string;\r\n  dayOfWeek: number;\r\n  startTime?: string;\r\n  endTime?: string;\r\n  type: TeacherScheduleEventType;\r\n  reason?: string;\r\n  originalDate?: string;\r\n  originalStartTime?: string;\r\n  originalEndTime?: string;\r\n  topic?: string;\r\n  content?: string;\r\n};"
+          "line": 63,
+          "definition": "export type TeacherScheduleEventResponse = {\n  id: string;\n  classId: string;\n  className: string;\n  classImageUrl: string;\n  colorIndex: number;\n  colorHex?: string;\n  date: string;\n  dayOfWeek: number;\n  startTime?: string;\n  endTime?: string;\n  type: TeacherScheduleEventType;\n  reason?: string;\n  originalDate?: string;\n  originalStartTime?: string;\n  originalEndTime?: string;\n  topic?: string;\n  content?: string;\n};"
         },
         {
           "name": "TeacherWeekScheduleResponse",
-          "line": 73,
-          "definition": "export type TeacherWeekScheduleResponse = {\r\n  weekStart: string;\r\n  weekEnd: string;\r\n  days: TeacherScheduleDayResponse[];\r\n  classes: TeacherScheduleClassResponse[];\r\n  events: TeacherScheduleEventResponse[];\r\n};"
+          "line": 83,
+          "definition": "export type TeacherWeekScheduleResponse = {\n  weekStart: string;\n  weekEnd: string;\n  days: TeacherScheduleDayResponse[];\n  classes: TeacherScheduleClassResponse[];\n  events: TeacherScheduleEventResponse[];\n};"
         },
         {
           "name": "LeanClass",
-          "line": 81,
-          "definition": "type LeanClass = {\r\n  _id: Types.ObjectId;\r\n  name: string;\r\n  imageUrl?: string;\r\n  colorIndex?: number;\r\n  colorHex?: string;\r\n};"
+          "line": 91,
+          "definition": "type LeanClass = {\n  _id: Types.ObjectId;\n  name: string;\n  imageUrl?: string;\n  colorIndex?: number;\n  colorHex?: string;\n};"
         },
         {
           "name": "LeanScheduleVersion",
-          "line": 89,
-          "definition": "type LeanScheduleVersion = {\r\n  _id: Types.ObjectId;\r\n  classId: Types.ObjectId;\r\n  version: number;\r\n  effectiveFrom: Date;\r\n  effectiveTo?: Date | null;\r\n  timeStorage?: 'utc' | 'vietnam';\r\n  schedules?: Array<{\r\n    dayOfWeek: number;\r\n    startTime: string;\r\n    endTime: string;\r\n  }>;\r\n};"
+          "line": 99,
+          "definition": "type LeanScheduleVersion = {\n  _id: Types.ObjectId;\n  classId: Types.ObjectId;\n  version: number;\n  effectiveFrom: Date;\n  effectiveTo?: Date | null;\n  timeStorage?: 'utc' | 'vietnam';\n  schedules?: Array<{\n    dayOfWeek: number;\n    startTime: string;\n    endTime: string;\n  }>;\n};"
         },
         {
           "name": "LeanScheduleOverride",
-          "line": 103,
-          "definition": "type LeanScheduleOverride = {\r\n  _id: Types.ObjectId;\r\n  classId: Types.ObjectId;\r\n  action: ScheduleOverrideAction;\r\n  originalDate?: Date;\r\n  originalStartTime?: string;\r\n  originalEndTime?: string;\r\n  newDate?: Date;\r\n  startTime?: string;\r\n  endTime?: string;\r\n  reason?: string;\r\n  timeStorage?: 'utc' | 'vietnam';\r\n};"
+          "line": 113,
+          "definition": "type LeanScheduleOverride = {\n  _id: Types.ObjectId;\n  classId: Types.ObjectId;\n  action: ScheduleOverrideAction;\n  originalDate?: Date;\n  originalStartTime?: string;\n  originalEndTime?: string;\n  newDate?: Date;\n  startTime?: string;\n  endTime?: string;\n  reason?: string;\n  timeStorage?: 'utc' | 'vietnam';\n};"
         },
         {
           "name": "LeanClassSession",
-          "line": 117,
-          "definition": "type LeanClassSession = {\r\n  _id: Types.ObjectId;\r\n  classId: Types.ObjectId;\r\n  date: Date;\r\n  startTime: string;\r\n  endTime: string;\r\n  timeStorage?: 'utc' | 'vietnam';\r\n  scheduleType?: ScheduleType;\r\n  topic?: string;\r\n  content?: string;\r\n};"
+          "line": 127,
+          "definition": "type LeanClassSession = {\n  _id: Types.ObjectId;\n  classId: Types.ObjectId;\n  date: Date;\n  startTime: string;\n  endTime: string;\n  timeStorage?: 'utc' | 'vietnam';\n  scheduleType?: ScheduleType;\n  status?: SessionStatus;\n  topic?: string;\n  content?: string;\n};"
         }
       ],
       "objects": [],
@@ -24062,6 +24095,22 @@
       "headings": []
     },
     {
+      "file": "edutrack_be/test/jest-schedule-integration.json",
+      "lines": 25,
+      "sha256": "373ce9c8458b88452e8a617537b7b43bedbf1559bd9196d830649074ec10fabe",
+      "imports": [],
+      "exports": [],
+      "classes": [],
+      "functions": [],
+      "types": [],
+      "objects": [],
+      "tests": [],
+      "routes": [],
+      "indexes": [],
+      "calls": [],
+      "headings": []
+    },
+    {
       "file": "edutrack_be/test/push-storage.integration-spec.ts",
       "lines": 295,
       "sha256": "d24c28d30c8227fbaa2a96b0caa7d08ca20953dfd10280e060855cffab8c3a60",
@@ -24164,6 +24213,72 @@
         {
           "label": "creates the MongoDB retention index for reminder markers",
           "line": 282
+        }
+      ],
+      "routes": [],
+      "indexes": [],
+      "calls": [],
+      "headings": []
+    },
+    {
+      "file": "edutrack_be/test/schedule-revoke.integration-spec.ts",
+      "lines": 382,
+      "sha256": "95578ebe7897b464b6f46804cee742d69a21e857d0828cf3f4d60205318e3fbe",
+      "imports": [
+        {
+          "from": "node:crypto",
+          "bindings": "{ randomUUID }"
+        },
+        {
+          "from": "@nestjs/common",
+          "bindings": "{ ConflictException }"
+        },
+        {
+          "from": "mongoose",
+          "bindings": "{ Connection, createConnection, Model, Types }"
+        },
+        {
+          "from": "../src/modules/classes/classes.service",
+          "bindings": "{ ClassesService }"
+        },
+        {
+          "from": "../src/modules/schedules/schedule-conflicts.service",
+          "bindings": "{ ScheduleConflictsService }"
+        },
+        {
+          "from": "../src/modules/schedules/schedules.service",
+          "bindings": "{ SchedulesService }"
+        },
+        {
+          "from": "../src/modules/school-management/enums",
+          "bindings": "{ AttendanceStatus, ScheduleOverrideAction, ScheduleType, SessionStatus, TuitionStatus, TuitionType, }"
+        },
+        {
+          "from": "../src/modules/school-management/schemas",
+          "bindings": "{ Attendance, AttendanceDocument, AttendanceSchema, Class, ClassDocument, ClassSchema, ClassEnrollment, ClassEnrollmentDocument, ClassEnrollmentSchema, ClassPriceVersion, ClassPriceVersionDocument, ClassPriceVersionSchema, ClassSession, ClassSessionDocument, ClassSessionSchema, ScheduleOverride, ScheduleOverrideDocument, ScheduleOverrideSchema, ScheduleVersion, ScheduleVersionDocument, ScheduleVersionSchema, TuitionEntry, TuitionEntryDocument, TuitionEntrySchema, }"
+        }
+      ],
+      "exports": [],
+      "classes": [],
+      "functions": [],
+      "types": [],
+      "objects": [],
+      "tests": [
+        {
+          "label": "Temporary lesson withdrawal with real isolated MongoDB",
+          "line": 50
+        },
+        {
+          "label": "blocks partial clearing, then removes a fully cleared lesson from the week, history and attendance sheet after withdrawal",
+          "line": 157
+        },
+        {
+          "label": "repairs already withdrawn legacy lessons while preserving actual attendance, billed tuition and manual lessons",
+          "line": 248
+        },
+        {
+          "label": "restores only the original fixed slot when an unattended move is withdrawn",
+          "line": 322
         }
       ],
       "routes": [],
@@ -35377,8 +35492,8 @@
     },
     {
       "file": "edutrack_fe/tests/attendance-reset.spec.ts",
-      "lines": 242,
-      "sha256": "30b40fe0be456a77a088a8cb738922b49bcbfca59b5e294273d2835d44e2fe75",
+      "lines": 254,
+      "sha256": "cafde86ee90855565f2124c44cdfd9b7bfbc636c3b2b817dfc02c748cbdf6a61",
       "imports": [
         {
           "from": "@playwright/test",
@@ -35403,7 +35518,7 @@
       "tests": [
         {
           "label": "billed attendance remains locked",
-          "line": 229
+          "line": 241
         }
       ],
       "routes": [],

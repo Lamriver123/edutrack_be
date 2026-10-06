@@ -2,7 +2,7 @@
 
 Mốc đọc và đối chiếu nghiệp vụ: **06/10/2026, Asia/Ho_Chi_Minh**.
 
-Mốc khảo sát ban đầu: backend tại `ae00d7b508c9a3fdaf5a2f51cca307ed30d1c94a`; frontend tại `12437b0f87f74df9223d5b245cac25536592c176`. Ngày 06/10/2026 tiếp tục bổ sung danh sách thiết bị nhận thông báo ở mục 14.4/14.6. Chỉ mục và snapshot phản ánh source local tại lần sinh gần nhất; các mốc này không xác nhận phiên bản đang chạy trên Render/Vercel.
+Mốc khảo sát ban đầu: backend tại `ae00d7b508c9a3fdaf5a2f51cca307ed30d1c94a`; frontend tại `12437b0f87f74df9223d5b245cac25536592c176`. Ngày 06/10/2026 tiếp tục bổ sung danh sách thiết bị nhận thông báo ở mục 14.4/14.6 và sửa buổi tạm hiện lại sau thu hồi ở mục 8.4/18.7. Chỉ mục và snapshot phản ánh source local tại lần sinh gần nhất; các mốc này không xác nhận phiên bản đang chạy trên Render/Vercel.
 
 Tài liệu này dành cho người bảo trì và coding agent. Mục đích là tìm đúng nơi sửa, hiểu quy tắc đang chạy và chọn kiểm thử phù hợp mà không phải đọc lại dự án từ đầu. Các nhận xét “hiện tại” là kết quả đối chiếu mã ở mốc trên, không phải cam kết mọi trường hợp đã được kiểm thử trên production.
 
@@ -525,11 +525,17 @@ Lớp có nhiều slot cùng ngày: reschedule/cancel một slot cần original 
 2. Chọn versions giao với tuần/ngày cần xét; chọn version hiệu lực cho từng ngày.
 3. Sinh fixed occurrences từ weekly slots.
 4. Áp overrides theo ngày mới và ngày nguồn; remove cancel/reschedule source rồi thêm buổi đích.
-5. Ghép nội dung/trạng thái từ ClassSession theo class/date/time; có compatibility dữ liệu cũ.
-6. Bổ sung standalone/manual ClassSession chưa được đại diện trong lịch sinh.
+5. Trước khi ghép nội dung, loại `ClassSession` đã cancelled và buổi tạm mất nguồn lịch nhưng không còn lịch sử thật. `excludeRevokedTemporarySessions` áp dụng chung cho lịch tuần và history điểm danh.
+6. Ghép nội dung/trạng thái từ ClassSession theo class/date/time; bổ sung standalone/manual ClassSession còn hợp lệ, có compatibility dữ liệu cũ.
 7. Sort và trả event có thông tin lớp/màu, type/source IDs, ngày/giờ Việt Nam.
 
 History điểm danh lấy từ lịch đầu tiên đến **hôm nay**, bao gồm override/manual phù hợp, bỏ lịch hủy. Hiện history không có pagination rõ ràng; lớp tồn tại nhiều năm có thể tăng response.
+
+**Sửa buổi tạm hiện lại sau thu hồi, 06/10/2026:** `ClassesService.revokeTemporarySchedule` xóa `ScheduleOverride`, nhưng điểm danh/lưu nội dung đã materialize một `ClassSession` độc lập. Trước đây fallback calendar thêm mọi session không nằm trong lịch sinh, nên session `extra/one_on_one/temporary` vẫn hiện dù danh sách overrides rỗng. FE đã tải lại cả overview và lịch tuần; chỉ sửa state FE hoặc xóa item trong danh sách không xử lý được nguyên nhân.
+
+Nguồn lịch được so theo **class + ngày Việt Nam + giờ bắt đầu/kết thúc Việt Nam**, không chỉ ref override vì dữ liệu điểm danh cũ có thể chưa lưu ref. Buổi tạm không được nguồn hiện hành đại diện chỉ xuất hiện như lịch sử khi còn `Attendance` thật hoặc `TuitionEntry.status = billed` của đúng teacher/class/session. Hai query history gom theo danh sách session IDs, chỉ chạy khi có buổi tạm mất nguồn; không query từng buổi. Flag `completed` cũ không đủ để giữ một buổi đã xóa hết điểm danh.
+
+Các buổi đã thu hồi bị sót từ trước tự hết xuất hiện khi đọc lịch, không cần migration hoặc xóa cứng dữ liệu. Manual/fixed sessions vẫn theo fallback hiện có; lịch sử điểm danh và hóa đơn được giữ. Thu hồi một lịch dời phải khôi phục slot cố định gốc và loại buổi đích đã thu hồi. Service nhận thêm Attendance/TuitionEntry models do `SchoolManagementModule` đã export.
 
 ### 8.5 Event ID, sourceKey và session DB ID
 
@@ -624,6 +630,7 @@ FE gửi dirty cells, không gửi lại toàn bộ sheet. Batch có danh sách 
 | Không còn attendance nhưng tuition billed legacy còn | Vẫn bị chặn; không xóa bill history |
 | Payload chỉ có học sinh đang sửa, học sinh khác vẫn có record | Query toàn session vẫn chặn |
 | Session có completed cũ nhưng không còn records/tuition billed | Flag completed đơn lẻ không chặn |
+| Thu hồi buổi tạm sau khi clear toàn bộ, vẫn còn ClassSession/nội dung | Buổi biến mất khỏi lịch tuần và history điểm danh; không tự quay lại dưới dạng standalone |
 | Một attendance đã xuất hóa đơn | Ô khóa; không cho clear/chỉnh status |
 
 Phần sửa này đã có trong backend commit ae00d7b và test FE 12437b0. Không quay lại guard “completed là luôn đã điểm danh”.
@@ -1341,6 +1348,9 @@ node node_modules/jest/bin/jest.js --runInBand src/modules/users/utils/push-devi
 # BE: localhost Mongo integration, tạo DB test cô lập
 node node_modules/jest/bin/jest.js --config test/jest-push-integration.json --runInBand
 
+# BE: regression thu hồi lịch, MongoDB QA localhost:27019, DB UUID cô lập
+node node_modules/jest/bin/jest.js --config test/jest-schedule-integration.json --runInBand
+
 # BE: e2e riêng, đọc test bootstrap trước khi chạy với env
 npm run test:e2e
 
@@ -1404,6 +1414,14 @@ Không coi các kết quả này là mới chạy lại sau mọi chỉnh sửa.
 - FE Playwright: **14 tests pass**, giữ regression quyền/SW/VAPID/gateway/logout/deep link và bổ sung cards, thiết bị hiện tại, legacy, empty state, bật/tắt, trình duyệt không hỗ trợ, mobile 390px không tràn ngang. Đã xem ảnh desktop/mobile để kiểm tra bố cục.
 - BE và FE production build thành công; ESLint các file thay đổi ở cả hai repo thành công. FE build có cảnh báo `metadataBase` đã tồn tại, không liên quan phần thiết bị.
 - Gateway và API trong UI tests được mock. Kết quả không xác nhận triển khai Render/Vercel hay thông báo đã hiển thị trên máy/iPhone thật. Không đổi VAPID, không migration dữ liệu ứng dụng, không gửi push ra ngoài trong kiểm thử này.
+
+### 18.7 Xác minh thu hồi buổi tạm ngày 06/10/2026
+
+- Đã tái hiện lỗi bằng regression test trước sửa: session không còn override/attendance nhưng vẫn thành event standalone. Ba case `extra/one_on_one/temporary` đều fail ở code cũ và pass sau sửa.
+- Backend targeted: **6 suites, 94 tests pass**, gồm SchedulesService, conflict service/engine, cron, attendance reset và schedule guard. Không chạy lại toàn bộ backend suite trong đợt này.
+- MongoDB thật: **3 integration tests pass**, dùng port QA `127.0.0.1:27019`, DB `edutrack_schedule_test_<pid>_<uuid>` riêng được dọn sau suite. Test gọi ClassesService thật để điểm danh 3 học sinh, clear 1 người và xác nhận chặn thu hồi, clear hết rồi thu hồi và đọc lại calendar/history/sheet. Bao phủ orphan legacy có stale completed flag, actual attendance/billed tuition, tenant khác và khôi phục slot cố định khi thu hồi lịch dời.
+- FE: **3 Playwright tests pass** ở 1440px/390px và billed lock, dùng API mock. Sau thu hồi kiểm cả danh sách tạm, nội dung trên calendar, tải lại trang và chuyển về bảng điểm danh. Chọn locator visible khi desktop/mobile cùng tồn tại trong DOM. FE lint và TypeScript pass; source UI không cần sửa vì đã refresh cả hai API.
+- Backend build và lint file thay đổi pass. Thay đổi chỉ là projection lịch, không xóa cứng sessions, không sửa hóa đơn hay chạy migration dữ liệu ứng dụng. Cần deploy backend để dữ liệu sót trên web đang chạy được lọc khi tải lại.
 
 ## 19. Công thức thay đổi và các bất biến
 
@@ -1473,6 +1491,7 @@ Job có tiền/file/backup cần idempotency, ownership, trạng thái retry/rec
 | Preview không bill/ghi receipt | Read-only draft path |
 | Receipt phát hành giữ snapshot | Template + data + frozen render |
 | Thu hồi lịch không xóa lịch sử attendance/billed | Guard actual records |
+| Buổi tạm đã thu hồi không tự trở lại từ session rỗng | SchedulesService loại session mất nguồn, kiểm actual attendance/billed |
 | Không overwrite quá khứ khi đổi lịch/giá | Versions và effective dates |
 | Push dedupe không mark sent khi mọi gateway fail | Reminder lease/sent state |
 | Prune backup chỉ sau upload thật và chỉ file của backup | Drive patterns/positive count |
@@ -1537,6 +1556,7 @@ Những phần này cần kiểm tra đúng môi trường khi có task tương 
 | Field mới gửi bị 400 | DTO whitelist/decorators/type transform → FE body field names |
 | Không thấy học sinh trong sheet | Enrollment active + Student state + class ownership; kiểm tra history record không bị xóa |
 | Thu hồi buổi báo đã điểm danh | Query ALL attendance của đúng session/occurrence → billed tuition → inactive student record → mapping legacy UTC/VN; không chỉ completed flag |
+| Danh sách lịch tạm rỗng nhưng calendar còn buổi sau thu hồi | Override đã xóa, ClassSession materialized còn → `excludeRevokedTemporarySessions` ở SchedulesService; kiểm actual history và key class/date/hours, không chỉ sửa UI |
 | Xóa một bạn làm buổi trống | Regression takeAttendanceBatch final exists check; FE chỉ dirty cells; test 3→2 |
 | Lịch lệch ngày/giờ, nhất là sáng sớm | timeStorage marker + weekday shift + date parse + sourceKey/event ID |
 | Dời lịch không chọn được buổi gốc | source-slots + originalDate/hours, nhiều slot/ngày, effective version |

@@ -9,7 +9,13 @@ import {
   ClassStatus,
   ScheduleOverrideAction,
   ScheduleType,
+  SessionStatus,
+  TuitionStatus,
 } from '../school-management/enums';
+import {
+  Attendance,
+  AttendanceDocument,
+} from '../school-management/schemas/attendance.schema';
 import {
   Class,
   ClassDocument,
@@ -26,6 +32,10 @@ import {
   ScheduleVersion,
   ScheduleVersionDocument,
 } from '../school-management/schemas/schedule-version.schema';
+import {
+  TuitionEntry,
+  TuitionEntryDocument,
+} from '../school-management/schemas/tuition-entry.schema';
 import { QueryTeacherWeekScheduleDto } from './dto/query-teacher-week-schedule.dto';
 
 const DEFAULT_CLASS_IMAGE_URL =
@@ -122,6 +132,7 @@ type LeanClassSession = {
   endTime: string;
   timeStorage?: 'utc' | 'vietnam';
   scheduleType?: ScheduleType;
+  status?: SessionStatus;
   topic?: string;
   content?: string;
 };
@@ -137,6 +148,10 @@ export class SchedulesService {
     private readonly scheduleOverrideModel: Model<ScheduleOverrideDocument>,
     @InjectModel(ClassSession.name)
     private readonly classSessionModel: Model<ClassSessionDocument>,
+    @InjectModel(Attendance.name)
+    private readonly attendanceModel: Model<AttendanceDocument>,
+    @InjectModel(TuitionEntry.name)
+    private readonly tuitionEntryModel: Model<TuitionEntryDocument>,
   ) {}
 
   async getTeacherWeekSchedule(
@@ -222,9 +237,14 @@ export class SchedulesService {
       weekStart,
       weekEndExclusive,
     );
-    const events = this.appendStandaloneClassSessions(
-      this.attachSessionContent(eventsWithScheduleSources, classSessions),
+    const visibleSessions = await this.excludeRevokedTemporarySessions(
+      teacherObjectId,
+      eventsWithScheduleSources,
       classSessions,
+    );
+    const events = this.appendStandaloneClassSessions(
+      this.attachSessionContent(eventsWithScheduleSources, visibleSessions),
+      visibleSessions,
       classMap,
       colorMap,
     );
@@ -336,9 +356,14 @@ export class SchedulesService {
       endDateExclusive,
     );
 
-    const finalEvents = this.appendStandaloneClassSessions(
-      this.attachSessionContent(eventsWithOverrides, classSessions),
+    const visibleSessions = await this.excludeRevokedTemporarySessions(
+      teacherObjectId,
+      eventsWithOverrides,
       classSessions,
+    );
+    const finalEvents = this.appendStandaloneClassSessions(
+      this.attachSessionContent(eventsWithOverrides, visibleSessions),
+      visibleSessions,
       classMap,
       colorMap,
     );
@@ -465,6 +490,80 @@ export class SchedulesService {
     }
 
     return events;
+  }
+
+  private async excludeRevokedTemporarySessions(
+    teacherId: Types.ObjectId,
+    events: TeacherScheduleEventResponse[],
+    sessions: LeanClassSession[],
+  ) {
+    const activeSessions = sessions.filter(
+      (session) => session.status !== SessionStatus.Cancelled,
+    );
+    const sourceKeys = new Set(
+      events
+        .filter(
+          (event) =>
+            event.type !== 'cancel' && event.startTime && event.endTime,
+        )
+        .map((event) =>
+          this.buildSessionKey(
+            event.classId,
+            event.date,
+            event.startTime!,
+            event.endTime!,
+          ),
+        ),
+    );
+    const orphanedSessions = activeSessions.filter((session) => {
+      const temporary =
+        session.scheduleType === ScheduleType.Extra ||
+        session.scheduleType === ScheduleType.OneOnOne ||
+        session.scheduleType === ScheduleType.Temporary;
+      const key = this.buildSessionKey(
+        session.classId.toString(),
+        this.toVietnamDateKey(session.date),
+        this.toVietnamTime(session.startTime, session.timeStorage)!,
+        this.toVietnamTime(session.endTime, session.timeStorage)!,
+      );
+      return temporary && !sourceKeys.has(key);
+    });
+    if (!orphanedSessions.length) return activeSessions;
+
+    // Attendance/content saves materialize sessions independently of overrides.
+    // Revoking the source must not make an empty temporary session reappear as
+    // a standalone lesson. Keep actual history, including legacy billed tuition;
+    // a stale completed flag alone does not prove that history exists.
+    const filter = {
+      teacherId,
+      classId: { $in: orphanedSessions.map((session) => session.classId) },
+      sessionId: { $in: orphanedSessions.map((session) => session._id) },
+    };
+    const [attendance, billedTuition] = await Promise.all([
+      this.attendanceModel
+        .find(filter)
+        .select('sessionId')
+        .lean<Array<{ sessionId: Types.ObjectId }>>()
+        .exec(),
+      this.tuitionEntryModel
+        .find({ ...filter, status: TuitionStatus.Billed })
+        .select('sessionId')
+        .lean<Array<{ sessionId: Types.ObjectId }>>()
+        .exec(),
+    ]);
+    const historicalIds = new Set(
+      [...attendance, ...billedTuition].map((record) =>
+        record.sessionId.toString(),
+      ),
+    );
+    const hiddenIds = new Set(
+      orphanedSessions
+        .filter((session) => !historicalIds.has(session._id.toString()))
+        .map((session) => session._id.toString()),
+    );
+    return activeSessions.filter(
+      (session) => !hiddenIds.has(session._id.toString()),
+    );
   }
 
   private attachSessionContent(

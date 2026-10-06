@@ -2,9 +2,9 @@
 
 Sinh từ mã nguồn bằng node scripts/project-index.cjs trong backend. Đọc [project-guide.md](project-guide.md) trước, rồi tìm đúng đường dẫn hoặc symbol trong file này. Chỉ mục ghi cấu trúc tĩnh; kiểu trả về suy luận và nghiệp vụ cần đọc hướng dẫn hoặc method đích.
 
-Mốc sinh chỉ mục: 2026-10-06 (Việt Nam). Backend: 38ef764855e6f3bbe509628677d3fbf5f13c7ac2. Frontend: b785bb9bf6e522405805aa0e013616e6418400da.
+Mốc sinh chỉ mục: 2026-10-06 (Việt Nam). Backend: b77355d4ab831b51593394caa36012d162c4c808. Frontend: ca4a87ba02114e46b0402afed582bf21a4775a37.
 
-Phạm vi: 375 file mã/cấu hình/style/tài nguyên văn bản, 73297 dòng. Loại trừ dependency, build/cache, log, credential JSON, .env runtime và dữ liệu backup; .env.example chỉ chứa mẫu cấu hình. Không đọc/ghi DB hoặc gọi dịch vụ ngoài.
+Phạm vi: 377 file mã/cấu hình/style/tài nguyên văn bản, 73872 dòng. Loại trừ dependency, build/cache, log, credential JSON, .env runtime và dữ liệu backup; .env.example chỉ chứa mẫu cấu hình. Không đọc/ghi DB hoặc gọi dịch vụ ngoài.
 
 ## Cách tra cứu
 
@@ -159,8 +159,8 @@ Phạm vi: 375 file mã/cấu hình/style/tài nguyên văn bản, 73297 dòng. 
 | [edutrack_be/src/modules/schedules/schedules-cron.service.ts](../src/modules/schedules/schedules-cron.service.ts) | 253 | SchedulesCronService |
 | [edutrack_be/src/modules/schedules/schedules.controller.ts](../src/modules/schedules/schedules.controller.ts) | 73 | SchedulesController |
 | [edutrack_be/src/modules/schedules/schedules.module.ts](../src/modules/schedules/schedules.module.ts) | 38 | SchedulesModule |
-| [edutrack_be/src/modules/schedules/schedules.service.spec.ts](../src/modules/schedules/schedules.service.spec.ts) | 297 | query, model |
-| [edutrack_be/src/modules/schedules/schedules.service.ts](../src/modules/schedules/schedules.service.ts) | 994 | SchedulesService, TeacherScheduleClassResponse, TeacherScheduleDayResponse, TeacherScheduleEventType, TeacherScheduleEventResponse, TeacherWeekScheduleResponse |
+| [edutrack_be/src/modules/schedules/schedules.service.spec.ts](../src/modules/schedules/schedules.service.spec.ts) | 354 | query, model, createService |
+| [edutrack_be/src/modules/schedules/schedules.service.ts](../src/modules/schedules/schedules.service.ts) | 1093 | SchedulesService, TeacherScheduleClassResponse, TeacherScheduleDayResponse, TeacherScheduleEventType, TeacherScheduleEventResponse, TeacherWeekScheduleResponse |
 | [edutrack_be/src/modules/schedules/schemas/push-reminder.schema.ts](../src/modules/schedules/schemas/push-reminder.schema.ts) | 26 | PushReminder, PushReminderDocument, PushReminderSchema |
 | [edutrack_be/src/modules/school-management/enums/attendance-status.enum.ts](../src/modules/school-management/enums/attendance-status.enum.ts) | 7 | AttendanceStatus |
 | [edutrack_be/src/modules/school-management/enums/attendance-type.enum.ts](../src/modules/school-management/enums/attendance-type.enum.ts) | 5 | AttendanceType |
@@ -229,7 +229,9 @@ Phạm vi: 375 file mã/cấu hình/style/tài nguyên văn bản, 73297 dòng. 
 | [edutrack_be/test/app.e2e-spec.ts](../test/app.e2e-spec.ts) | 30 |  |
 | [edutrack_be/test/jest-e2e.json](../test/jest-e2e.json) | 10 |  |
 | [edutrack_be/test/jest-push-integration.json](../test/jest-push-integration.json) | 23 |  |
+| [edutrack_be/test/jest-schedule-integration.json](../test/jest-schedule-integration.json) | 25 |  |
 | [edutrack_be/test/push-storage.integration-spec.ts](../test/push-storage.integration-spec.ts) | 295 |  |
+| [edutrack_be/test/schedule-revoke.integration-spec.ts](../test/schedule-revoke.integration-spec.ts) | 382 |  |
 | [edutrack_be/test/schedule-ui-smoke.cjs](../test/schedule-ui-smoke.cjs) | 129 | main |
 | [edutrack_be/tsconfig.build.json](../tsconfig.build.json) | 5 |  |
 | [edutrack_be/tsconfig.json](../tsconfig.json) | 26 |  |
@@ -379,7 +381,7 @@ Phạm vi: 375 file mã/cấu hình/style/tài nguyên văn bản, 73297 dòng. 
 | [edutrack_fe/public/vercel.svg](../../edutrack_fe/public/vercel.svg) | 1 |  |
 | [edutrack_fe/public/window.svg](../../edutrack_fe/public/window.svg) | 1 |  |
 | [edutrack_fe/tests/access-token.test.mjs](../../edutrack_fe/tests/access-token.test.mjs) | 100 | createToken |
-| [edutrack_fe/tests/attendance-reset.spec.ts](../../edutrack_fe/tests/attendance-reset.spec.ts) | 242 | setup |
+| [edutrack_fe/tests/attendance-reset.spec.ts](../../edutrack_fe/tests/attendance-reset.spec.ts) | 254 | setup |
 | [edutrack_fe/tests/class-color-suggestions.test.mjs](../../edutrack_fe/tests/class-color-suggestions.test.mjs) | 74 | getHslLightness |
 | [edutrack_fe/tests/invoice-designer.spec.ts](../../edutrack_fe/tests/invoice-designer.spec.ts) | 1083 | renderReceiptReference, mockApi, saveTemplate, openDesigner |
 | [edutrack_fe/tests/push-notifications.spec.ts](../../edutrack_fe/tests/push-notifications.spec.ts) | 221 | setup |
@@ -3759,82 +3761,86 @@ Exports: `SchedulesModule` (19).
 
 ### edutrack_be/src/modules/schedules/schedules.service.spec.ts
 
-[edutrack_be/src/modules/schedules/schedules.service.spec.ts](../src/modules/schedules/schedules.service.spec.ts) — 297 dòng.
+[edutrack_be/src/modules/schedules/schedules.service.spec.ts](../src/modules/schedules/schedules.service.spec.ts) — 354 dòng.
 
-Dependencies: `mongoose`, `./schedules.service`.
+Dependencies: `mongoose`, `./schedules.service`, `../school-management/enums`.
 
-Functions: `query(data: unknown): QueryStub` (dòng 16); `model(data: unknown): T` (dòng 27).
+Functions: `query(data: unknown): QueryStub` (dòng 17); `model(data: unknown): T` (dòng 28); `createService(classes: ScheduleModels[0], versions: ScheduleModels[1], overrides: ScheduleModels[2], sessions: ScheduleModels[3], attendance: ScheduleModels[4] = model([]), tuition: ScheduleModels[5] = model([]))` (dòng 51).
 
 Type contracts / enum values (mã khai báo tại mốc khảo sát):
 
 ```typescript
-// line 4
+// line 5
 type QueryStub = {
   sort: () => QueryStub;
   select: () => QueryStub;
   lean: () => QueryStub;
   exec: () => Promise<unknown>;
 };
-// line 11
+// line 12
 type ModelData = {
   find?: unknown;
   findOne?: unknown;
 };
+// line 50
+type ScheduleModels = ConstructorParameters<typeof SchedulesService>;
 ```
 
 Test labels (khai báo, không phải kết quả thực thi):
 
-- Dòng 49: Teacher calendar source exclusion
-- Dòng 50: moves only the selected fixed slot and returns original Vietnam time to both calendars
-- Dòng 103: returns extra schedules for attendance even when the class has no fixed version
-- Dòng 155: keeps one-on-one schedules distinct for attendance and billing
-- Dòng 199: keeps standalone class sessions visible in attendance history
-- Dòng 253: keeps standalone class sessions visible in the teacher week calendar
+- Dòng 69: Teacher calendar source exclusion
+- Dòng 70: moves only the selected fixed slot and returns original Vietnam time to both calendars
+- Dòng 123: returns extra schedules for attendance even when the class has no fixed version
+- Dòng 175: keeps one-on-one schedules distinct for attendance and billing
+- Dòng 219: keeps standalone class sessions visible in attendance history
+- Dòng 273: keeps standalone class sessions visible in the teacher week calendar
+- Dòng 318: does not resurrect a revoked %s lesson after attendance was cleared
 
 ### edutrack_be/src/modules/schedules/schedules.service.ts
 
-[edutrack_be/src/modules/schedules/schedules.service.ts](../src/modules/schedules/schedules.service.ts) — 994 dòng.
+[edutrack_be/src/modules/schedules/schedules.service.ts](../src/modules/schedules/schedules.service.ts) — 1093 dòng.
 
-Dependencies: `@nestjs/common`, `@nestjs/mongoose`, `mongoose`, `../../common/utils/vietnam-time`, `../school-management/enums`, `../school-management/schemas/class.schema`, `../school-management/schemas/class-session.schema`, `../school-management/schemas/schedule-override.schema`, `../school-management/schemas/schedule-version.schema`, `./dto/query-teacher-week-schedule.dto`.
+Dependencies: `@nestjs/common`, `@nestjs/mongoose`, `mongoose`, `../../common/utils/vietnam-time`, `../school-management/enums`, `../school-management/schemas/attendance.schema`, `../school-management/schemas/class.schema`, `../school-management/schemas/class-session.schema`, `../school-management/schemas/schedule-override.schema`, `../school-management/schemas/schedule-version.schema`, `../school-management/schemas/tuition-entry.schema`, `./dto/query-teacher-week-schedule.dto`.
 
-**SchedulesService** (dòng 129) @Injectable()
+**SchedulesService** (dòng 140) @Injectable()
 
 | Member | Dòng | Hợp đồng / loại | Validation / metadata |
 | --- | ---: | --- | --- |
-| getTeacherWeekSchedule | 142 | public getTeacherWeekSchedule(teacherId: string, query: QueryTeacherWeekScheduleDto = {}): Promise<TeacherWeekScheduleResponse> |  |
-| getClassScheduleHistory | 247 | public getClassScheduleHistory(teacherId: string, classId: string): Promise<TeacherScheduleEventResponse[]> |  |
-| findClassScheduleHistoryStartDate | 350 | private findClassScheduleHistoryStartDate(teacherId: Types.ObjectId, classId: Types.ObjectId, endDateExclusive: Date) |  |
-| buildFixedEvents | 410 | private buildFixedEvents(days: TeacherScheduleDayResponse[], fixedSchedules: LeanScheduleVersion[], classMap: Map<string, LeanClass>, colorMap: Map<string, number>) |  |
-| attachSessionContent | 470 | private attachSessionContent(events: TeacherScheduleEventResponse[], sessions: LeanClassSession[]) |  |
-| appendStandaloneClassSessions | 524 | private appendStandaloneClassSessions(events: TeacherScheduleEventResponse[], sessions: LeanClassSession[], classMap: Map<string, LeanClass>, colorMap: Map<string, number>) |  |
-| mapSessionScheduleTypeToEventType | 581 | private mapSessionScheduleTypeToEventType(scheduleType?: ScheduleType): Exclude<TeacherScheduleEventType, 'cancel'> |  |
-| applyTemporarySchedules | 603 | private applyTemporarySchedules(fixedEvents: TeacherScheduleEventResponse[], temporarySchedules: LeanScheduleOverride[], classMap: Map<string, LeanClass>, colorMap: Map<string, number>, weekStart: Date, weekEndExclusive: Date) |  |
-| buildTemporaryEvent | 735 | private buildTemporaryEvent({ schedule, classroom, colorIndex, date, originalDate, type, }: { schedule: LeanScheduleOverride; classroom: LeanClass; colorIndex: number; date: string; originalDate?: string; type: TeacherScheduleEventType; }): TeacherScheduleEventResponse |  |
-| findActiveSchedulesForDate | 777 | private findActiveSchedulesForDate(schedules: LeanScheduleVersion[], dayStart: Date, dayEnd: Date) |  |
-| removeFixedEvents | 808 | private removeFixedEvents(events: TeacherScheduleEventResponse[], classId: string, date: string, startTime?: string, endTime?: string) |  |
-| sortEvents | 838 | private sortEvents(events: TeacherScheduleEventResponse[]) |  |
-| buildWeekDays | 850 | private buildWeekDays(weekStart: Date): TeacherScheduleDayResponse[] |  |
-| buildDays | 854 | private buildDays(startDate: Date, endDateExclusive: Date): TeacherScheduleDayResponse[] |  |
-| buildEmptyWeekResponse | 870 | private buildEmptyWeekResponse(weekStart: Date, days: TeacherScheduleDayResponse[]): TeacherWeekScheduleResponse |  |
-| buildClassMap | 883 | private buildClassMap(classes: LeanClass[]) |  |
-| buildColorMap | 889 | private buildColorMap(classes: LeanClass[]) |  |
-| parseVietnamDateOnly | 898 | private parseVietnamDateOnly(value: string, label: string) |  |
-| getCurrentVietnamDate | 923 | private getCurrentVietnamDate() |  |
-| getVietnamWeekStart | 930 | private getVietnamWeekStart(date: Date) |  |
-| getVietnamDayOfWeek | 936 | private getVietnamDayOfWeek(date: Date) |  |
-| toVietnamDateKey | 943 | private toVietnamDateKey(date: Date) |  |
-| isDateKeyInWeek | 952 | private isDateKeyInWeek(dateKey: string, weekStart: Date, weekEndExclusive: Date) |  |
-| addDays | 962 | private addDays(date: Date, days: number) |  |
-| buildSessionKey | 966 | private buildSessionKey(classId: string, date: string, startTime: string, endTime: string) |  |
-| toVietnamTime | 975 | private toVietnamTime(time: string \| undefined, timeStorage?: 'utc' \| 'vietnam') |  |
-| toObjectId | 986 | private toObjectId(value: string, fieldName: string) |  |
+| getTeacherWeekSchedule | 157 | public getTeacherWeekSchedule(teacherId: string, query: QueryTeacherWeekScheduleDto = {}): Promise<TeacherWeekScheduleResponse> |  |
+| getClassScheduleHistory | 267 | public getClassScheduleHistory(teacherId: string, classId: string): Promise<TeacherScheduleEventResponse[]> |  |
+| findClassScheduleHistoryStartDate | 375 | private findClassScheduleHistoryStartDate(teacherId: Types.ObjectId, classId: Types.ObjectId, endDateExclusive: Date) |  |
+| buildFixedEvents | 435 | private buildFixedEvents(days: TeacherScheduleDayResponse[], fixedSchedules: LeanScheduleVersion[], classMap: Map<string, LeanClass>, colorMap: Map<string, number>) |  |
+| excludeRevokedTemporarySessions | 495 | private excludeRevokedTemporarySessions(teacherId: Types.ObjectId, events: TeacherScheduleEventResponse[], sessions: LeanClassSession[]) |  |
+| attachSessionContent | 569 | private attachSessionContent(events: TeacherScheduleEventResponse[], sessions: LeanClassSession[]) |  |
+| appendStandaloneClassSessions | 623 | private appendStandaloneClassSessions(events: TeacherScheduleEventResponse[], sessions: LeanClassSession[], classMap: Map<string, LeanClass>, colorMap: Map<string, number>) |  |
+| mapSessionScheduleTypeToEventType | 680 | private mapSessionScheduleTypeToEventType(scheduleType?: ScheduleType): Exclude<TeacherScheduleEventType, 'cancel'> |  |
+| applyTemporarySchedules | 702 | private applyTemporarySchedules(fixedEvents: TeacherScheduleEventResponse[], temporarySchedules: LeanScheduleOverride[], classMap: Map<string, LeanClass>, colorMap: Map<string, number>, weekStart: Date, weekEndExclusive: Date) |  |
+| buildTemporaryEvent | 834 | private buildTemporaryEvent({ schedule, classroom, colorIndex, date, originalDate, type, }: { schedule: LeanScheduleOverride; classroom: LeanClass; colorIndex: number; date: string; originalDate?: string; type: TeacherScheduleEventType; }): TeacherScheduleEventResponse |  |
+| findActiveSchedulesForDate | 876 | private findActiveSchedulesForDate(schedules: LeanScheduleVersion[], dayStart: Date, dayEnd: Date) |  |
+| removeFixedEvents | 907 | private removeFixedEvents(events: TeacherScheduleEventResponse[], classId: string, date: string, startTime?: string, endTime?: string) |  |
+| sortEvents | 937 | private sortEvents(events: TeacherScheduleEventResponse[]) |  |
+| buildWeekDays | 949 | private buildWeekDays(weekStart: Date): TeacherScheduleDayResponse[] |  |
+| buildDays | 953 | private buildDays(startDate: Date, endDateExclusive: Date): TeacherScheduleDayResponse[] |  |
+| buildEmptyWeekResponse | 969 | private buildEmptyWeekResponse(weekStart: Date, days: TeacherScheduleDayResponse[]): TeacherWeekScheduleResponse |  |
+| buildClassMap | 982 | private buildClassMap(classes: LeanClass[]) |  |
+| buildColorMap | 988 | private buildColorMap(classes: LeanClass[]) |  |
+| parseVietnamDateOnly | 997 | private parseVietnamDateOnly(value: string, label: string) |  |
+| getCurrentVietnamDate | 1022 | private getCurrentVietnamDate() |  |
+| getVietnamWeekStart | 1029 | private getVietnamWeekStart(date: Date) |  |
+| getVietnamDayOfWeek | 1035 | private getVietnamDayOfWeek(date: Date) |  |
+| toVietnamDateKey | 1042 | private toVietnamDateKey(date: Date) |  |
+| isDateKeyInWeek | 1051 | private isDateKeyInWeek(dateKey: string, weekStart: Date, weekEndExclusive: Date) |  |
+| addDays | 1061 | private addDays(date: Date, days: number) |  |
+| buildSessionKey | 1065 | private buildSessionKey(classId: string, date: string, startTime: string, endTime: string) |  |
+| toVietnamTime | 1074 | private toVietnamTime(time: string \| undefined, timeStorage?: 'utc' \| 'vietnam') |  |
+| toObjectId | 1085 | private toObjectId(value: string, fieldName: string) |  |
 
-Exports: `TeacherScheduleClassResponse` (37), `TeacherScheduleDayResponse` (45), `TeacherScheduleEventType` (50), `TeacherScheduleEventResponse` (53), `TeacherWeekScheduleResponse` (73), `SchedulesService` (129).
+Exports: `TeacherScheduleClassResponse` (47), `TeacherScheduleDayResponse` (55), `TeacherScheduleEventType` (60), `TeacherScheduleEventResponse` (63), `TeacherWeekScheduleResponse` (83), `SchedulesService` (140).
 
 Type contracts / enum values (mã khai báo tại mốc khảo sát):
 
 ```typescript
-// line 37
+// line 47
 export type TeacherScheduleClassResponse = {
   id: string;
   name: string;
@@ -3842,15 +3848,15 @@ export type TeacherScheduleClassResponse = {
   colorIndex: number;
   colorHex?: string;
 };
-// line 45
+// line 55
 export type TeacherScheduleDayResponse = {
   date: string;
   dayOfWeek: number;
 };
-// line 50
+// line 60
 export type TeacherScheduleEventType =
   'fixed' | 'extra' | 'one_on_one' | 'reschedule' | 'cancel' | 'manual';
-// line 53
+// line 63
 export type TeacherScheduleEventResponse = {
   id: string;
   classId: string;
@@ -3870,7 +3876,7 @@ export type TeacherScheduleEventResponse = {
   topic?: string;
   content?: string;
 };
-// line 73
+// line 83
 export type TeacherWeekScheduleResponse = {
   weekStart: string;
   weekEnd: string;
@@ -3878,7 +3884,7 @@ export type TeacherWeekScheduleResponse = {
   classes: TeacherScheduleClassResponse[];
   events: TeacherScheduleEventResponse[];
 };
-// line 81
+// line 91
 type LeanClass = {
   _id: Types.ObjectId;
   name: string;
@@ -3886,7 +3892,7 @@ type LeanClass = {
   colorIndex?: number;
   colorHex?: string;
 };
-// line 89
+// line 99
 type LeanScheduleVersion = {
   _id: Types.ObjectId;
   classId: Types.ObjectId;
@@ -3900,7 +3906,7 @@ type LeanScheduleVersion = {
     endTime: string;
   }>;
 };
-// line 103
+// line 113
 type LeanScheduleOverride = {
   _id: Types.ObjectId;
   classId: Types.ObjectId;
@@ -3914,7 +3920,7 @@ type LeanScheduleOverride = {
   reason?: string;
   timeStorage?: 'utc' | 'vietnam';
 };
-// line 117
+// line 127
 type LeanClassSession = {
   _id: Types.ObjectId;
   classId: Types.ObjectId;
@@ -3923,6 +3929,7 @@ type LeanClassSession = {
   endTime: string;
   timeStorage?: 'utc' | 'vietnam';
   scheduleType?: ScheduleType;
+  status?: SessionStatus;
   topic?: string;
   content?: string;
 };
@@ -5878,6 +5885,19 @@ Test labels (khai báo, không phải kết quả thực thi):
 - Dòng 231: allows lease takeover after expiry and fences completion from the old worker
 - Dòng 252: releases failed delivery for retry and preserves accepted delivery across a fresh connection
 - Dòng 282: creates the MongoDB retention index for reminder markers
+
+### edutrack_be/test/schedule-revoke.integration-spec.ts
+
+[edutrack_be/test/schedule-revoke.integration-spec.ts](../test/schedule-revoke.integration-spec.ts) — 382 dòng.
+
+Dependencies: `node:crypto`, `@nestjs/common`, `mongoose`, `../src/modules/classes/classes.service`, `../src/modules/schedules/schedule-conflicts.service`, `../src/modules/schedules/schedules.service`, `../src/modules/school-management/enums`, `../src/modules/school-management/schemas`.
+
+Test labels (khai báo, không phải kết quả thực thi):
+
+- Dòng 50: Temporary lesson withdrawal with real isolated MongoDB
+- Dòng 157: blocks partial clearing, then removes a fully cleared lesson from the week, history and attendance sheet after withdrawal
+- Dòng 248: repairs already withdrawn legacy lessons while preserving actual attendance, billed tuition and manual lessons
+- Dòng 322: restores only the original fixed slot when an unattended move is withdrawn
 
 ### edutrack_be/test/schedule-ui-smoke.cjs
 
@@ -8289,7 +8309,7 @@ Test labels (khai báo, không phải kết quả thực thi):
 
 ### edutrack_fe/tests/attendance-reset.spec.ts
 
-[edutrack_fe/tests/attendance-reset.spec.ts](../../edutrack_fe/tests/attendance-reset.spec.ts) — 242 dòng.
+[edutrack_fe/tests/attendance-reset.spec.ts](../../edutrack_fe/tests/attendance-reset.spec.ts) — 254 dòng.
 
 Dependencies: `@playwright/test`, `../types/school`.
 
@@ -8297,7 +8317,7 @@ Functions: `setup(page: Page, billed = false)` (dòng 50).
 
 Test labels (khai báo, không phải kết quả thực thi):
 
-- Dòng 229: billed attendance remains locked
+- Dòng 241: billed attendance remains locked
 
 ### edutrack_fe/tests/class-color-suggestions.test.mjs
 
