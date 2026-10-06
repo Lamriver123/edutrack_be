@@ -2,9 +2,9 @@
 
 Sinh từ mã nguồn bằng node scripts/project-index.cjs trong backend. Đọc [project-guide.md](project-guide.md) trước, rồi tìm đúng đường dẫn hoặc symbol trong file này. Chỉ mục ghi cấu trúc tĩnh; kiểu trả về suy luận và nghiệp vụ cần đọc hướng dẫn hoặc method đích.
 
-Mốc sinh chỉ mục: 2026-10-06 (Việt Nam). Backend: ae00d7b508c9a3fdaf5a2f51cca307ed30d1c94a. Frontend: 12437b0f87f74df9223d5b245cac25536592c176.
+Mốc sinh chỉ mục: 2026-10-06 (Việt Nam). Backend: 38ef764855e6f3bbe509628677d3fbf5f13c7ac2. Frontend: b785bb9bf6e522405805aa0e013616e6418400da.
 
-Phạm vi: 371 file mã/cấu hình/style/tài nguyên văn bản, 72685 dòng. Loại trừ dependency, build/cache, log, credential JSON, .env runtime và dữ liệu backup; .env.example chỉ chứa mẫu cấu hình. Không đọc/ghi DB hoặc gọi dịch vụ ngoài.
+Phạm vi: 375 file mã/cấu hình/style/tài nguyên văn bản, 73297 dòng. Loại trừ dependency, build/cache, log, credential JSON, .env runtime và dữ liệu backup; .env.example chỉ chứa mẫu cấu hình. Không đọc/ghi DB hoặc gọi dịch vụ ngoài.
 
 ## Cách tra cứu
 
@@ -126,11 +126,11 @@ Phạm vi: 371 file mã/cấu hình/style/tài nguyên văn bản, 72685 dòng. 
 | [edutrack_be/src/modules/mail/listeners/mail.listener.ts](../src/modules/mail/listeners/mail.listener.ts) | 35 | MailListener |
 | [edutrack_be/src/modules/mail/mail.module.ts](../src/modules/mail/mail.module.ts) | 10 | MailModule |
 | [edutrack_be/src/modules/mail/mail.service.ts](../src/modules/mail/mail.service.ts) | 160 | MailService |
-| [edutrack_be/src/modules/push/push.controller.spec.ts](../src/modules/push/push.controller.spec.ts) | 226 |  |
-| [edutrack_be/src/modules/push/push.controller.ts](../src/modules/push/push.controller.ts) | 40 | PushController |
+| [edutrack_be/src/modules/push/push.controller.spec.ts](../src/modules/push/push.controller.spec.ts) | 271 |  |
+| [edutrack_be/src/modules/push/push.controller.ts](../src/modules/push/push.controller.ts) | 66 | PushController |
 | [edutrack_be/src/modules/push/push.module.ts](../src/modules/push/push.module.ts) | 13 | PushModule |
 | [edutrack_be/src/modules/push/push.service.spec.ts](../src/modules/push/push.service.spec.ts) | 220 | createService |
-| [edutrack_be/src/modules/push/push.service.ts](../src/modules/push/push.service.ts) | 193 | PushService, PushDeliveryResult |
+| [edutrack_be/src/modules/push/push.service.ts](../src/modules/push/push.service.ts) | 196 | PushService, PushDeliveryResult |
 | [edutrack_be/src/modules/receipts/dto/download-receipts.dto.ts](../src/modules/receipts/dto/download-receipts.dto.ts) | 15 | DownloadReceiptsDto |
 | [edutrack_be/src/modules/receipts/dto/issue-receipt.dto.ts](../src/modules/receipts/dto/issue-receipt.dto.ts) | 141 | ReceiptExamRemarkDto, IssueReceiptDto, normalizeStringArray |
 | [edutrack_be/src/modules/receipts/dto/query-billing.dto.ts](../src/modules/receipts/dto/query-billing.dto.ts) | 41 | QueryBillingDto, normalizeStringArray |
@@ -214,19 +214,22 @@ Phạm vi: 371 file mã/cấu hình/style/tài nguyên văn bản, 72685 dòng. 
 | [edutrack_be/src/modules/users/dto/push-subscription.dto.ts](../src/modules/users/dto/push-subscription.dto.ts) | 81 | PushEndpointDto, PushSubscriptionKeysDto, PushSubscriptionDto, isSupportedPushEndpoint |
 | [edutrack_be/src/modules/users/dto/update-profile.dto.ts](../src/modules/users/dto/update-profile.dto.ts) | 60 | UpdateProfileDto |
 | [edutrack_be/src/modules/users/payment-qr.constants.ts](../src/modules/users/payment-qr.constants.ts) | 5 | PAYMENT_QR_INFO_NOT_FOUND_CODE, PAYMENT_QR_INFO_NOT_FOUND_MESSAGE |
-| [edutrack_be/src/modules/users/schemas/user.schema.ts](../src/modules/users/schemas/user.schema.ts) | 136 | User, UserRole, UserDocument, UserSchema |
+| [edutrack_be/src/modules/users/schemas/user.schema.ts](../src/modules/users/schemas/user.schema.ts) | 134 | User, UserRole, UserDocument, UserSchema |
+| [edutrack_be/src/modules/users/types/push-device.type.ts](../src/modules/users/types/push-device.type.ts) | 28 | PushDeviceType, PushDeviceInfo, StoredPushSubscription, PushDeviceSummary |
 | [edutrack_be/src/modules/users/types/safe-user.type.ts](../src/modules/users/types/safe-user.type.ts) | 24 | SafeUser |
 | [edutrack_be/src/modules/users/users.controller.ts](../src/modules/users/users.controller.ts) | 195 | UsersController |
 | [edutrack_be/src/modules/users/users.module.ts](../src/modules/users/users.module.ts) | 19 | UsersModule |
-| [edutrack_be/src/modules/users/users.push.spec.ts](../src/modules/users/users.push.spec.ts) | 106 | createService |
+| [edutrack_be/src/modules/users/users.push.spec.ts](../src/modules/users/users.push.spec.ts) | 87 | createService |
 | [edutrack_be/src/modules/users/users.service.spec.ts](../src/modules/users/users.service.spec.ts) | 281 | createUser, createService |
-| [edutrack_be/src/modules/users/users.service.ts](../src/modules/users/users.service.ts) | 587 | UsersService, isValidQrAccountIdentifier, createPaymentQrTrace, maskAccountNumber |
+| [edutrack_be/src/modules/users/users.service.ts](../src/modules/users/users.service.ts) | 614 | UsersService, isValidQrAccountIdentifier, createPaymentQrTrace, maskAccountNumber |
+| [edutrack_be/src/modules/users/utils/push-device.spec.ts](../src/modules/users/utils/push-device.spec.ts) | 131 |  |
+| [edutrack_be/src/modules/users/utils/push-device.ts](../src/modules/users/utils/push-device.ts) | 122 | describePushDevice, isoDate, summarizePushDevices, pushDeviceId |
 | [edutrack_be/src/modules/users/utils/vietqr-parser.spec.ts](../src/modules/users/utils/vietqr-parser.spec.ts) | 66 | tlv |
 | [edutrack_be/src/modules/users/utils/vietqr-parser.ts](../src/modules/users/utils/vietqr-parser.ts) | 137 | parseVietQrPaymentInfo, parseVietQrQuickLink, normalizeAccountName, parseTlv, findField, VietQrPaymentInfo |
 | [edutrack_be/test/app.e2e-spec.ts](../test/app.e2e-spec.ts) | 30 |  |
 | [edutrack_be/test/jest-e2e.json](../test/jest-e2e.json) | 10 |  |
 | [edutrack_be/test/jest-push-integration.json](../test/jest-push-integration.json) | 23 |  |
-| [edutrack_be/test/push-storage.integration-spec.ts](../test/push-storage.integration-spec.ts) | 259 |  |
+| [edutrack_be/test/push-storage.integration-spec.ts](../test/push-storage.integration-spec.ts) | 295 |  |
 | [edutrack_be/test/schedule-ui-smoke.cjs](../test/schedule-ui-smoke.cjs) | 129 | main |
 | [edutrack_be/tsconfig.build.json](../tsconfig.build.json) | 5 |  |
 | [edutrack_be/tsconfig.json](../tsconfig.json) | 26 |  |
@@ -322,7 +325,8 @@ Phạm vi: 371 file mã/cấu hình/style/tài nguyên văn bản, 72685 dòng. 
 | [edutrack_fe/components/media/media-history.tsx](../../edutrack_fe/components/media/media-history.tsx) | 118 | MediaHistory |
 | [edutrack_fe/components/media/media-trim-slider.tsx](../../edutrack_fe/components/media/media-trim-slider.tsx) | 110 | formatDuration, MediaTrimSlider |
 | [edutrack_fe/components/media/media-upload-board.tsx](../../edutrack_fe/components/media/media-upload-board.tsx) | 525 | formatFileSize, writeString, encodeWav, MediaUploadBoard |
-| [edutrack_fe/components/notifications/push-notification-panel.tsx](../../edutrack_fe/components/notifications/push-notification-panel.tsx) | 91 | PushNotificationPanel |
+| [edutrack_fe/components/notifications/push-device-list.tsx](../../edutrack_fe/components/notifications/push-device-list.tsx) | 72 | updatedAt, PushDeviceList |
+| [edutrack_fe/components/notifications/push-notification-panel.tsx](../../edutrack_fe/components/notifications/push-notification-panel.tsx) | 114 | PushNotificationPanel |
 | [edutrack_fe/components/profile/profile-bank-select.tsx](../../edutrack_fe/components/profile/profile-bank-select.tsx) | 69 | ProfileBankSelect |
 | [edutrack_fe/components/profile/profile-page.tsx](../../edutrack_fe/components/profile/profile-page.tsx) | 851 | ProfilePage, ImagePreviewDialog, isPaymentQrInfoNotFoundError, getPaymentQrWarningDescription, normalizeBankAccountNumber |
 | [edutrack_fe/components/profile/profile-qr-crop.tsx](../../edutrack_fe/components/profile/profile-qr-crop.tsx) | 324 | QrCropBox, CropHandle, QrCropToolbar, getEdgeHandleClassName, getCornerHandleClassName, getCropHandleLabel, normalizeQrCrop, resizeQrCrop, clampNumber, QrCropState |
@@ -347,18 +351,18 @@ Phạm vi: 371 file mã/cấu hình/style/tài nguyên văn bản, 72685 dòng. 
 | [edutrack_fe/components/ui/primary-button.tsx](../../edutrack_fe/components/ui/primary-button.tsx) | 43 | PrimaryButton |
 | [edutrack_fe/components/ui/select-picker.tsx](../../edutrack_fe/components/ui/select-picker.tsx) | 386 | SelectPicker, normalizeSearchText, getTriggerToneClass, getOptionToneClass, SelectPickerOption |
 | [edutrack_fe/eslint.config.mjs](../../edutrack_fe/eslint.config.mjs) | 19 |  |
-| [edutrack_fe/hooks/use-push.ts](../../edutrack_fe/hooks/use-push.ts) | 210 | usePushNotifications |
+| [edutrack_fe/hooks/use-push.ts](../../edutrack_fe/hooks/use-push.ts) | 229 | usePushNotifications |
 | [edutrack_fe/lib/api/auth.ts](../../edutrack_fe/lib/api/auth.ts) | 90 | authApi |
 | [edutrack_fe/lib/api/client.ts](../../edutrack_fe/lib/api/client.ts) | 331 | ApiError, apiRequest, apiBlobRequest, executeRequest, refreshSession, coordinateRefresh, refreshOrReuseStoredSession, getStoredReplacementSession, getRefreshedAccessToken, performRefreshSession, refreshAuthSession, createSessionExpiredError, createSessionChangedError, readResponsePayload, throwApiError, getFileNameFromContentDisposition, ApiBlobResponse |
 | [edutrack_fe/lib/api/invoice-images.ts](../../edutrack_fe/lib/api/invoice-images.ts) | 29 | invoiceImagesApi |
 | [edutrack_fe/lib/api/invoice-template.ts](../../edutrack_fe/lib/api/invoice-template.ts) | 63 | invoiceTemplateApi |
-| [edutrack_fe/lib/api/profile.ts](../../edutrack_fe/lib/api/profile.ts) | 215 | getToken, pushRequest, refreshForBinaryRequest, readBinaryError, fetchPaymentQrBlob, profileApi |
+| [edutrack_fe/lib/api/profile.ts](../../edutrack_fe/lib/api/profile.ts) | 218 | getToken, pushRequest, refreshForBinaryRequest, readBinaryError, fetchPaymentQrBlob, profileApi |
 | [edutrack_fe/lib/api/school.ts](../../edutrack_fe/lib/api/school.ts) | 742 | getToken, buildQuery, schoolApi |
 | [edutrack_fe/lib/api/url.ts](../../edutrack_fe/lib/api/url.ts) | 15 | getApiBaseUrl, getApiRequestUrl |
 | [edutrack_fe/lib/auth/access-token.ts](../../edutrack_fe/lib/auth/access-token.ts) | 55 | getAccessTokenPayload, getAccessTokenExpiresAt, getAccessTokenSubject, isAccessTokenExpired, shouldRefreshAccessToken |
 | [edutrack_fe/lib/auth/token-storage.ts](../../edutrack_fe/lib/auth/token-storage.ts) | 181 | removeSession, AUTH_ACCESS_TOKEN_STORAGE_KEY, AUTH_USER_STORAGE_KEY, AUTH_SESSION_EXPIRED_EVENT, AUTH_SESSION_CHANGED_EVENT, PendingOtpState, tokenStorage |
 | [edutrack_fe/lib/files/open-pdf-in-new-tab.ts](../../edutrack_fe/lib/files/open-pdf-in-new-tab.ts) | 33 | openPdfInNewTab |
-| [edutrack_fe/lib/push/browser.ts](../../edutrack_fe/lib/push/browser.ts) | 43 | supportsPush, pushSupportMessage, decodePublicKey, subscriptionMatchesKey, readyPushRegistration |
+| [edutrack_fe/lib/push/browser.ts](../../edutrack_fe/lib/push/browser.ts) | 56 | getPushDeviceType, supportsPush, pushSupportMessage, decodePublicKey, subscriptionMatchesKey, readyPushRegistration |
 | [edutrack_fe/next.config.ts](../../edutrack_fe/next.config.ts) | 45 | normalizeApiUrl |
 | [edutrack_fe/package.json](../../edutrack_fe/package.json) | 39 |  |
 | [edutrack_fe/playwright.config.ts](../../edutrack_fe/playwright.config.ts) | 18 |  |
@@ -378,7 +382,7 @@ Phạm vi: 371 file mã/cấu hình/style/tài nguyên văn bản, 72685 dòng. 
 | [edutrack_fe/tests/attendance-reset.spec.ts](../../edutrack_fe/tests/attendance-reset.spec.ts) | 242 | setup |
 | [edutrack_fe/tests/class-color-suggestions.test.mjs](../../edutrack_fe/tests/class-color-suggestions.test.mjs) | 74 | getHslLightness |
 | [edutrack_fe/tests/invoice-designer.spec.ts](../../edutrack_fe/tests/invoice-designer.spec.ts) | 1083 | renderReceiptReference, mockApi, saveTemplate, openDesigner |
-| [edutrack_fe/tests/push-notifications.spec.ts](../../edutrack_fe/tests/push-notifications.spec.ts) | 156 | setup |
+| [edutrack_fe/tests/push-notifications.spec.ts](../../edutrack_fe/tests/push-notifications.spec.ts) | 221 | setup |
 | [edutrack_fe/tests/push-worker.test.mjs](../../edutrack_fe/tests/push-worker.test.mjs) | 111 | harness |
 | [edutrack_fe/tests/receipt-template-selection.spec.ts](../../edutrack_fe/tests/receipt-template-selection.spec.ts) | 260 | setup, chooseTemplate |
 | [edutrack_fe/tests/session-persistence.spec.ts](../../edutrack_fe/tests/session-persistence.spec.ts) | 329 | seedSession, fulfillDashboard |
@@ -387,7 +391,7 @@ Phạm vi: 371 file mã/cấu hình/style/tài nguyên văn bản, 72685 dòng. 
 | [edutrack_fe/types/auth.ts](../../edutrack_fe/types/auth.ts) | 70 | RegisterPayload, LoginPayload, VerifyOtpPayload, ForgotPasswordPayload, ResetPasswordPayload, ResendOtpPayload, ResendPasswordResetOtpPayload, AuthResponse, RegisterResponse, ResendOtpResponse, ForgotPasswordResponse, ResetPasswordResponse, LogoutResponse |
 | [edutrack_fe/types/invoice-template.ts](../../edutrack_fe/types/invoice-template.ts) | 45 | InvoiceTemplate, SaveInvoiceTemplate, TemplateSaveMode, InvoiceRegion, InvoiceRegionRegistry, InvoiceImage, InvoiceImagePage |
 | [edutrack_fe/types/school.ts](../../edutrack_fe/types/school.ts) | 810 | Gender, StudentStatus, ClassStatus, EnrollmentStatus, ClassScheduleSlot, ScheduleOverrideAction, SuspendFixedSchedulePayload, ResumeFixedSchedulePayload, UpdateEnrollmentStatusPayload, LatestFixedSchedule, ClassScheduleOverview, ClassTemporarySchedule, StudentParent, Student, CreateStudentPayload, UpdateStudentPayload, DeleteStudentMode, StudentBulkDeleteResult, StudentSortField, StudentSortOrder, StudentListFilters, StudentImportResult, Classroom, ClassroomDetail, CreateClassPayload, UpdateClassPayload, SaveFixedSchedulePayload, CreateTemporarySchedulePayload, UpdateTemporarySchedulePayload, ClassSessionScheduleType, SaveClassSessionContentPayload, ClassSessionContent, TeacherScheduleEventType, TeacherScheduleClass, TeacherScheduleDay, TeacherScheduleEvent, TeacherWeekSchedule, DashboardTodayLesson, DashboardRevenueStats, DashboardMonthlyRevenue, DashboardPendingPayment, DashboardOverviewData, ScheduleConflict, ScheduleConflictResult, ScheduleAvailabilityPayload, ScheduleTimeSlot, ScheduleAvailability, EnrollmentResponse, EnrollmentBulkResponse, RemoveStudentsBulkResponse, AttendanceStatus, AttendanceRecord, AttendanceResponse, TakeAttendanceRecordPayload, TakeAttendancePayload, TakeAttendanceBatchPayload, FlatAttendanceRecord, AttendanceSheetResponse, Exam, ExamScore, ExamSheetResponse, CreateExamPayload, UpdateExamPayload, TakeExamScoreEntry, TakeExamScoresBatchPayload, PaymentStatus, ReceiptPdfStatus, ReceiptScope, ReceiptTeacherSnapshot, ReceiptClassSnapshot, ReceiptStudentSnapshot, ReceiptSessionSnapshot, ReceiptExamSnapshot, ReceiptDetail, ReceiptListItem, BillingOverviewStudent, BillingOverview, StudentBillingOverviewClass, StudentBillingOverview, BillingClassSummary, BillingCandidates, IssueReceiptPayload, ReceiptPreviewResponse, FileDownloadResponse, ReceiptDownloadResponse, ReceiptBulkDownloadPayload, UpdateReceiptPaymentPayload, AiChatMessage, AiScheduleSessionResponse, AiChatResponse, AiSessionListItem, AiSessionDetail |
-| [edutrack_fe/types/user.ts](../../edutrack_fe/types/user.ts) | 57 | UserRole, PaymentBank, User, UpdateProfilePayload, PaymentQrUploadResponse, ChangePasswordPayload |
+| [edutrack_fe/types/user.ts](../../edutrack_fe/types/user.ts) | 77 | UserRole, PushDeviceType, PushDevice, PushStatus, PaymentBank, User, UpdateProfilePayload, PaymentQrUploadResponse, ChangePasswordPayload |
 
 ## API backend
 
@@ -458,10 +462,10 @@ Tất cả đường dẫn controller được thêm prefix /api tại src/main.
 | [edutrack_be/src/modules/invoice-template/invoice-template.controller.ts](../src/modules/invoice-template/invoice-template.controller.ts):89 | PATCH | /api/invoice-templates/:id | update(@CurrentUser() user: JwtUser, @Param('id') id: string, @Body() dto: UpdateInvoiceTemplateDto) | @UseGuards(JwtAuthGuard) |
 | [edutrack_be/src/modules/invoice-template/invoice-template.controller.ts](../src/modules/invoice-template/invoice-template.controller.ts):98 | DELETE | /api/invoice-templates/:id | remove(@CurrentUser() user: JwtUser, @Param('id') id: string) | @UseGuards(JwtAuthGuard) |
 | [edutrack_be/src/modules/invoice-template/invoice-template.controller.ts](../src/modules/invoice-template/invoice-template.controller.ts):103 | POST | /api/invoice-templates/:id/duplicate | duplicate(@CurrentUser() user: JwtUser, @Param('id') id: string, @Body() dto: DuplicateInvoiceTemplateDto = {}) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/push/push.controller.ts](../src/modules/push/push.controller.ts):20 | GET | /api/users/me/push-subscription/status | getStatus(@CurrentUser() user: JwtUser) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/push/push.controller.ts](../src/modules/push/push.controller.ts):25 | POST | /api/users/me/push-subscription | subscribe(@CurrentUser() user: JwtUser, @Body() dto: PushSubscriptionDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/push/push.controller.ts](../src/modules/push/push.controller.ts):30 | POST | /api/users/me/push-subscription/test | test(@CurrentUser() user: JwtUser, @Body() dto: PushEndpointDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/push/push.controller.ts](../src/modules/push/push.controller.ts):35 | DELETE | /api/users/me/push-subscription | unsubscribe(@CurrentUser() user: JwtUser, @Body() dto: PushEndpointDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/push/push.controller.ts](../src/modules/push/push.controller.ts):31 | GET | /api/users/me/push-subscription/status | getStatus(@CurrentUser() user: JwtUser) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/push/push.controller.ts](../src/modules/push/push.controller.ts):36 | POST | /api/users/me/push-subscription | subscribe(@CurrentUser() user: JwtUser, @Body() dto: PushSubscriptionDto, @Req() request: Request) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/push/push.controller.ts](../src/modules/push/push.controller.ts):56 | POST | /api/users/me/push-subscription/test | test(@CurrentUser() user: JwtUser, @Body() dto: PushEndpointDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/push/push.controller.ts](../src/modules/push/push.controller.ts):61 | DELETE | /api/users/me/push-subscription | unsubscribe(@CurrentUser() user: JwtUser, @Body() dto: PushEndpointDto) | @UseGuards(JwtAuthGuard) |
 | [edutrack_be/src/modules/receipts/receipts.controller.ts](../src/modules/receipts/receipts.controller.ts):43 | GET | /api/classes/:classId/billing/overview | getClassBillingOverview(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Query() query: QueryBillingDto) | @UseGuards(JwtAuthGuard) |
 | [edutrack_be/src/modules/receipts/receipts.controller.ts](../src/modules/receipts/receipts.controller.ts):56 | GET | /api/classes/:classId/students/:studentId/billing-candidates | getBillingCandidates(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string, @Query() query: QueryBillingDto) | @UseGuards(JwtAuthGuard) |
 | [edutrack_be/src/modules/receipts/receipts.controller.ts](../src/modules/receipts/receipts.controller.ts):71 | GET | /api/students/:studentId/billing/overview | getStudentBillingOverview(@CurrentUser() user: JwtUser, @Param('studentId') studentId: string, @Query() query: QueryBillingDto) | @UseGuards(JwtAuthGuard) |
@@ -2741,7 +2745,7 @@ API calls (trích tham số tĩnh, tối đa 180 ký tự/tham số):
 
 ### edutrack_be/src/modules/push/push.controller.spec.ts
 
-[edutrack_be/src/modules/push/push.controller.spec.ts](../src/modules/push/push.controller.spec.ts) — 226 dòng.
+[edutrack_be/src/modules/push/push.controller.spec.ts](../src/modules/push/push.controller.spec.ts) — 271 dòng.
 
 Dependencies: `@nestjs/common`, `@nestjs/config`, `@nestjs/event-emitter`, `@nestjs/testing`, `jsonwebtoken`, `node:http`, `supertest`, `web-push`, `../auth/strategies/jwt.strategy`, `../users/users.service`, `./push.controller`, `./push.service`.
 
@@ -2752,41 +2756,46 @@ API calls (trích tham số tĩnh, tối đa 180 ký tự/tham số):
 - Dòng 110: `request(server)`
 - Dòng 114: `request(server)`
 - Dòng 122: `request(server)`
-- Dòng 139: `request(server)`
-- Dòng 148: `request(server)`
-- Dòng 153: `request(server)`
-- Dòng 165: `request(server)`
-- Dòng 183: `request(server)`
-- Dòng 192: `request(server)`
+- Dòng 140: `request(server)`
+- Dòng 150: `request(server)`
+- Dòng 155: `request(server)`
+- Dòng 164: `request(server)`
+- Dòng 187: `request(server)`
+- Dòng 195: `request(server)`
+- Dòng 210: `request(server)`
+- Dòng 228: `request(server)`
+- Dòng 237: `request(server)`
 
 Test labels (khai báo, không phải kết quả thực thi):
 
 - Dòng 29: Push API with JWT, validation and real event wiring
 - Dòng 102: rejects unauthenticated status, subscription, test, and delete calls
 - Dòng 121: returns the runtime public key and own device count without private material
-- Dòng 138: validates browser subscriptions and persists with identity taken from JWT
-- Dòng 161: returns actual provider acceptance instead of fire-and-forget success
-- Dòng 182: does not let another teacher test this device endpoint
-- Dòng 191: scopes subscription deletion to JWT identity
-- Dòng 203: resolves emitAsync with delivery counts for the scheduler
-- Dòng 214: propagates listener database failures back to emitAsync callers
+- Dòng 139: validates browser subscriptions and persists with identity taken from JWT
+- Dòng 163: captures safe browser metadata and uses the hint for an iPad in desktop mode
+- Dòng 186: returns only the authenticated account devices and strips endpoints and push keys
+- Dòng 206: returns actual provider acceptance instead of fire-and-forget success
+- Dòng 227: does not let another teacher test this device endpoint
+- Dòng 236: scopes subscription deletion to JWT identity
+- Dòng 248: resolves emitAsync with delivery counts for the scheduler
+- Dòng 259: propagates listener database failures back to emitAsync callers
 
 ### edutrack_be/src/modules/push/push.controller.ts
 
-[edutrack_be/src/modules/push/push.controller.ts](../src/modules/push/push.controller.ts) — 40 dòng.
+[edutrack_be/src/modules/push/push.controller.ts](../src/modules/push/push.controller.ts) — 66 dòng.
 
-Dependencies: `@nestjs/common`, `../../common/decorators/current-user.decorator`, `../../common/types/authenticated-request.type`, `../auth/guards/jwt-auth.guard`, `../users/dto/push-subscription.dto`, `../users/users.service`, `./push.service`.
+Dependencies: `@nestjs/common`, `express`, `../../common/decorators/current-user.decorator`, `../../common/types/authenticated-request.type`, `../auth/guards/jwt-auth.guard`, `../users/dto/push-subscription.dto`, `../users/users.service`, `../users/types/push-device.type`, `../users/utils/push-device`, `./push.service`.
 
-**PushController** (dòng 12) @Controller('users/me') @UseGuards(JwtAuthGuard)
+**PushController** (dòng 23) @Controller('users/me') @UseGuards(JwtAuthGuard)
 
 | Member | Dòng | Hợp đồng / loại | Validation / metadata |
 | --- | ---: | --- | --- |
-| getStatus | 20 | public getStatus(@CurrentUser() user: JwtUser) | @Get('push-subscription/status') |
-| subscribe | 25 | public subscribe(@CurrentUser() user: JwtUser, @Body() dto: PushSubscriptionDto) | @Post('push-subscription') |
-| test | 30 | public test(@CurrentUser() user: JwtUser, @Body() dto: PushEndpointDto) | @Post('push-subscription/test') |
-| unsubscribe | 35 | public unsubscribe(@CurrentUser() user: JwtUser, @Body() dto: PushEndpointDto) | @Delete('push-subscription') |
+| getStatus | 31 | public getStatus(@CurrentUser() user: JwtUser) | @Get('push-subscription/status') |
+| subscribe | 36 | public subscribe(@CurrentUser() user: JwtUser, @Body() dto: PushSubscriptionDto, @Req() request: Request) | @Post('push-subscription') |
+| test | 56 | public test(@CurrentUser() user: JwtUser, @Body() dto: PushEndpointDto) | @Post('push-subscription/test') |
+| unsubscribe | 61 | public unsubscribe(@CurrentUser() user: JwtUser, @Body() dto: PushEndpointDto) | @Delete('push-subscription') |
 
-Exports: `PushController` (12).
+Exports: `PushController` (23).
 
 ### edutrack_be/src/modules/push/push.module.ts
 
@@ -2827,30 +2836,30 @@ Test labels (khai báo, không phải kết quả thực thi):
 
 ### edutrack_be/src/modules/push/push.service.ts
 
-[edutrack_be/src/modules/push/push.service.ts](../src/modules/push/push.service.ts) — 193 dòng.
+[edutrack_be/src/modules/push/push.service.ts](../src/modules/push/push.service.ts) — 196 dòng.
 
-Dependencies: `@nestjs/common`, `@nestjs/config`, `@nestjs/event-emitter`, `node:crypto`, `web-push`, `../users/dto/push-subscription.dto`, `../users/users.service`.
+Dependencies: `@nestjs/common`, `@nestjs/config`, `@nestjs/event-emitter`, `node:crypto`, `web-push`, `../users/dto/push-subscription.dto`, `../users/users.service`, `../users/utils/push-device`.
 
-**PushService** (dòng 17) @Injectable()
+**PushService** (dòng 18) @Injectable()
 
 | Member | Dòng | Hợp đồng / loại | Validation / metadata |
 | --- | ---: | --- | --- |
-| logger | 19 |  |  |
-| configured | 20 |  |  |
-| publicKey | 21 | string \| null |  |
-| configurationError | 22 | string (optional) |  |
-| getStatus | 65 | public getStatus(userId: string) |  |
-| handleNotificationEvent | 78 | public handleNotificationEvent(data: { userId: string; payload: Record<string, unknown>; }): Promise<PushDeliveryResult> | @OnEvent('notification.push', { suppressErrors: false }) |
-| sendTestNotification | 86 | public sendTestNotification(userId: string, endpoint: string) |  |
-| sendNotification | 109 | public sendNotification(userId: string, payload: Record<string, unknown>, endpoint?: string): Promise<PushDeliveryResult> |  |
-| getStatusCode | 181 | private getStatusCode(error: unknown): number \| undefined |  |
+| logger | 20 |  |  |
+| configured | 21 |  |  |
+| publicKey | 22 | string \| null |  |
+| configurationError | 23 | string (optional) |  |
+| getStatus | 66 | public getStatus(userId: string) |  |
+| handleNotificationEvent | 81 | public handleNotificationEvent(data: { userId: string; payload: Record<string, unknown>; }): Promise<PushDeliveryResult> | @OnEvent('notification.push', { suppressErrors: false }) |
+| sendTestNotification | 89 | public sendTestNotification(userId: string, endpoint: string) |  |
+| sendNotification | 112 | public sendNotification(userId: string, payload: Record<string, unknown>, endpoint?: string): Promise<PushDeliveryResult> |  |
+| getStatusCode | 184 | private getStatusCode(error: unknown): number \| undefined |  |
 
-Exports: `PushDeliveryResult` (9), `PushService` (17).
+Exports: `PushDeliveryResult` (10), `PushService` (18).
 
 Type contracts / enum values (mã khai báo tại mốc khảo sát):
 
 ```typescript
-// line 9
+// line 10
 export type PushDeliveryResult = {
   configured: boolean;
   attempted: number;
@@ -5484,65 +5493,104 @@ Exports: `PAYMENT_QR_INFO_NOT_FOUND_CODE` (1), `PAYMENT_QR_INFO_NOT_FOUND_MESSAG
 
 ### edutrack_be/src/modules/users/schemas/user.schema.ts
 
-[edutrack_be/src/modules/users/schemas/user.schema.ts](../src/modules/users/schemas/user.schema.ts) — 136 dòng.
+[edutrack_be/src/modules/users/schemas/user.schema.ts](../src/modules/users/schemas/user.schema.ts) — 134 dòng.
 
-Dependencies: `@nestjs/mongoose`, `mongoose`.
+Dependencies: `@nestjs/mongoose`, `mongoose`, `../types/push-device.type`.
 
-**User** (dòng 8) @Schema({ timestamps: true, versionKey: false, })
+**User** (dòng 9) @Schema({ timestamps: true, versionKey: false, })
 
 | Member | Dòng | Hợp đồng / loại | Validation / metadata |
 | --- | ---: | --- | --- |
-| fullName | 13 | string | @Prop({ required: true, trim: true }) |
-| avatarUrl | 16 | string (optional) | @Prop({ trim: true }) |
-| phone | 19 | string (optional) | @Prop({ trim: true }) |
-| address | 22 | string (optional) | @Prop({ trim: true }) |
-| bio | 25 | string (optional) | @Prop({ trim: true, maxlength: 500 }) |
-| bankAccountName | 28 | string (optional) | @Prop({ trim: true, maxlength: 100 }) |
-| bankAccountNumber | 31 | string (optional) | @Prop({ trim: true, maxlength: 50 }) |
-| bankName | 34 | string (optional) | @Prop({ trim: true, maxlength: 120 }) |
-| bankCode | 37 | string (optional) | @Prop({ trim: true, maxlength: 30 }) |
-| bankBin | 40 | string (optional) | @Prop({ trim: true, maxlength: 20 }) |
-| bankLogoUrl | 43 | string (optional) | @Prop({ trim: true, maxlength: 500 }) |
-| paymentQrImageData | 46 | Buffer (optional) | @Prop({ type: Buffer, select: false }) |
-| paymentQrImageContentType | 49 | string (optional) | @Prop({ trim: true }) |
-| paymentQrImageSize | 52 | number (optional) | @Prop({ min: 0 }) |
-| paymentQrImageUpdatedAt | 55 | Date (optional) | @Prop({ type: Date }) |
-| email | 58 | string | @Prop({ required: true, lowercase: true, trim: true, unique: true, }) |
-| passwordHash | 66 | string | @Prop({ required: true, select: false }) |
-| role | 69 | UserRole | @Prop({ enum: UserRole, default: UserRole.Teacher, }) |
-| isEmailVerified | 75 | boolean | @Prop({ default: false }) |
-| otpHash | 78 | string (optional) | @Prop({ select: false }) |
-| otpExpiresAt | 81 | Date (optional) | @Prop({ type: Date, select: false }) |
-| otpAttempts | 84 | number | @Prop({ default: 0, select: false }) |
-| otpResendAvailableAt | 87 | Date (optional) | @Prop({ type: Date, select: false }) |
-| emailVerificationExpiresAt | 90 | Date (optional) | @Prop({ type: Date, select: false }) |
-| pendingPasswordHash | 93 | string (optional) | @Prop({ select: false }) |
-| passwordResetOtpHash | 96 | string (optional) | @Prop({ select: false }) |
-| passwordResetOtpExpiresAt | 99 | Date (optional) | @Prop({ type: Date, select: false }) |
-| passwordResetOtpAttempts | 102 | number | @Prop({ default: 0, select: false }) |
-| passwordResetOtpResendAvailableAt | 105 | Date (optional) | @Prop({ type: Date, select: false }) |
-| refreshTokenHash | 108 | string (optional) | @Prop({ select: false }) |
-| refreshTokenExpiresAt | 111 | Date (optional) | @Prop({ type: Date, select: false }) |
-| lastLoginAt | 114 | Date (optional) | @Prop({ type: Date }) |
-| recentMediaUrls | 117 | string[] | @Prop({ type: [String], default: [] }) |
-| pushSubscriptions | 120 | { endpoint: string; keys?: { p256dh: string; auth: string }; }[] | @Prop({ type: [{ type: Object }], default: [], select: false }) |
+| fullName | 14 | string | @Prop({ required: true, trim: true }) |
+| avatarUrl | 17 | string (optional) | @Prop({ trim: true }) |
+| phone | 20 | string (optional) | @Prop({ trim: true }) |
+| address | 23 | string (optional) | @Prop({ trim: true }) |
+| bio | 26 | string (optional) | @Prop({ trim: true, maxlength: 500 }) |
+| bankAccountName | 29 | string (optional) | @Prop({ trim: true, maxlength: 100 }) |
+| bankAccountNumber | 32 | string (optional) | @Prop({ trim: true, maxlength: 50 }) |
+| bankName | 35 | string (optional) | @Prop({ trim: true, maxlength: 120 }) |
+| bankCode | 38 | string (optional) | @Prop({ trim: true, maxlength: 30 }) |
+| bankBin | 41 | string (optional) | @Prop({ trim: true, maxlength: 20 }) |
+| bankLogoUrl | 44 | string (optional) | @Prop({ trim: true, maxlength: 500 }) |
+| paymentQrImageData | 47 | Buffer (optional) | @Prop({ type: Buffer, select: false }) |
+| paymentQrImageContentType | 50 | string (optional) | @Prop({ trim: true }) |
+| paymentQrImageSize | 53 | number (optional) | @Prop({ min: 0 }) |
+| paymentQrImageUpdatedAt | 56 | Date (optional) | @Prop({ type: Date }) |
+| email | 59 | string | @Prop({ required: true, lowercase: true, trim: true, unique: true, }) |
+| passwordHash | 67 | string | @Prop({ required: true, select: false }) |
+| role | 70 | UserRole | @Prop({ enum: UserRole, default: UserRole.Teacher, }) |
+| isEmailVerified | 76 | boolean | @Prop({ default: false }) |
+| otpHash | 79 | string (optional) | @Prop({ select: false }) |
+| otpExpiresAt | 82 | Date (optional) | @Prop({ type: Date, select: false }) |
+| otpAttempts | 85 | number | @Prop({ default: 0, select: false }) |
+| otpResendAvailableAt | 88 | Date (optional) | @Prop({ type: Date, select: false }) |
+| emailVerificationExpiresAt | 91 | Date (optional) | @Prop({ type: Date, select: false }) |
+| pendingPasswordHash | 94 | string (optional) | @Prop({ select: false }) |
+| passwordResetOtpHash | 97 | string (optional) | @Prop({ select: false }) |
+| passwordResetOtpExpiresAt | 100 | Date (optional) | @Prop({ type: Date, select: false }) |
+| passwordResetOtpAttempts | 103 | number | @Prop({ default: 0, select: false }) |
+| passwordResetOtpResendAvailableAt | 106 | Date (optional) | @Prop({ type: Date, select: false }) |
+| refreshTokenHash | 109 | string (optional) | @Prop({ select: false }) |
+| refreshTokenExpiresAt | 112 | Date (optional) | @Prop({ type: Date, select: false }) |
+| lastLoginAt | 115 | Date (optional) | @Prop({ type: Date }) |
+| recentMediaUrls | 118 | string[] | @Prop({ type: [String], default: [] }) |
+| pushSubscriptions | 121 | StoredPushSubscription[] | @Prop({ type: [{ type: Object }], default: [], select: false }) |
 
-Exports: `UserRole` (4), `User` (8), `UserDocument` (127), `UserSchema` (128).
+Exports: `UserRole` (5), `User` (9), `UserDocument` (125), `UserSchema` (126).
 
 Type contracts / enum values (mã khai báo tại mốc khảo sát):
 
 ```typescript
-// line 4
+// line 5
 export enum UserRole {
   Teacher = 'teacher',
 }
-// line 127
+// line 125
 export type UserDocument = HydratedDocument<User>;
 ```
 
 Indexes:
 
-- Dòng 129: `UserSchema.index( { emailVerificationExpiresAt: 1 }, { expireAfterSeconds: 0, partialFilterExpression: { isEmailVerified: false }, }, )`
+- Dòng 127: `UserSchema.index( { emailVerificationExpiresAt: 1 }, { expireAfterSeconds: 0, partialFilterExpression: { isEmailVerified: false }, }, )`
+
+### edutrack_be/src/modules/users/types/push-device.type.ts
+
+[edutrack_be/src/modules/users/types/push-device.type.ts](../src/modules/users/types/push-device.type.ts) — 28 dòng.
+
+Exports: `PushDeviceType` (1), `PushDeviceInfo` (8), `StoredPushSubscription` (15), `PushDeviceSummary` (23).
+
+Type contracts / enum values (mã khai báo tại mốc khảo sát):
+
+```typescript
+// line 1
+export enum PushDeviceType {
+  Desktop = 'desktop',
+  Mobile = 'mobile',
+  Tablet = 'tablet',
+  Unknown = 'unknown',
+}
+// line 8
+export type PushDeviceInfo = {
+  type: PushDeviceType;
+  name: string;
+  browser: string | null;
+  os: string | null;
+};
+// line 15
+export type StoredPushSubscription = {
+  endpoint: string;
+  keys?: { p256dh: string; auth: string };
+  device?: PushDeviceInfo;
+  registeredAt?: Date;
+  lastSeenAt?: Date;
+};
+// line 23
+export type PushDeviceSummary = PushDeviceInfo & {
+  id: string;
+  registeredAt: string | null;
+  lastSeenAt: string | null;
+};
+```
 
 ### edutrack_be/src/modules/users/types/safe-user.type.ts
 
@@ -5619,7 +5667,7 @@ Exports: `UsersModule` (9).
 
 ### edutrack_be/src/modules/users/users.push.spec.ts
 
-[edutrack_be/src/modules/users/users.push.spec.ts](../src/modules/users/users.push.spec.ts) — 106 dòng.
+[edutrack_be/src/modules/users/users.push.spec.ts](../src/modules/users/users.push.spec.ts) — 87 dòng.
 
 Dependencies: `./users.service`, `./schemas/user.schema`.
 
@@ -5630,8 +5678,8 @@ Test labels (khai báo, không phải kết quả thực thi):
 - Dòng 36: UsersService push subscription persistence
 - Dòng 37: explicitly selects hidden push subscriptions without selecting auth secrets
 - Dòng 47: upserts a device with an atomic replacement pipeline so renewed keys persist
-- Dòng 79: removes only one owned endpoint atomically, preserving other devices
-- Dòng 91: returns not found when the authenticated account no longer exists
+- Dòng 60: removes only one owned endpoint atomically, preserving other devices
+- Dòng 72: returns not found when the authenticated account no longer exists
 
 ### edutrack_be/src/modules/users/users.service.spec.ts
 
@@ -5678,48 +5726,48 @@ Test labels (khai báo, không phải kết quả thực thi):
 
 ### edutrack_be/src/modules/users/users.service.ts
 
-[edutrack_be/src/modules/users/users.service.ts](../src/modules/users/users.service.ts) — 587 dòng.
+[edutrack_be/src/modules/users/users.service.ts](../src/modules/users/users.service.ts) — 614 dòng.
 
-Dependencies: `@nestjs/common`, `@nestjs/config`, `@nestjs/mongoose`, `bcrypt`, `node:crypto`, `mongoose`, `../cloudinary/cloudinary.service`, `./bank-directory.service`, `./dto/change-password.dto`, `./dto/lookup-bank-account.dto`, `./dto/push-subscription.dto`, `./dto/update-profile.dto`, `./payment-qr.constants`, `./schemas/user.schema`, `./types/safe-user.type`, `./utils/vietqr-parser`.
+Dependencies: `@nestjs/common`, `@nestjs/config`, `@nestjs/mongoose`, `bcrypt`, `node:crypto`, `mongoose`, `../cloudinary/cloudinary.service`, `./bank-directory.service`, `./dto/change-password.dto`, `./dto/lookup-bank-account.dto`, `./dto/push-subscription.dto`, `./types/push-device.type`, `./utils/push-device`, `./dto/update-profile.dto`, `./payment-qr.constants`, `./schemas/user.schema`, `./types/safe-user.type`, `./utils/vietqr-parser`.
 
-**UsersService** (dòng 43) @Injectable()
+**UsersService** (dòng 45) @Injectable()
 
 | Member | Dòng | Hợp đồng / loại | Validation / metadata |
 | --- | ---: | --- | --- |
-| logger | 45 |  |  |
-| normalizeEmail | 54 | public normalizeEmail(email: string) |  |
-| createTeacher | 58 | public createTeacher(input: CreateTeacherInput) |  |
-| findByEmail | 68 | public findByEmail(email: string) |  |
-| findByEmailWithSecrets | 72 | public findByEmailWithSecrets(email: string) |  |
-| findByIdWithSecrets | 81 | public findByIdWithSecrets(id: string) |  |
-| findById | 94 | public findById(id: string) |  |
-| deleteById | 102 | public deleteById(id: string \| Types.ObjectId) |  |
-| getProfile | 106 | public getProfile(userId: string) |  |
-| getBanks | 112 | public getBanks() |  |
-| lookupBankAccount | 116 | public lookupBankAccount(dto: LookupBankAccountDto) |  |
-| updateProfile | 176 | public updateProfile(userId: string, dto: UpdateProfileDto) |  |
-| changePassword | 236 | public changePassword(userId: string, dto: ChangePasswordDto) |  |
-| updatePaymentQr | 267 | public updatePaymentQr(userId: string, file: UploadImageFile, qrContent?: string, allowUnrecognized = false) |  |
-| getPaymentQr | 360 | public getPaymentQr(userId: string) |  |
-| removePaymentQr | 386 | public removePaymentQr(userId: string) |  |
-| uploadMedia | 413 | public uploadMedia(userId: string, file: UploadImageFile) |  |
-| getMediaHistory | 435 | public getMediaHistory(userId: string) |  |
-| getPushSubscriptions | 442 | public getPushSubscriptions(userId: string) |  |
-| addPushSubscription | 452 | public addPushSubscription(userId: string, subscription: PushSubscriptionDto) |  |
-| removePushSubscription | 493 | public removePushSubscription(userId: string, endpoint: string) |  |
-| toSafeUser | 505 | public toSafeUser(user: UserDocument): SafeUser |  |
-| findByIdOrThrow | 531 | private findByIdOrThrow(userId: string) |  |
-| assignPaymentBank | 541 | private assignPaymentBank(user: UserDocument, bank: PaymentBank \| null) |  |
-| getPasswordSaltRounds | 548 | private getPasswordSaltRounds() |  |
+| logger | 47 |  |  |
+| normalizeEmail | 56 | public normalizeEmail(email: string) |  |
+| createTeacher | 60 | public createTeacher(input: CreateTeacherInput) |  |
+| findByEmail | 70 | public findByEmail(email: string) |  |
+| findByEmailWithSecrets | 74 | public findByEmailWithSecrets(email: string) |  |
+| findByIdWithSecrets | 83 | public findByIdWithSecrets(id: string) |  |
+| findById | 96 | public findById(id: string) |  |
+| deleteById | 104 | public deleteById(id: string \| Types.ObjectId) |  |
+| getProfile | 108 | public getProfile(userId: string) |  |
+| getBanks | 114 | public getBanks() |  |
+| lookupBankAccount | 118 | public lookupBankAccount(dto: LookupBankAccountDto) |  |
+| updateProfile | 178 | public updateProfile(userId: string, dto: UpdateProfileDto) |  |
+| changePassword | 238 | public changePassword(userId: string, dto: ChangePasswordDto) |  |
+| updatePaymentQr | 269 | public updatePaymentQr(userId: string, file: UploadImageFile, qrContent?: string, allowUnrecognized = false) |  |
+| getPaymentQr | 362 | public getPaymentQr(userId: string) |  |
+| removePaymentQr | 388 | public removePaymentQr(userId: string) |  |
+| uploadMedia | 415 | public uploadMedia(userId: string, file: UploadImageFile) |  |
+| getMediaHistory | 437 | public getMediaHistory(userId: string) |  |
+| getPushSubscriptions | 444 | public getPushSubscriptions(userId: string) |  |
+| addPushSubscription | 454 | public addPushSubscription(userId: string, subscription: PushSubscriptionDto, device?: PushDeviceInfo) |  |
+| removePushSubscription | 520 | public removePushSubscription(userId: string, endpoint: string) |  |
+| toSafeUser | 532 | public toSafeUser(user: UserDocument): SafeUser |  |
+| findByIdOrThrow | 558 | private findByIdOrThrow(userId: string) |  |
+| assignPaymentBank | 568 | private assignPaymentBank(user: UserDocument, bank: PaymentBank \| null) |  |
+| getPasswordSaltRounds | 575 | private getPasswordSaltRounds() |  |
 
-Functions: `isValidQrAccountIdentifier(value?: string)` (dòng 553); `createPaymentQrTrace(rawValue?: string)` (dòng 557); `maskAccountNumber(value?: string)` (dòng 576).
+Functions: `isValidQrAccountIdentifier(value?: string)` (dòng 580); `createPaymentQrTrace(rawValue?: string)` (dòng 584); `maskAccountNumber(value?: string)` (dòng 603).
 
-Exports: `UsersService` (43).
+Exports: `UsersService` (45).
 
 Type contracts / enum values (mã khai báo tại mốc khảo sát):
 
 ```typescript
-// line 33
+// line 35
 type CreateTeacherInput = {
   fullName: string;
   email: string;
@@ -5730,6 +5778,30 @@ type CreateTeacherInput = {
   emailVerificationExpiresAt: Date;
 };
 ```
+
+### edutrack_be/src/modules/users/utils/push-device.spec.ts
+
+[edutrack_be/src/modules/users/utils/push-device.spec.ts](../src/modules/users/utils/push-device.spec.ts) — 131 dòng.
+
+Dependencies: `../types/push-device.type`, `./push-device`.
+
+Test labels (khai báo, không phải kết quả thực thi):
+
+- Dòng 13: Push device display metadata
+- Dòng 14: describes %s without confusing compatible browser tokens
+- Dòng 65: recognizes iPadOS desktop mode from the validated display hint
+- Dòng 77: shows legacy devices honestly and never exposes transport credentials
+- Dòng 103: deduplicates legacy endpoints, keeps richer metadata, and sorts latest registrations first
+
+### edutrack_be/src/modules/users/utils/push-device.ts
+
+[edutrack_be/src/modules/users/utils/push-device.ts](../src/modules/users/utils/push-device.ts) — 122 dòng.
+
+Dependencies: `node:crypto`, `../types/push-device.type`.
+
+Functions: `describePushDevice(userAgent: string, deviceType?: PushDeviceType): PushDeviceInfo` (dòng 14); `isoDate(value: unknown): string \| null` (dòng 86); `summarizePushDevices(subscriptions: StoredPushSubscription[]): PushDeviceSummary[]` (dòng 92).
+
+Exports: `pushDeviceId` (9), `describePushDevice` (14), `summarizePushDevices` (92).
 
 ### edutrack_be/src/modules/users/utils/vietqr-parser.spec.ts
 
@@ -5790,21 +5862,22 @@ Test labels (khai báo, không phải kết quả thực thi):
 
 ### edutrack_be/test/push-storage.integration-spec.ts
 
-[edutrack_be/test/push-storage.integration-spec.ts](../test/push-storage.integration-spec.ts) — 259 dòng.
+[edutrack_be/test/push-storage.integration-spec.ts](../test/push-storage.integration-spec.ts) — 295 dòng.
 
-Dependencies: `node:crypto`, `@nestjs/common`, `@nestjs/config`, `mongoose`, `../src/modules/cloudinary/cloudinary.service`, `../src/modules/schedules/push-reminder-store.service`, `../src/modules/schedules/schemas/push-reminder.schema`, `../src/modules/users/bank-directory.service`, `../src/modules/users/dto/push-subscription.dto`, `../src/modules/users/schemas/user.schema`, `../src/modules/users/users.service`.
+Dependencies: `node:crypto`, `@nestjs/common`, `@nestjs/config`, `mongoose`, `../src/modules/cloudinary/cloudinary.service`, `../src/modules/schedules/push-reminder-store.service`, `../src/modules/schedules/schemas/push-reminder.schema`, `../src/modules/users/bank-directory.service`, `../src/modules/users/dto/push-subscription.dto`, `../src/modules/users/schemas/user.schema`, `../src/modules/users/users.service`, `../src/modules/users/types/push-device.type`, `../src/modules/users/utils/push-device`.
 
 Test labels (khai báo, không phải kết quả thực thi):
 
-- Dòng 30: Push storage integration against isolated local MongoDB
-- Dòng 87: reads select:false subscriptions explicitly while profile and auth reads stay private
-- Dòng 103: preserves concurrent devices and replaces rotated keys without duplicate endpoints
-- Dòng 134: deduplicates old records and removes only the requested endpoint amid another registration
-- Dòng 154: scopes endpoint mutation to the selected user and rejects unknown users
-- Dòng 181: grants exactly one lease under concurrent duplicate-key upserts
-- Dòng 195: allows lease takeover after expiry and fences completion from the old worker
-- Dòng 216: releases failed delivery for retry and preserves accepted delivery across a fresh connection
-- Dòng 246: creates the MongoDB retention index for reminder markers
+- Dòng 32: Push storage integration against isolated local MongoDB
+- Dòng 89: reads select:false subscriptions explicitly while profile and auth reads stay private
+- Dòng 105: preserves concurrent devices and replaces rotated keys without duplicate endpoints
+- Dòng 136: persists device metadata and preserves its registration date on key rotation
+- Dòng 170: deduplicates old records and removes only the requested endpoint amid another registration
+- Dòng 190: scopes endpoint mutation to the selected user and rejects unknown users
+- Dòng 217: grants exactly one lease under concurrent duplicate-key upserts
+- Dòng 231: allows lease takeover after expiry and fences completion from the old worker
+- Dòng 252: releases failed delivery for retry and preserves accepted delivery across a fresh connection
+- Dòng 282: creates the MongoDB retention index for reminder markers
 
 ### edutrack_be/test/schedule-ui-smoke.cjs
 
@@ -7257,15 +7330,25 @@ API calls (trích tham số tĩnh, tối đa 180 ký tự/tham số):
 
 - Dòng 368: `profileApi.uploadMedia(selectedFile)`
 
+### edutrack_fe/components/notifications/push-device-list.tsx
+
+[edutrack_fe/components/notifications/push-device-list.tsx](../../edutrack_fe/components/notifications/push-device-list.tsx) — 72 dòng.
+
+Dependencies: `lucide-react`, `@/types/user`.
+
+Functions: `updatedAt(value: string \| null)` (dòng 11); `PushDeviceList({ devices, currentDeviceId }: { devices: PushDevice[]; currentDeviceId: string \| null; })` (dòng 17).
+
+Exports: `PushDeviceList` (17).
+
 ### edutrack_fe/components/notifications/push-notification-panel.tsx
 
-[edutrack_fe/components/notifications/push-notification-panel.tsx](../../edutrack_fe/components/notifications/push-notification-panel.tsx) — 91 dòng.
+[edutrack_fe/components/notifications/push-notification-panel.tsx](../../edutrack_fe/components/notifications/push-notification-panel.tsx) — 114 dòng.
 
-Dependencies: `lucide-react`, `@/components/layout/dashboard-shell`.
+Dependencies: `lucide-react`, `@/components/layout/dashboard-shell`, `./push-device-list`.
 
-Functions: `PushNotificationPanel()` (dòng 6).
+Functions: `PushNotificationPanel()` (dòng 7).
 
-Exports: `PushNotificationPanel` (6).
+Exports: `PushNotificationPanel` (7).
 
 ### edutrack_fe/components/profile/profile-bank-select.tsx
 
@@ -7749,23 +7832,23 @@ export type SelectPickerOption = {
 
 ### edutrack_fe/hooks/use-push.ts
 
-[edutrack_fe/hooks/use-push.ts](../../edutrack_fe/hooks/use-push.ts) — 210 dòng.
+[edutrack_fe/hooks/use-push.ts](../../edutrack_fe/hooks/use-push.ts) — 229 dòng.
 
-Dependencies: `react`, `@/lib/api/profile`, `@/components/ui/notice-provider`, `@/lib/push/browser`.
+Dependencies: `react`, `@/lib/api/profile`, `@/types/user`, `@/components/ui/notice-provider`, `@/lib/push/browser`.
 
-Functions: `usePushNotifications(userId?: string)` (dòng 11).
+Functions: `usePushNotifications(userId?: string)` (dòng 12).
 
-Exports: `usePushNotifications` (11).
+Exports: `usePushNotifications` (12).
 
 API calls (trích tham số tĩnh, tối đa 180 ký tự/tham số):
 
-- Dòng 22: `profileApi.getPushStatus()`
-- Dòng 64: `profileApi.subscribeToPush(subscription.toJSON())`
-- Dòng 97: `profileApi.getPushStatus()`
-- Dòng 104: `profileApi.unsubscribeFromPush(subscription.endpoint)`
-- Dòng 111: `profileApi.subscribeToPush(subscription.toJSON())`
-- Dòng 167: `profileApi.unsubscribeFromPush(subscription.endpoint)`
-- Dòng 193: `profileApi.testPush(subscription.endpoint)`
+- Dòng 25: `profileApi.getPushStatus()`
+- Dòng 72: `profileApi.subscribeToPush(subscription.toJSON())`
+- Dòng 107: `profileApi.getPushStatus()`
+- Dòng 114: `profileApi.unsubscribeFromPush(subscription.endpoint)`
+- Dòng 121: `profileApi.subscribeToPush(subscription.toJSON())`
+- Dòng 181: `profileApi.unsubscribeFromPush(subscription.endpoint)`
+- Dòng 209: `profileApi.testPush(subscription.endpoint)`
 
 ### edutrack_fe/lib/api/auth.ts
 
@@ -7887,44 +7970,44 @@ API calls (trích tham số tĩnh, tối đa 180 ký tự/tham số):
 
 ### edutrack_fe/lib/api/profile.ts
 
-[edutrack_fe/lib/api/profile.ts](../../edutrack_fe/lib/api/profile.ts) — 215 dòng.
+[edutrack_fe/lib/api/profile.ts](../../edutrack_fe/lib/api/profile.ts) — 218 dòng.
 
-Dependencies: `@/types/user`, `@/lib/auth/token-storage`, `./client`.
+Dependencies: `@/types/user`, `@/lib/auth/token-storage`, `@/lib/push/browser`, `@/types/user`, `./client`.
 
-Functions: `getToken()` (dòng 16); `pushRequest(path: string, options: Parameters<typeof apiRequest>[1] = {})` (dòng 20); `refreshForBinaryRequest()` (dòng 34); `readBinaryError(response: Response)` (dòng 44); `fetchPaymentQrBlob(token: string \| null)` (dòng 65).
+Functions: `getToken()` (dòng 18); `pushRequest(path: string, options: Parameters<typeof apiRequest>[1] = {})` (dòng 22); `refreshForBinaryRequest()` (dòng 36); `readBinaryError(response: Response)` (dòng 46); `fetchPaymentQrBlob(token: string \| null)` (dòng 67).
 
-Exports: `profileApi` (86).
+Exports: `profileApi` (88).
 
 Object API: **profileApi**
 
-- Dòng 87: `getProfile()`
-- Dòng 93: `getBanks()`
-- Dòng 99: `updateProfile(payload: UpdateProfilePayload)`
-- Dòng 107: `changePassword(payload: ChangePasswordPayload)`
-- Dòng 115: `uploadTeacherAvatar(file: File)`
-- Dòng 126: `uploadMedia(file: File)`
-- Dòng 137: `getMediaHistory()`
-- Dòng 143: `uploadPaymentQr(file: File, qrContent?: string, allowUnrecognized = false)`
-- Dòng 160: `getPaymentQrBlob()`
-- Dòng 180: `removePaymentQr()`
-- Dòng 187: `subscribeToPush(subscription: unknown)`
-- Dòng 195: `unsubscribeFromPush(endpoint: string)`
-- Dòng 203: `getPushStatus()`
-- Dòng 207: `testPush(endpoint: string)`
+- Dòng 89: `getProfile()`
+- Dòng 95: `getBanks()`
+- Dòng 101: `updateProfile(payload: UpdateProfilePayload)`
+- Dòng 109: `changePassword(payload: ChangePasswordPayload)`
+- Dòng 117: `uploadTeacherAvatar(file: File)`
+- Dòng 128: `uploadMedia(file: File)`
+- Dòng 139: `getMediaHistory()`
+- Dòng 145: `uploadPaymentQr(file: File, qrContent?: string, allowUnrecognized = false)`
+- Dòng 162: `getPaymentQrBlob()`
+- Dòng 182: `removePaymentQr()`
+- Dòng 189: `subscribeToPush(subscription: unknown)`
+- Dòng 198: `unsubscribeFromPush(endpoint: string)`
+- Dòng 206: `getPushStatus()`
+- Dòng 210: `testPush(endpoint: string)`
 
 API calls (trích tham số tĩnh, tối đa 180 ký tự/tham số):
 
-- Dòng 25: `apiRequest(path, { ...options, token: getToken(), signal: controller.signal })`
-- Dòng 66: `fetch('${getApiBaseUrl()}/users/me/payment-qr', { credentials: "include", headers: token ? { Authorization: 'Bearer ${token}', } : undefined, })`
-- Dòng 88: `apiRequest("/users/me", { token: getToken(), })`
-- Dòng 94: `apiRequest("/users/banks", { token: getToken(), })`
-- Dòng 100: `apiRequest("/users/me", { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 108: `apiRequest("/users/me/password", { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 119: `apiRequest("/users/me/avatar", { method: "POST", token: getToken(), body: formData, })`
-- Dòng 130: `apiRequest("/users/me/media", { method: "POST", token: getToken(), body: formData, })`
-- Dòng 138: `apiRequest("/users/me/media", { token: getToken(), })`
-- Dòng 153: `apiRequest("/users/me/payment-qr", { method: "POST", token: getToken(), body: formData, })`
-- Dòng 181: `apiRequest("/users/me/payment-qr", { method: "DELETE", token: getToken(), })`
+- Dòng 27: `apiRequest(path, { ...options, token: getToken(), signal: controller.signal })`
+- Dòng 68: `fetch('${getApiBaseUrl()}/users/me/payment-qr', { credentials: "include", headers: token ? { Authorization: 'Bearer ${token}', } : undefined, })`
+- Dòng 90: `apiRequest("/users/me", { token: getToken(), })`
+- Dòng 96: `apiRequest("/users/banks", { token: getToken(), })`
+- Dòng 102: `apiRequest("/users/me", { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 110: `apiRequest("/users/me/password", { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 121: `apiRequest("/users/me/avatar", { method: "POST", token: getToken(), body: formData, })`
+- Dòng 132: `apiRequest("/users/me/media", { method: "POST", token: getToken(), body: formData, })`
+- Dòng 140: `apiRequest("/users/me/media", { token: getToken(), })`
+- Dòng 155: `apiRequest("/users/me/payment-qr", { method: "POST", token: getToken(), body: formData, })`
+- Dòng 183: `apiRequest("/users/me/payment-qr", { method: "DELETE", token: getToken(), })`
 
 ### edutrack_fe/lib/api/school.ts
 
@@ -8155,11 +8238,13 @@ type PdfBlobResponse = {
 
 ### edutrack_fe/lib/push/browser.ts
 
-[edutrack_fe/lib/push/browser.ts](../../edutrack_fe/lib/push/browser.ts) — 43 dòng.
+[edutrack_fe/lib/push/browser.ts](../../edutrack_fe/lib/push/browser.ts) — 56 dòng.
 
-Functions: `supportsPush()` (dòng 1); `pushSupportMessage()` (dòng 6); `decodePublicKey(value: string)` (dòng 11); `subscriptionMatchesKey(subscription: PushSubscription, key: Uint8Array)` (dòng 19); `readyPushRegistration()` (dòng 26).
+Dependencies: `@/types/user`.
 
-Exports: `supportsPush` (1), `pushSupportMessage` (6), `decodePublicKey` (11), `subscriptionMatchesKey` (19), `readyPushRegistration` (26).
+Functions: `getPushDeviceType(): PushDeviceType` (dòng 5); `supportsPush()` (dòng 14); `pushSupportMessage()` (dòng 19); `decodePublicKey(value: string)` (dòng 24); `subscriptionMatchesKey(subscription: PushSubscription, key: Uint8Array)` (dòng 32); `readyPushRegistration()` (dòng 39).
+
+Exports: `getPushDeviceType` (5), `supportsPush` (14), `pushSupportMessage` (19), `decodePublicKey` (24), `subscriptionMatchesKey` (32), `readyPushRegistration` (39).
 
 ### edutrack_fe/next.config.ts
 
@@ -8267,24 +8352,28 @@ Test labels (khai báo, không phải kết quả thực thi):
 
 ### edutrack_fe/tests/push-notifications.spec.ts
 
-[edutrack_fe/tests/push-notifications.spec.ts](../../edutrack_fe/tests/push-notifications.spec.ts) — 156 dòng.
+[edutrack_fe/tests/push-notifications.spec.ts](../../edutrack_fe/tests/push-notifications.spec.ts) — 221 dòng.
 
-Dependencies: `node:crypto`, `@playwright/test`.
+Dependencies: `node:crypto`, `@playwright/test`, `../types/user`.
 
-Functions: `setup(page: Page, options: { subscribed?: boolean; permission?: "granted" \| "denied" \| "default"; unsupported?: boolean; configured?: boolean; saveFails?: boolean; testFails?: boolean; rotated?: boolean; registrationFails?: boolean; serverCount?: number } = {})` (dòng 9).
+Functions: `setup(page: Page, options: { subscribed?: boolean; permission?: "granted" \| "denied" \| "default"; unsupported?: boolean; configured?: boolean; saveFails?: boolean; testFails?: boolean; rotated?: boolean; registrationFails?: boolean; devices?: PushDevice[] } = {})` (dòng 20).
 
 Test labels (khai báo, không phải kết quả thực thi):
 
-- Dòng 72: reconciles a browser subscription with the current account and tests this device
-- Dòng 82: asks for notification permission on the first app open and enables the device
-- Dòng 92: failed provider delivery never reports success and disables expired subscription
-- Dòng 99: server configuration failure is visible instead of claiming push is enabled
-- Dòng 105: new subscription is rolled back if saving to the backend fails
-- Dòng 115: VAPID rotation requires re-enabling and replaces the old browser subscription
-- Dòng 125: denied permission gives actionable guidance without requesting repeatedly
-- Dòng 131: unsupported browser still shows guidance and can log out
-- Dòng 140: service worker registration failure is reported without leaving an endless spinner
-- Dòng 146: attendance notification deep link selects the attendance tab
+- Dòng 86: reconciles a browser subscription with the current account and tests this device
+- Dòng 96: asks for notification permission on the first app open and enables the device
+- Dòng 106: failed provider delivery never reports success and disables expired subscription
+- Dòng 113: server configuration failure is visible instead of claiming push is enabled
+- Dòng 119: new subscription is rolled back if saving to the backend fails
+- Dòng 129: VAPID rotation requires re-enabling and replaces the old browser subscription
+- Dòng 139: denied permission gives actionable guidance without requesting repeatedly
+- Dòng 145: unsupported browser still shows guidance and can log out
+- Dòng 154: service worker registration failure is reported without leaving an endless spinner
+- Dòng 160: attendance notification deep link selects the attendance tab
+- Dòng 171: shows device cards with this browser first and safe legacy fallback
+- Dòng 186: device cards fit a phone and remain visible when this device is not subscribed
+- Dòng 201: enabling and disabling this device updates the cards and empty state
+- Dòng 213: unsupported browsers can still inspect and refresh account devices
 
 ### edutrack_fe/tests/push-worker.test.mjs
 
@@ -9314,9 +9403,9 @@ export type AiSessionDetail = {
 
 ### edutrack_fe/types/user.ts
 
-[edutrack_fe/types/user.ts](../../edutrack_fe/types/user.ts) — 57 dòng.
+[edutrack_fe/types/user.ts](../../edutrack_fe/types/user.ts) — 77 dòng.
 
-Exports: `UserRole` (1), `PaymentBank` (3), `User` (12), `UpdateProfilePayload` (34), `PaymentQrUploadResponse` (45), `ChangePasswordPayload` (53).
+Exports: `UserRole` (1), `PushDeviceType` (3), `PushDevice` (5), `PushStatus` (15), `PaymentBank` (23), `User` (32), `UpdateProfilePayload` (54), `PaymentQrUploadResponse` (65), `ChangePasswordPayload` (73).
 
 Type contracts / enum values (mã khai báo tại mốc khảo sát):
 
@@ -9324,6 +9413,26 @@ Type contracts / enum values (mã khai báo tại mốc khảo sát):
 // line 1
 export type UserRole = "teacher";
 // line 3
+export type PushDeviceType = "desktop" | "mobile" | "tablet" | "unknown";
+// line 5
+export type PushDevice = {
+  id: string;
+  type: PushDeviceType;
+  name: string;
+  browser: string | null;
+  os: string | null;
+  registeredAt: string | null;
+  lastSeenAt: string | null;
+};
+// line 15
+export type PushStatus = {
+  configured: boolean;
+  publicKey: string | null;
+  subscriptionCount: number;
+  devices?: PushDevice[];
+  configurationError?: string;
+};
+// line 23
 export type PaymentBank = {
   id: number;
   name: string;
@@ -9332,7 +9441,7 @@ export type PaymentBank = {
   shortName: string;
   logo: string;
 };
-// line 12
+// line 32
 export type User = {
   id: string;
   fullName: string;
@@ -9354,7 +9463,7 @@ export type User = {
   paymentQrImageSize?: number;
   paymentQrImageUpdatedAt?: string;
 };
-// line 34
+// line 54
 export type UpdateProfilePayload = {
   fullName?: string;
   avatarUrl?: string;
@@ -9365,7 +9474,7 @@ export type UpdateProfilePayload = {
   bankAccountNumber?: string;
   bankBin?: string;
 };
-// line 45
+// line 65
 export type PaymentQrUploadResponse = User & {
   paymentQrBankDetection?: {
     bankBin: string;
@@ -9373,7 +9482,7 @@ export type PaymentQrUploadResponse = User & {
     bankName: string;
   };
 };
-// line 53
+// line 73
 export type ChangePasswordPayload = {
   currentPassword: string;
   newPassword: string;

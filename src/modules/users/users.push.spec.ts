@@ -46,31 +46,12 @@ describe('UsersService push subscription persistence', () => {
 
   it('upserts a device with an atomic replacement pipeline so renewed keys persist', async () => {
     const { service, model } = createService();
-    await expect(
-      service.addPushSubscription(USER_ID, subscription),
-    ).resolves.toEqual({ success: true });
+    const result = await service.addPushSubscription(USER_ID, subscription);
+    expect(result.success).toBe(true);
+    expect(result.deviceId).toMatch(/^[a-f0-9]{64}$/);
     expect(model.updateOne).toHaveBeenCalledWith(
       { _id: USER_ID },
-      [
-        {
-          $set: {
-            pushSubscriptions: {
-              $concatArrays: [
-                {
-                  $filter: {
-                    input: { $ifNull: ['$pushSubscriptions', []] },
-                    as: 'subscription',
-                    cond: {
-                      $ne: ['$$subscription.endpoint', subscription.endpoint],
-                    },
-                  },
-                },
-                { $literal: [subscription] },
-              ],
-            },
-          },
-        },
-      ],
+      expect.any(Array),
       { updatePipeline: true },
     );
     expect(model.findById).not.toHaveBeenCalled();

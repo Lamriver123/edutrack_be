@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { JwtUser } from '../../common/types/authenticated-request.type';
@@ -33,11 +41,15 @@ export class PushController {
   ) {
     const userAgent = request.get('user-agent') ?? '';
     const hint = request.get('x-push-device-type');
-    const deviceType = Object.values(PushDeviceType).find((type) => type === hint);
+    const deviceType = Object.values(PushDeviceType).find(
+      (type) => type === hint,
+    );
     return this.usersService.addPushSubscription(
       user.userId,
       dto,
-      userAgent || deviceType ? describePushDevice(userAgent, deviceType) : undefined,
+      userAgent || deviceType
+        ? describePushDevice(userAgent, deviceType)
+        : undefined,
     );
   }
 

@@ -2,7 +2,7 @@
 
 Mốc đọc và đối chiếu nghiệp vụ: **06/10/2026, Asia/Ho_Chi_Minh**.
 
-Backend tại `ae00d7b508c9a3fdaf5a2f51cca307ed30d1c94a`; frontend tại `12437b0f87f74df9223d5b245cac25536592c176`. Các mốc này mô tả code local đã push trước khi viết tài liệu; không xác nhận phiên bản đang chạy trên Render/Vercel.
+Mốc khảo sát ban đầu: backend tại `ae00d7b508c9a3fdaf5a2f51cca307ed30d1c94a`; frontend tại `12437b0f87f74df9223d5b245cac25536592c176`. Ngày 06/10/2026 tiếp tục bổ sung danh sách thiết bị nhận thông báo ở mục 14.4/14.6. Chỉ mục và snapshot phản ánh source local tại lần sinh gần nhất; các mốc này không xác nhận phiên bản đang chạy trên Render/Vercel.
 
 Tài liệu này dành cho người bảo trì và coding agent. Mục đích là tìm đúng nơi sửa, hiểu quy tắc đang chạy và chọn kiểm thử phù hợp mà không phải đọc lại dự án từ đầu. Các nhận xét “hiện tại” là kết quả đối chiếu mã ở mốc trên, không phải cam kết mọi trường hợp đã được kiểm thử trên production.
 
@@ -71,7 +71,7 @@ Các link BE bắt đầu `../src`; link FE bắt đầu `../../edutrack_fe`. Li
 | Upload/cắt ảnh/audio/video | Users media methods, CloudinaryService | `components/media/*`, `app/(dashboard)/upload/upload-page-content.tsx` | File giới hạn/MIME, quyền và browser API thực tế |
 | Thống kê dashboard | `dashboard.service.ts`, SchedulesService, receipts queries | `dashboard-overview.tsx`, `yearly-revenue-chart.tsx`, `types/school.ts` | Đối chiếu dataset xác định, receipt cancelled/partial/date boundaries |
 | AI gợi ý lịch | `ai/ai-schedule.service.ts`, controller, schema/DTO | `schedule/ai-schedule-chat.tsx`, school API | Không giả định AI kiểm tra conflict; kiểm tra thật khi lưu lịch |
-| Push nhắc lịch/điểm danh | `push/*`, `schedules-cron.service.ts`, `push-reminder-store.service.ts`, User push subscriptions | `hooks/use-push.ts`, `lib/push/browser.ts`, `push-notification-panel.tsx`, `public/sw.js` | Push unit/integration, cron tests, FE worker/UI tests |
+| Push nhắc lịch/điểm danh, danh sách thiết bị | `push/*`, `users/types/push-device.type.ts`, `users/utils/push-device.ts`, User subscription persistence, `schedules-cron.service.ts`, `push-reminder-store.service.ts` | `hooks/use-push.ts`, `lib/push/browser.ts`, `lib/api/profile.ts`, `push-device-list.tsx`, `push-notification-panel.tsx`, `public/sw.js` | Push unit/HTTP/storage integration, cron tests, FE worker/UI tests |
 | PWA/offline/cài ứng dụng | Không có API offline sync | `public/sw.js`, `components/pwa/*`, manifest/icons, root layout | `push-worker.test.mjs`, browser network offline |
 | Backup không xuất hiện trên Drive | `backup/*`, config, AppModule, Render env | Không có UI backup | Backup/Drive/OAuth tests, `backup:check` chỉ đọc |
 | Trang giới thiệu/quyền riêng tư/điều khoản | Không có module riêng | `app/(public)/{about,privacy,terms}/page.tsx`, `components/public/information-page.tsx` | FE build, HTTP/render kiểm tra trang |
@@ -954,9 +954,19 @@ Web Push là nhắc từ cron qua browser gateway. Có push thành công không 
 
 ### 14.4 Subscription và transport
 
-PushService đọc VAPID_PUBLIC_KEY/PRIVATE_KEY/SUBJECT trực tiếp từ env; kiểm tra pair. Status trả public key/configured/subscription count/error phù hợp, không private key.
+PushService đọc VAPID_PUBLIC_KEY/PRIVATE_KEY/SUBJECT trực tiếp từ env; kiểm tra pair. `GET /api/users/me/push-subscription/status` yêu cầu JWT, trả `configured`, `publicKey`, `subscriptionCount`, `devices` và `configurationError` nếu có. Chỉ đọc subscriptions của `user.userId`; không trả private key.
 
-Subscription persistence ở User dùng update pipeline để thay cùng endpoint và giữ endpoint thiết bị khác; không read-modify-save toàn array dễ mất concurrent devices.
+`User.pushSubscriptions` là mảng Mixed với `select: false`. Kiểu `StoredPushSubscription` gồm `endpoint`, `keys`, `device?: { type, name, browser, os }`, `registeredAt?`, `lastSeenAt?`. `UsersService.getPushSubscriptions` chỉ chọn `_id +pushSubscriptions`, tránh lấy auth secrets.
+
+`POST /api/users/me/push-subscription` giữ body subscription cũ (`endpoint`, `keys`, các field DTO đang cho phép); FE gửi thêm header `X-Push-Device-Type` với `desktop | mobile | tablet | unknown`. Controller chỉ nhận hint nằm trong enum, kết hợp `User-Agent` để tạo metadata hiển thị. Header tách khỏi body giúp FE mới đăng ký với BE cũ mà không vi phạm `forbidNonWhitelisted`. Với CORS hiện tại, middleware phản chiếu request headers; nếu sau này khóa `allowedHeaders`, cần thêm header này. Response mới là `{ success: true, deviceId }`; FE chấp nhận BE cũ chưa có `deviceId`.
+
+Subscription persistence ở User dùng **một update pipeline atomic** để thay cùng endpoint, xoay keys, dọn bản trùng và giữ endpoint thiết bị khác. Không read-modify-save toàn array dễ mất concurrent devices. Pipeline giữ `registeredAt` cũ, ghi `lastSeenAt` khi đăng ký/đồng bộ, giữ metadata cũ nếu caller không truyền metadata. `lastSeenAt` là thời điểm đồng bộ đăng ký, không phải heartbeat hay lần nhận thông báo.
+
+`summarizePushDevices` trả mỗi endpoint duy nhất thành `{ id, type, name, browser, os, registeredAt, lastSeenAt }`. `id` là SHA-256 của endpoint, ổn định khi xoay keys của cùng endpoint. Projection không trả endpoint, `keys.p256dh`, `keys.auth` hay raw User-Agent. Dates dùng ISO hoặc `null`; status sort theo `lastSeenAt` giảm dần và tính `subscriptionCount` từ danh sách đã dedupe. Một thiết bị vật lý có nhiều trình duyệt/profile có thể có nhiều thẻ.
+
+`describePushDevice` chỉ suy đoán loại thiết bị và tên hệ điều hành/trình duyệt để hiển thị; không khẳng định model máy hoặc dùng UA để cấp quyền/kiểm tra hỗ trợ push. FE bổ sung hint iPad khi UA là Macintosh và `maxTouchPoints > 1`. Thứ tự nhận diện browser ưu tiên Edge/Opera/Samsung/Firefox trước Chrome/Safari để tránh nhầm các compatibility tokens. Xem [giới hạn nhận diện bằng User-Agent](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Browser_detection_using_the_user_agent).
+
+Dữ liệu cũ thiếu metadata vẫn xuất hiện với tên **Thiết bị chưa xác định**, dates/browser/OS là `null`. Không có đủ dữ liệu để backfill tên chính xác từ endpoint. Khi mở EduTrack trên trình duyệt đó, flow đồng bộ subscription hiện có sẽ tự bổ sung metadata; không bắt buộc migration hoặc đăng ký lại nếu VAPID không đổi.
 
 DTO chỉ nhận HTTPS gateway cho phép:
 
@@ -995,6 +1005,10 @@ Cron không chạy khi process ngủ/tắt. Restart ngoài reminder window khôn
 - Permission denied/default và hạn chế iOS/PWA có feedback riêng.
 - API/SW ready có timeout để UI không loading vô hạn.
 - Tự xin quyền khi default có thể bị browser giới hạn user gesture; không xem UI toggled là permission đã granted.
+
+Hook trả thêm `devices` và `currentDeviceId`. `checkSubscription` lấy status tài khoản trước khi kiểm tra khả năng nhận push của trình duyệt, nên trình duyệt không hỗ trợ vẫn xem được các thiết bị khác và dùng **Kiểm tra lại**. Khi subscription của trình duyệt được POST thành công, hook dùng `deviceId` trả về để gắn nhãn **Thiết bị này**, rồi refresh status. Bật/tắt/gửi thử với endpoint hết hạn đều cập nhật lại danh sách; lỗi có rollback state hiện tại.
+
+`PushDeviceList` dùng cards với icon laptop/điện thoại/tablet/unknown, tên, browser/OS, thời gian **Cập nhật** theo múi giờ Việt Nam. Thẻ hiện tại đứng đầu và màu tím; các thẻ khác có badge **Đã đăng ký**. Đây không phải danh sách thiết bị đang online hoặc bằng chứng từng thiết bị đã hiển thị thông báo. Grid 1 cột mobile, 2 cột `sm`, 3 cột `xl`; có skeleton, empty state, hướng dẫn cập nhật thiết bị cũ. Nếu BE cũ chỉ trả count, FE hiển thị count và trạng thái chưa tải được thông tin thay vì lỗi.
 
 ### 14.7 Service worker/PWA/offline
 
@@ -1322,6 +1336,7 @@ node node_modules/jest/bin/jest.js --runInBand classes-attendance-reset classes-
 node node_modules/jest/bin/jest.js --runInBand schedule-conflict
 node node_modules/jest/bin/jest.js --runInBand backup google-drive
 node node_modules/jest/bin/jest.js --runInBand invoice-template receipt
+node node_modules/jest/bin/jest.js --runInBand src/modules/users/utils/push-device.spec.ts src/modules/users/users.push.spec.ts src/modules/push/push.service.spec.ts src/modules/push/push.controller.spec.ts
 
 # BE: localhost Mongo integration, tạo DB test cô lập
 node node_modules/jest/bin/jest.js --config test/jest-push-integration.json --runInBand
@@ -1381,6 +1396,14 @@ Không coi các kết quả này là mới chạy lại sau mọi chỉnh sửa.
 - Sinh index/snapshot xong, `node scripts/project-index.cjs --check` trả changed/deleted rỗng.
 - Kiểm tra mẫu nhạy cảm trong tài liệu không phát hiện private key/token/DB URI có password.
 - Không thay đổi source runtime BE/FE, không ghi DB/deploy trong task tài liệu.
+
+### 18.6 Xác minh danh sách thiết bị push ngày 06/10/2026
+
+- Backend targeted unit/HTTP: **4 suites, 41 tests pass** (`push-device`, `users.push`, `push.service`, `push.controller`). Bao phủ nhận diện browser/OS, iPad UA Macintosh, legacy metadata, dedupe, tenant JWT và projection không lộ endpoint/keys.
+- Storage integration: **9 tests pass** trên MongoDB localhost thật, database UUID riêng được dọn sau suite. Bao phủ đăng ký đồng thời, xoay keys, giữ metadata/thời điểm đăng ký, hidden projection, ownership và reminder lease/restart.
+- FE Playwright: **14 tests pass**, giữ regression quyền/SW/VAPID/gateway/logout/deep link và bổ sung cards, thiết bị hiện tại, legacy, empty state, bật/tắt, trình duyệt không hỗ trợ, mobile 390px không tràn ngang. Đã xem ảnh desktop/mobile để kiểm tra bố cục.
+- BE và FE production build thành công; ESLint các file thay đổi ở cả hai repo thành công. FE build có cảnh báo `metadataBase` đã tồn tại, không liên quan phần thiết bị.
+- Gateway và API trong UI tests được mock. Kết quả không xác nhận triển khai Render/Vercel hay thông báo đã hiển thị trên máy/iPhone thật. Không đổi VAPID, không migration dữ liệu ứng dụng, không gửi push ra ngoài trong kiểm thử này.
 
 ## 19. Công thức thay đổi và các bất biến
 

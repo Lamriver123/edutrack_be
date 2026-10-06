@@ -1,8 +1,8 @@
 {
   "surveyedAt": "2026-10-06",
   "commits": {
-    "backend": "ae00d7b508c9a3fdaf5a2f51cca307ed30d1c94a",
-    "frontend": "12437b0f87f74df9223d5b245cac25536592c176"
+    "backend": "38ef764855e6f3bbe509628677d3fbf5f13c7ac2",
+    "frontend": "b785bb9bf6e522405805aa0e013616e6418400da"
   },
   "files": [
     {
@@ -10207,8 +10207,8 @@
     },
     {
       "file": "edutrack_be/src/modules/push/push.controller.spec.ts",
-      "lines": 226,
-      "sha256": "34635e6440dc6a5521798c485c83f8a30f77ee4155f9a63e084c57ebd1b2b4e5",
+      "lines": 271,
+      "sha256": "0babf739843e60a42a4c328b5a43ad37f96794945df6513ed9382cb9ff13827e",
       "imports": [
         {
           "from": "@nestjs/common",
@@ -10279,27 +10279,35 @@
         },
         {
           "label": "validates browser subscriptions and persists with identity taken from JWT",
-          "line": 138
+          "line": 139
+        },
+        {
+          "label": "captures safe browser metadata and uses the hint for an iPad in desktop mode",
+          "line": 163
+        },
+        {
+          "label": "returns only the authenticated account devices and strips endpoints and push keys",
+          "line": 186
         },
         {
           "label": "returns actual provider acceptance instead of fire-and-forget success",
-          "line": 161
+          "line": 206
         },
         {
           "label": "does not let another teacher test this device endpoint",
-          "line": 182
+          "line": 227
         },
         {
           "label": "scopes subscription deletion to JWT identity",
-          "line": 191
+          "line": 236
         },
         {
           "label": "resolves emitAsync with delivery counts for the scheduler",
-          "line": 203
+          "line": 248
         },
         {
           "label": "propagates listener database failures back to emitAsync callers",
-          "line": 214
+          "line": 259
         }
       ],
       "routes": [],
@@ -10345,54 +10353,79 @@
           "args": [
             "server"
           ],
-          "line": 139
+          "line": 140
         },
         {
           "fn": "request",
           "args": [
             "server"
           ],
-          "line": 148
+          "line": 150
         },
         {
           "fn": "request",
           "args": [
             "server"
           ],
-          "line": 153
+          "line": 155
         },
         {
           "fn": "request",
           "args": [
             "server"
           ],
-          "line": 165
+          "line": 164
         },
         {
           "fn": "request",
           "args": [
             "server"
           ],
-          "line": 183
+          "line": 187
         },
         {
           "fn": "request",
           "args": [
             "server"
           ],
-          "line": 192
+          "line": 195
+        },
+        {
+          "fn": "request",
+          "args": [
+            "server"
+          ],
+          "line": 210
+        },
+        {
+          "fn": "request",
+          "args": [
+            "server"
+          ],
+          "line": 228
+        },
+        {
+          "fn": "request",
+          "args": [
+            "server"
+          ],
+          "line": 237
         }
       ],
       "headings": []
     },
     {
       "file": "edutrack_be/src/modules/push/push.controller.ts",
-      "lines": 40,
-      "sha256": "e71f8b3ec79b8d5f3ede782e3a987aff168b08506a7441e771db10aec279d978",
+      "lines": 66,
+      "sha256": "d51a7eda2e12f1547ea1e7322200484f728d306c7303b363a596cf1b6890b1e0",
       "imports": [
         {
           "from": "@nestjs/common",
-          "bindings": "{ Body, Controller, Delete, Get, Post, UseGuards }"
+          "bindings": "{ Body, Controller, Delete, Get, Post, Req, UseGuards, }"
+        },
+        {
+          "from": "express",
+          "bindings": "type { Request }"
         },
         {
           "from": "../../common/decorators/current-user.decorator",
@@ -10415,6 +10448,14 @@
           "bindings": "{ UsersService }"
         },
         {
+          "from": "../users/types/push-device.type",
+          "bindings": "{ PushDeviceType }"
+        },
+        {
+          "from": "../users/utils/push-device",
+          "bindings": "{ describePushDevice }"
+        },
+        {
           "from": "./push.service",
           "bindings": "{ PushService }"
         }
@@ -10422,7 +10463,7 @@
       "exports": [
         {
           "name": "PushController",
-          "line": 12
+          "line": 23
         }
       ],
       "classes": [
@@ -10432,11 +10473,11 @@
             "@Controller('users/me')",
             "@UseGuards(JwtAuthGuard)"
           ],
-          "line": 12,
+          "line": 23,
           "members": [
             {
               "name": "getStatus",
-              "line": 20,
+              "line": 31,
               "decorators": [
                 "@Get('push-subscription/status')"
               ],
@@ -10445,16 +10486,16 @@
             },
             {
               "name": "subscribe",
-              "line": 25,
+              "line": 36,
               "decorators": [
                 "@Post('push-subscription')"
               ],
-              "signature": "subscribe(@CurrentUser() user: JwtUser, @Body() dto: PushSubscriptionDto)",
+              "signature": "subscribe(@CurrentUser() user: JwtUser, @Body() dto: PushSubscriptionDto, @Req() request: Request)",
               "visibility": "public"
             },
             {
               "name": "test",
-              "line": 30,
+              "line": 56,
               "decorators": [
                 "@Post('push-subscription/test')"
               ],
@@ -10463,7 +10504,7 @@
             },
             {
               "name": "unsubscribe",
-              "line": 35,
+              "line": 61,
               "decorators": [
                 "@Delete('push-subscription')"
               ],
@@ -10485,7 +10526,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Get('push-subscription/status')",
           "method": "getStatus(@CurrentUser() user: JwtUser)",
-          "line": 20
+          "line": 31
         },
         {
           "controller": "@Controller('users/me')",
@@ -10493,8 +10534,8 @@
           "path": "/api/users/me/push-subscription",
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post('push-subscription')",
-          "method": "subscribe(@CurrentUser() user: JwtUser, @Body() dto: PushSubscriptionDto)",
-          "line": 25
+          "method": "subscribe(@CurrentUser() user: JwtUser, @Body() dto: PushSubscriptionDto, @Req() request: Request)",
+          "line": 36
         },
         {
           "controller": "@Controller('users/me')",
@@ -10503,7 +10544,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post('push-subscription/test')",
           "method": "test(@CurrentUser() user: JwtUser, @Body() dto: PushEndpointDto)",
-          "line": 30
+          "line": 56
         },
         {
           "controller": "@Controller('users/me')",
@@ -10512,7 +10553,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Delete('push-subscription')",
           "method": "unsubscribe(@CurrentUser() user: JwtUser, @Body() dto: PushEndpointDto)",
-          "line": 35
+          "line": 61
         }
       ],
       "indexes": [],
@@ -10656,8 +10697,8 @@
     },
     {
       "file": "edutrack_be/src/modules/push/push.service.ts",
-      "lines": 193,
-      "sha256": "1d645b32031ea963797a9be57d007bf12ef814bbe02bf46b4b5f98fc2f8e898d",
+      "lines": 196,
+      "sha256": "567b142e438898e2b97cac0c851e9a6845bb101d3574289dc4c5e64139c9f4d3",
       "imports": [
         {
           "from": "@nestjs/common",
@@ -10686,16 +10727,20 @@
         {
           "from": "../users/users.service",
           "bindings": "{ UsersService }"
+        },
+        {
+          "from": "../users/utils/push-device",
+          "bindings": "{ summarizePushDevices }"
         }
       ],
       "exports": [
         {
           "name": "PushDeliveryResult",
-          "line": 9
+          "line": 10
         },
         {
           "name": "PushService",
-          "line": 17
+          "line": 18
         }
       ],
       "classes": [
@@ -10704,18 +10749,10 @@
           "decorators": [
             "@Injectable()"
           ],
-          "line": 17,
+          "line": 18,
           "members": [
             {
               "name": "logger",
-              "line": 19,
-              "decorators": [],
-              "type": "",
-              "optional": false,
-              "initializer": ""
-            },
-            {
-              "name": "configured",
               "line": 20,
               "decorators": [],
               "type": "",
@@ -10723,8 +10760,16 @@
               "initializer": ""
             },
             {
-              "name": "publicKey",
+              "name": "configured",
               "line": 21,
+              "decorators": [],
+              "type": "",
+              "optional": false,
+              "initializer": ""
+            },
+            {
+              "name": "publicKey",
+              "line": 22,
               "decorators": [],
               "type": "string | null",
               "optional": false,
@@ -10732,7 +10777,7 @@
             },
             {
               "name": "configurationError",
-              "line": 22,
+              "line": 23,
               "decorators": [],
               "type": "string",
               "optional": true,
@@ -10740,14 +10785,14 @@
             },
             {
               "name": "getStatus",
-              "line": 65,
+              "line": 66,
               "decorators": [],
               "signature": "getStatus(userId: string)",
               "visibility": "public"
             },
             {
               "name": "handleNotificationEvent",
-              "line": 78,
+              "line": 81,
               "decorators": [
                 "@OnEvent('notification.push', { suppressErrors: false })"
               ],
@@ -10756,21 +10801,21 @@
             },
             {
               "name": "sendTestNotification",
-              "line": 86,
+              "line": 89,
               "decorators": [],
               "signature": "sendTestNotification(userId: string, endpoint: string)",
               "visibility": "public"
             },
             {
               "name": "sendNotification",
-              "line": 109,
+              "line": 112,
               "decorators": [],
               "signature": "sendNotification(userId: string, payload: Record<string, unknown>, endpoint?: string): Promise<PushDeliveryResult>",
               "visibility": "public"
             },
             {
               "name": "getStatusCode",
-              "line": 181,
+              "line": 184,
               "decorators": [],
               "signature": "getStatusCode(error: unknown): number | undefined",
               "visibility": "private"
@@ -10782,8 +10827,8 @@
       "types": [
         {
           "name": "PushDeliveryResult",
-          "line": 9,
-          "definition": "export type PushDeliveryResult = {\r\n  configured: boolean;\r\n  attempted: number;\r\n  sent: number;\r\n  failed: number;\r\n  removed: number;\r\n};"
+          "line": 10,
+          "definition": "export type PushDeliveryResult = {\n  configured: boolean;\n  attempted: number;\n  sent: number;\n  failed: number;\n  removed: number;\n};"
         }
       ],
       "objects": [],
@@ -22151,7 +22196,7 @@
     {
       "file": "edutrack_be/src/modules/users/dto/push-subscription.dto.ts",
       "lines": 81,
-      "sha256": "030ae943f277c812023ca5dcf91ec5576b0cec3eaaf151f3e9758680ab4449ea",
+      "sha256": "4c5e4b82df4cc136bef14fe5f79b02dff9983d65df75f5a3f1c457571cb10e35",
       "imports": [
         {
           "from": "class-transformer",
@@ -22434,8 +22479,8 @@
     },
     {
       "file": "edutrack_be/src/modules/users/schemas/user.schema.ts",
-      "lines": 136,
-      "sha256": "a3e5877ead69c1b96fc2f6752f276dc3f494c8007832e81e496d1b22008a5c12",
+      "lines": 134,
+      "sha256": "1b3cc75a95e3f1de5ae2ed519b36d13015f058979e65a11a9eb06de3be6f8ba1",
       "imports": [
         {
           "from": "@nestjs/mongoose",
@@ -22444,24 +22489,28 @@
         {
           "from": "mongoose",
           "bindings": "{ HydratedDocument }"
+        },
+        {
+          "from": "../types/push-device.type",
+          "bindings": "type { StoredPushSubscription }"
         }
       ],
       "exports": [
         {
           "name": "UserRole",
-          "line": 4
+          "line": 5
         },
         {
           "name": "User",
-          "line": 8
+          "line": 9
         },
         {
           "name": "UserDocument",
-          "line": 127
+          "line": 125
         },
         {
           "name": "UserSchema",
-          "line": 128
+          "line": 126
         }
       ],
       "classes": [
@@ -22470,11 +22519,11 @@
           "decorators": [
             "@Schema({ timestamps: true, versionKey: false, })"
           ],
-          "line": 8,
+          "line": 9,
           "members": [
             {
               "name": "fullName",
-              "line": 13,
+              "line": 14,
               "decorators": [
                 "@Prop({ required: true, trim: true })"
               ],
@@ -22484,7 +22533,7 @@
             },
             {
               "name": "avatarUrl",
-              "line": 16,
+              "line": 17,
               "decorators": [
                 "@Prop({ trim: true })"
               ],
@@ -22494,7 +22543,7 @@
             },
             {
               "name": "phone",
-              "line": 19,
+              "line": 20,
               "decorators": [
                 "@Prop({ trim: true })"
               ],
@@ -22504,7 +22553,7 @@
             },
             {
               "name": "address",
-              "line": 22,
+              "line": 23,
               "decorators": [
                 "@Prop({ trim: true })"
               ],
@@ -22514,7 +22563,7 @@
             },
             {
               "name": "bio",
-              "line": 25,
+              "line": 26,
               "decorators": [
                 "@Prop({ trim: true, maxlength: 500 })"
               ],
@@ -22524,7 +22573,7 @@
             },
             {
               "name": "bankAccountName",
-              "line": 28,
+              "line": 29,
               "decorators": [
                 "@Prop({ trim: true, maxlength: 100 })"
               ],
@@ -22534,7 +22583,7 @@
             },
             {
               "name": "bankAccountNumber",
-              "line": 31,
+              "line": 32,
               "decorators": [
                 "@Prop({ trim: true, maxlength: 50 })"
               ],
@@ -22544,7 +22593,7 @@
             },
             {
               "name": "bankName",
-              "line": 34,
+              "line": 35,
               "decorators": [
                 "@Prop({ trim: true, maxlength: 120 })"
               ],
@@ -22554,7 +22603,7 @@
             },
             {
               "name": "bankCode",
-              "line": 37,
+              "line": 38,
               "decorators": [
                 "@Prop({ trim: true, maxlength: 30 })"
               ],
@@ -22564,7 +22613,7 @@
             },
             {
               "name": "bankBin",
-              "line": 40,
+              "line": 41,
               "decorators": [
                 "@Prop({ trim: true, maxlength: 20 })"
               ],
@@ -22574,7 +22623,7 @@
             },
             {
               "name": "bankLogoUrl",
-              "line": 43,
+              "line": 44,
               "decorators": [
                 "@Prop({ trim: true, maxlength: 500 })"
               ],
@@ -22584,7 +22633,7 @@
             },
             {
               "name": "paymentQrImageData",
-              "line": 46,
+              "line": 47,
               "decorators": [
                 "@Prop({ type: Buffer, select: false })"
               ],
@@ -22594,7 +22643,7 @@
             },
             {
               "name": "paymentQrImageContentType",
-              "line": 49,
+              "line": 50,
               "decorators": [
                 "@Prop({ trim: true })"
               ],
@@ -22604,7 +22653,7 @@
             },
             {
               "name": "paymentQrImageSize",
-              "line": 52,
+              "line": 53,
               "decorators": [
                 "@Prop({ min: 0 })"
               ],
@@ -22614,7 +22663,7 @@
             },
             {
               "name": "paymentQrImageUpdatedAt",
-              "line": 55,
+              "line": 56,
               "decorators": [
                 "@Prop({ type: Date })"
               ],
@@ -22624,7 +22673,7 @@
             },
             {
               "name": "email",
-              "line": 58,
+              "line": 59,
               "decorators": [
                 "@Prop({ required: true, lowercase: true, trim: true, unique: true, })"
               ],
@@ -22634,7 +22683,7 @@
             },
             {
               "name": "passwordHash",
-              "line": 66,
+              "line": 67,
               "decorators": [
                 "@Prop({ required: true, select: false })"
               ],
@@ -22644,7 +22693,7 @@
             },
             {
               "name": "role",
-              "line": 69,
+              "line": 70,
               "decorators": [
                 "@Prop({ enum: UserRole, default: UserRole.Teacher, })"
               ],
@@ -22654,7 +22703,7 @@
             },
             {
               "name": "isEmailVerified",
-              "line": 75,
+              "line": 76,
               "decorators": [
                 "@Prop({ default: false })"
               ],
@@ -22664,7 +22713,7 @@
             },
             {
               "name": "otpHash",
-              "line": 78,
+              "line": 79,
               "decorators": [
                 "@Prop({ select: false })"
               ],
@@ -22674,7 +22723,7 @@
             },
             {
               "name": "otpExpiresAt",
-              "line": 81,
+              "line": 82,
               "decorators": [
                 "@Prop({ type: Date, select: false })"
               ],
@@ -22684,7 +22733,7 @@
             },
             {
               "name": "otpAttempts",
-              "line": 84,
+              "line": 85,
               "decorators": [
                 "@Prop({ default: 0, select: false })"
               ],
@@ -22694,7 +22743,7 @@
             },
             {
               "name": "otpResendAvailableAt",
-              "line": 87,
+              "line": 88,
               "decorators": [
                 "@Prop({ type: Date, select: false })"
               ],
@@ -22704,7 +22753,7 @@
             },
             {
               "name": "emailVerificationExpiresAt",
-              "line": 90,
+              "line": 91,
               "decorators": [
                 "@Prop({ type: Date, select: false })"
               ],
@@ -22714,7 +22763,7 @@
             },
             {
               "name": "pendingPasswordHash",
-              "line": 93,
+              "line": 94,
               "decorators": [
                 "@Prop({ select: false })"
               ],
@@ -22724,7 +22773,7 @@
             },
             {
               "name": "passwordResetOtpHash",
-              "line": 96,
+              "line": 97,
               "decorators": [
                 "@Prop({ select: false })"
               ],
@@ -22734,7 +22783,7 @@
             },
             {
               "name": "passwordResetOtpExpiresAt",
-              "line": 99,
+              "line": 100,
               "decorators": [
                 "@Prop({ type: Date, select: false })"
               ],
@@ -22744,7 +22793,7 @@
             },
             {
               "name": "passwordResetOtpAttempts",
-              "line": 102,
+              "line": 103,
               "decorators": [
                 "@Prop({ default: 0, select: false })"
               ],
@@ -22754,7 +22803,7 @@
             },
             {
               "name": "passwordResetOtpResendAvailableAt",
-              "line": 105,
+              "line": 106,
               "decorators": [
                 "@Prop({ type: Date, select: false })"
               ],
@@ -22764,7 +22813,7 @@
             },
             {
               "name": "refreshTokenHash",
-              "line": 108,
+              "line": 109,
               "decorators": [
                 "@Prop({ select: false })"
               ],
@@ -22774,7 +22823,7 @@
             },
             {
               "name": "refreshTokenExpiresAt",
-              "line": 111,
+              "line": 112,
               "decorators": [
                 "@Prop({ type: Date, select: false })"
               ],
@@ -22784,7 +22833,7 @@
             },
             {
               "name": "lastLoginAt",
-              "line": 114,
+              "line": 115,
               "decorators": [
                 "@Prop({ type: Date })"
               ],
@@ -22794,7 +22843,7 @@
             },
             {
               "name": "recentMediaUrls",
-              "line": 117,
+              "line": 118,
               "decorators": [
                 "@Prop({ type: [String], default: [] })"
               ],
@@ -22804,11 +22853,11 @@
             },
             {
               "name": "pushSubscriptions",
-              "line": 120,
+              "line": 121,
               "decorators": [
                 "@Prop({ type: [{ type: Object }], default: [], select: false })"
               ],
-              "type": "{ endpoint: string; keys?: { p256dh: string; auth: string }; }[]",
+              "type": "StoredPushSubscription[]",
               "optional": false,
               "initializer": ""
             }
@@ -22819,12 +22868,12 @@
       "types": [
         {
           "name": "UserRole",
-          "line": 4,
-          "definition": "export enum UserRole {\r\n  Teacher = 'teacher',\r\n}"
+          "line": 5,
+          "definition": "export enum UserRole {\n  Teacher = 'teacher',\n}"
         },
         {
           "name": "UserDocument",
-          "line": 127,
+          "line": 125,
           "definition": "export type UserDocument = HydratedDocument<User>;"
         }
       ],
@@ -22834,9 +22883,63 @@
       "indexes": [
         {
           "expression": "UserSchema.index( { emailVerificationExpiresAt: 1 }, { expireAfterSeconds: 0, partialFilterExpression: { isEmailVerified: false }, }, )",
-          "line": 129
+          "line": 127
         }
       ],
+      "calls": [],
+      "headings": []
+    },
+    {
+      "file": "edutrack_be/src/modules/users/types/push-device.type.ts",
+      "lines": 28,
+      "sha256": "e77a8f64c346a9df27a506bb044fa81f15cc4507259045edbfad2d5cdba54071",
+      "imports": [],
+      "exports": [
+        {
+          "name": "PushDeviceType",
+          "line": 1
+        },
+        {
+          "name": "PushDeviceInfo",
+          "line": 8
+        },
+        {
+          "name": "StoredPushSubscription",
+          "line": 15
+        },
+        {
+          "name": "PushDeviceSummary",
+          "line": 23
+        }
+      ],
+      "classes": [],
+      "functions": [],
+      "types": [
+        {
+          "name": "PushDeviceType",
+          "line": 1,
+          "definition": "export enum PushDeviceType {\n  Desktop = 'desktop',\n  Mobile = 'mobile',\n  Tablet = 'tablet',\n  Unknown = 'unknown',\n}"
+        },
+        {
+          "name": "PushDeviceInfo",
+          "line": 8,
+          "definition": "export type PushDeviceInfo = {\n  type: PushDeviceType;\n  name: string;\n  browser: string | null;\n  os: string | null;\n};"
+        },
+        {
+          "name": "StoredPushSubscription",
+          "line": 15,
+          "definition": "export type StoredPushSubscription = {\n  endpoint: string;\n  keys?: { p256dh: string; auth: string };\n  device?: PushDeviceInfo;\n  registeredAt?: Date;\n  lastSeenAt?: Date;\n};"
+        },
+        {
+          "name": "PushDeviceSummary",
+          "line": 23,
+          "definition": "export type PushDeviceSummary = PushDeviceInfo & {\n  id: string;\n  registeredAt: string | null;\n  lastSeenAt: string | null;\n};"
+        }
+      ],
+      "objects": [],
+      "tests": [],
+      "routes": [],
+      "indexes": [],
       "calls": [],
       "headings": []
     },
@@ -23219,8 +23322,8 @@
     },
     {
       "file": "edutrack_be/src/modules/users/users.push.spec.ts",
-      "lines": 106,
-      "sha256": "49431965d802c2b34b216727c8b66a7fdd2623f5c5ccded81bb25e881848bcca",
+      "lines": 87,
+      "sha256": "a4933098c9bbbceaa1f84809ac8a8c1632a0c57924eddc990f1130224ff92441",
       "imports": [
         {
           "from": "./users.service",
@@ -23257,11 +23360,11 @@
         },
         {
           "label": "removes only one owned endpoint atomically, preserving other devices",
-          "line": 79
+          "line": 60
         },
         {
           "label": "returns not found when the authenticated account no longer exists",
-          "line": 91
+          "line": 72
         }
       ],
       "routes": [],
@@ -23358,8 +23461,8 @@
     },
     {
       "file": "edutrack_be/src/modules/users/users.service.ts",
-      "lines": 587,
-      "sha256": "e29027a261daa70695825982e9093dddc9d311ba1238732e7a72fb23ff7c2cc0",
+      "lines": 614,
+      "sha256": "0ac7639b483111784eab2e37747bd20aef191e23e365b3aacadbcddd972bbe0b",
       "imports": [
         {
           "from": "@nestjs/common",
@@ -23406,6 +23509,14 @@
           "bindings": "{ PushSubscriptionDto }"
         },
         {
+          "from": "./types/push-device.type",
+          "bindings": "type { PushDeviceInfo }"
+        },
+        {
+          "from": "./utils/push-device",
+          "bindings": "{ pushDeviceId }"
+        },
+        {
           "from": "./dto/update-profile.dto",
           "bindings": "{ UpdateProfileDto }"
         },
@@ -23429,7 +23540,7 @@
       "exports": [
         {
           "name": "UsersService",
-          "line": 43
+          "line": 45
         }
       ],
       "classes": [
@@ -23438,11 +23549,11 @@
           "decorators": [
             "@Injectable()"
           ],
-          "line": 43,
+          "line": 45,
           "members": [
             {
               "name": "logger",
-              "line": 45,
+              "line": 47,
               "decorators": [],
               "type": "",
               "optional": false,
@@ -23450,168 +23561,168 @@
             },
             {
               "name": "normalizeEmail",
-              "line": 54,
+              "line": 56,
               "decorators": [],
               "signature": "normalizeEmail(email: string)",
               "visibility": "public"
             },
             {
               "name": "createTeacher",
-              "line": 58,
+              "line": 60,
               "decorators": [],
               "signature": "createTeacher(input: CreateTeacherInput)",
               "visibility": "public"
             },
             {
               "name": "findByEmail",
-              "line": 68,
+              "line": 70,
               "decorators": [],
               "signature": "findByEmail(email: string)",
               "visibility": "public"
             },
             {
               "name": "findByEmailWithSecrets",
-              "line": 72,
+              "line": 74,
               "decorators": [],
               "signature": "findByEmailWithSecrets(email: string)",
               "visibility": "public"
             },
             {
               "name": "findByIdWithSecrets",
-              "line": 81,
+              "line": 83,
               "decorators": [],
               "signature": "findByIdWithSecrets(id: string)",
               "visibility": "public"
             },
             {
               "name": "findById",
-              "line": 94,
+              "line": 96,
               "decorators": [],
               "signature": "findById(id: string)",
               "visibility": "public"
             },
             {
               "name": "deleteById",
-              "line": 102,
+              "line": 104,
               "decorators": [],
               "signature": "deleteById(id: string | Types.ObjectId)",
               "visibility": "public"
             },
             {
               "name": "getProfile",
-              "line": 106,
+              "line": 108,
               "decorators": [],
               "signature": "getProfile(userId: string)",
               "visibility": "public"
             },
             {
               "name": "getBanks",
-              "line": 112,
+              "line": 114,
               "decorators": [],
               "signature": "getBanks()",
               "visibility": "public"
             },
             {
               "name": "lookupBankAccount",
-              "line": 116,
+              "line": 118,
               "decorators": [],
               "signature": "lookupBankAccount(dto: LookupBankAccountDto)",
               "visibility": "public"
             },
             {
               "name": "updateProfile",
-              "line": 176,
+              "line": 178,
               "decorators": [],
               "signature": "updateProfile(userId: string, dto: UpdateProfileDto)",
               "visibility": "public"
             },
             {
               "name": "changePassword",
-              "line": 236,
+              "line": 238,
               "decorators": [],
               "signature": "changePassword(userId: string, dto: ChangePasswordDto)",
               "visibility": "public"
             },
             {
               "name": "updatePaymentQr",
-              "line": 267,
+              "line": 269,
               "decorators": [],
               "signature": "updatePaymentQr(userId: string, file: UploadImageFile, qrContent?: string, allowUnrecognized = false)",
               "visibility": "public"
             },
             {
               "name": "getPaymentQr",
-              "line": 360,
+              "line": 362,
               "decorators": [],
               "signature": "getPaymentQr(userId: string)",
               "visibility": "public"
             },
             {
               "name": "removePaymentQr",
-              "line": 386,
+              "line": 388,
               "decorators": [],
               "signature": "removePaymentQr(userId: string)",
               "visibility": "public"
             },
             {
               "name": "uploadMedia",
-              "line": 413,
+              "line": 415,
               "decorators": [],
               "signature": "uploadMedia(userId: string, file: UploadImageFile)",
               "visibility": "public"
             },
             {
               "name": "getMediaHistory",
-              "line": 435,
+              "line": 437,
               "decorators": [],
               "signature": "getMediaHistory(userId: string)",
               "visibility": "public"
             },
             {
               "name": "getPushSubscriptions",
-              "line": 442,
+              "line": 444,
               "decorators": [],
               "signature": "getPushSubscriptions(userId: string)",
               "visibility": "public"
             },
             {
               "name": "addPushSubscription",
-              "line": 452,
+              "line": 454,
               "decorators": [],
-              "signature": "addPushSubscription(userId: string, subscription: PushSubscriptionDto)",
+              "signature": "addPushSubscription(userId: string, subscription: PushSubscriptionDto, device?: PushDeviceInfo)",
               "visibility": "public"
             },
             {
               "name": "removePushSubscription",
-              "line": 493,
+              "line": 520,
               "decorators": [],
               "signature": "removePushSubscription(userId: string, endpoint: string)",
               "visibility": "public"
             },
             {
               "name": "toSafeUser",
-              "line": 505,
+              "line": 532,
               "decorators": [],
               "signature": "toSafeUser(user: UserDocument): SafeUser",
               "visibility": "public"
             },
             {
               "name": "findByIdOrThrow",
-              "line": 531,
+              "line": 558,
               "decorators": [],
               "signature": "findByIdOrThrow(userId: string)",
               "visibility": "private"
             },
             {
               "name": "assignPaymentBank",
-              "line": 541,
+              "line": 568,
               "decorators": [],
               "signature": "assignPaymentBank(user: UserDocument, bank: PaymentBank | null)",
               "visibility": "private"
             },
             {
               "name": "getPasswordSaltRounds",
-              "line": 548,
+              "line": 575,
               "decorators": [],
               "signature": "getPasswordSaltRounds()",
               "visibility": "private"
@@ -23623,26 +23734,126 @@
         {
           "name": "isValidQrAccountIdentifier",
           "signature": "isValidQrAccountIdentifier(value?: string)",
-          "line": 553
+          "line": 580
         },
         {
           "name": "createPaymentQrTrace",
           "signature": "createPaymentQrTrace(rawValue?: string)",
-          "line": 557
+          "line": 584
         },
         {
           "name": "maskAccountNumber",
           "signature": "maskAccountNumber(value?: string)",
-          "line": 576
+          "line": 603
         }
       ],
       "types": [
         {
           "name": "CreateTeacherInput",
-          "line": 33,
-          "definition": "type CreateTeacherInput = {\r\n  fullName: string;\r\n  email: string;\r\n  passwordHash: string;\r\n  otpHash: string;\r\n  otpExpiresAt: Date;\r\n  otpResendAvailableAt: Date;\r\n  emailVerificationExpiresAt: Date;\r\n};"
+          "line": 35,
+          "definition": "type CreateTeacherInput = {\n  fullName: string;\n  email: string;\n  passwordHash: string;\n  otpHash: string;\n  otpExpiresAt: Date;\n  otpResendAvailableAt: Date;\n  emailVerificationExpiresAt: Date;\n};"
         }
       ],
+      "objects": [],
+      "tests": [],
+      "routes": [],
+      "indexes": [],
+      "calls": [],
+      "headings": []
+    },
+    {
+      "file": "edutrack_be/src/modules/users/utils/push-device.spec.ts",
+      "lines": 131,
+      "sha256": "ee965056014ec492cf93481e66dc79ba9bf3a4f91d01147d9482ae275527cd9d",
+      "imports": [
+        {
+          "from": "../types/push-device.type",
+          "bindings": "{ PushDeviceType }"
+        },
+        {
+          "from": "./push-device",
+          "bindings": "{ describePushDevice, pushDeviceId, summarizePushDevices, }"
+        }
+      ],
+      "exports": [],
+      "classes": [],
+      "functions": [],
+      "types": [],
+      "objects": [],
+      "tests": [
+        {
+          "label": "Push device display metadata",
+          "line": 13
+        },
+        {
+          "label": "describes %s without confusing compatible browser tokens",
+          "line": 14
+        },
+        {
+          "label": "recognizes iPadOS desktop mode from the validated display hint",
+          "line": 65
+        },
+        {
+          "label": "shows legacy devices honestly and never exposes transport credentials",
+          "line": 77
+        },
+        {
+          "label": "deduplicates legacy endpoints, keeps richer metadata, and sorts latest registrations first",
+          "line": 103
+        }
+      ],
+      "routes": [],
+      "indexes": [],
+      "calls": [],
+      "headings": []
+    },
+    {
+      "file": "edutrack_be/src/modules/users/utils/push-device.ts",
+      "lines": 122,
+      "sha256": "0df992da8bca75630b12c63369b852ca6d7d85c1f75743a921db481782830e6e",
+      "imports": [
+        {
+          "from": "node:crypto",
+          "bindings": "{ createHash }"
+        },
+        {
+          "from": "../types/push-device.type",
+          "bindings": "{ PushDeviceType, type PushDeviceInfo, type PushDeviceSummary, type StoredPushSubscription, }"
+        }
+      ],
+      "exports": [
+        {
+          "name": "pushDeviceId",
+          "line": 9
+        },
+        {
+          "name": "describePushDevice",
+          "line": 14
+        },
+        {
+          "name": "summarizePushDevices",
+          "line": 92
+        }
+      ],
+      "classes": [],
+      "functions": [
+        {
+          "name": "describePushDevice",
+          "signature": "describePushDevice(userAgent: string, deviceType?: PushDeviceType): PushDeviceInfo",
+          "line": 14
+        },
+        {
+          "name": "isoDate",
+          "signature": "isoDate(value: unknown): string | null",
+          "line": 86
+        },
+        {
+          "name": "summarizePushDevices",
+          "signature": "summarizePushDevices(subscriptions: StoredPushSubscription[]): PushDeviceSummary[]",
+          "line": 92
+        }
+      ],
+      "types": [],
       "objects": [],
       "tests": [],
       "routes": [],
@@ -23852,8 +24063,8 @@
     },
     {
       "file": "edutrack_be/test/push-storage.integration-spec.ts",
-      "lines": 259,
-      "sha256": "54e236d3b0a4fdfc60e44dfe11758755c3e754b00c509228205ade508138b928",
+      "lines": 295,
+      "sha256": "d24c28d30c8227fbaa2a96b0caa7d08ca20953dfd10280e060855cffab8c3a60",
       "imports": [
         {
           "from": "node:crypto",
@@ -23898,6 +24109,14 @@
         {
           "from": "../src/modules/users/users.service",
           "bindings": "{ UsersService }"
+        },
+        {
+          "from": "../src/modules/users/types/push-device.type",
+          "bindings": "type { StoredPushSubscription }"
+        },
+        {
+          "from": "../src/modules/users/utils/push-device",
+          "bindings": "{ describePushDevice }"
         }
       ],
       "exports": [],
@@ -23908,39 +24127,43 @@
       "tests": [
         {
           "label": "Push storage integration against isolated local MongoDB",
-          "line": 30
+          "line": 32
         },
         {
           "label": "reads select:false subscriptions explicitly while profile and auth reads stay private",
-          "line": 87
+          "line": 89
         },
         {
           "label": "preserves concurrent devices and replaces rotated keys without duplicate endpoints",
-          "line": 103
+          "line": 105
+        },
+        {
+          "label": "persists device metadata and preserves its registration date on key rotation",
+          "line": 136
         },
         {
           "label": "deduplicates old records and removes only the requested endpoint amid another registration",
-          "line": 134
+          "line": 170
         },
         {
           "label": "scopes endpoint mutation to the selected user and rejects unknown users",
-          "line": 154
+          "line": 190
         },
         {
           "label": "grants exactly one lease under concurrent duplicate-key upserts",
-          "line": 181
+          "line": 217
         },
         {
           "label": "allows lease takeover after expiry and fences completion from the old worker",
-          "line": 195
+          "line": 231
         },
         {
           "label": "releases failed delivery for retry and preserves accepted delivery across a fresh connection",
-          "line": 216
+          "line": 252
         },
         {
           "label": "creates the MongoDB retention index for reminder markers",
-          "line": 246
+          "line": 282
         }
       ],
       "routes": [],
@@ -30616,23 +30839,68 @@
       "headings": []
     },
     {
-      "file": "edutrack_fe/components/notifications/push-notification-panel.tsx",
-      "lines": 91,
-      "sha256": "f1a603229a77583bb8f6138260aca3b429db199fe9cd63e3c36c27f1c5de9fb5",
+      "file": "edutrack_fe/components/notifications/push-device-list.tsx",
+      "lines": 72,
+      "sha256": "371ce94f85fdb30881aedc26562910d25aef8480e50e7a2bd0231863cf8a0eed",
       "imports": [
         {
           "from": "lucide-react",
-          "bindings": "{ Bell }"
+          "bindings": "{ Clock3, Globe2, Laptop, Monitor, Smartphone, Tablet }"
+        },
+        {
+          "from": "@/types/user",
+          "bindings": "type { PushDevice }"
+        }
+      ],
+      "exports": [
+        {
+          "name": "PushDeviceList",
+          "line": 17
+        }
+      ],
+      "classes": [],
+      "functions": [
+        {
+          "name": "updatedAt",
+          "signature": "updatedAt(value: string | null)",
+          "line": 11
+        },
+        {
+          "name": "PushDeviceList",
+          "signature": "PushDeviceList({ devices, currentDeviceId }: { devices: PushDevice[]; currentDeviceId: string | null; })",
+          "line": 17
+        }
+      ],
+      "types": [],
+      "objects": [],
+      "tests": [],
+      "routes": [],
+      "indexes": [],
+      "calls": [],
+      "headings": []
+    },
+    {
+      "file": "edutrack_fe/components/notifications/push-notification-panel.tsx",
+      "lines": 114,
+      "sha256": "63e45530281c0e9de51aace0d07ec96a1a6497577b30cc908ad1ff5f6d4645fc",
+      "imports": [
+        {
+          "from": "lucide-react",
+          "bindings": "{ Bell, BellOff, BellRing, CheckCircle2, Info, LoaderCircle, RefreshCw, Send, ShieldAlert }"
         },
         {
           "from": "@/components/layout/dashboard-shell",
           "bindings": "{ useDashboardSession }"
+        },
+        {
+          "from": "./push-device-list",
+          "bindings": "{ PushDeviceList }"
         }
       ],
       "exports": [
         {
           "name": "PushNotificationPanel",
-          "line": 6
+          "line": 7
         }
       ],
       "classes": [],
@@ -30640,7 +30908,7 @@
         {
           "name": "PushNotificationPanel",
           "signature": "PushNotificationPanel()",
-          "line": 6
+          "line": 7
         }
       ],
       "types": [],
@@ -32623,8 +32891,8 @@
     },
     {
       "file": "edutrack_fe/hooks/use-push.ts",
-      "lines": 210,
-      "sha256": "a8c95e28f55de0b6d48a3f06b14780b3ef0505c393a576563c737b68bea4f748",
+      "lines": 229,
+      "sha256": "565a0a21b30567a539255270ea215a23101baf81562892eb229611bdace9f875",
       "imports": [
         {
           "from": "react",
@@ -32633,6 +32901,10 @@
         {
           "from": "@/lib/api/profile",
           "bindings": "{ profileApi }"
+        },
+        {
+          "from": "@/types/user",
+          "bindings": "type { PushDevice }"
         },
         {
           "from": "@/components/ui/notice-provider",
@@ -32646,7 +32918,7 @@
       "exports": [
         {
           "name": "usePushNotifications",
-          "line": 11
+          "line": 12
         }
       ],
       "classes": [],
@@ -32654,7 +32926,7 @@
         {
           "name": "usePushNotifications",
           "signature": "usePushNotifications(userId?: string)",
-          "line": 11
+          "line": 12
         }
       ],
       "types": [],
@@ -32666,47 +32938,47 @@
         {
           "fn": "profileApi.getPushStatus",
           "args": [],
-          "line": 22
+          "line": 25
         },
         {
           "fn": "profileApi.subscribeToPush",
           "args": [
             "subscription.toJSON()"
           ],
-          "line": 64
+          "line": 72
         },
         {
           "fn": "profileApi.getPushStatus",
           "args": [],
-          "line": 97
+          "line": 107
         },
         {
           "fn": "profileApi.unsubscribeFromPush",
           "args": [
             "subscription.endpoint"
           ],
-          "line": 104
+          "line": 114
         },
         {
           "fn": "profileApi.subscribeToPush",
           "args": [
             "subscription.toJSON()"
           ],
-          "line": 111
+          "line": 121
         },
         {
           "fn": "profileApi.unsubscribeFromPush",
           "args": [
             "subscription.endpoint"
           ],
-          "line": 167
+          "line": 181
         },
         {
           "fn": "profileApi.testPush",
           "args": [
             "subscription.endpoint"
           ],
-          "line": 193
+          "line": 209
         }
       ],
       "headings": []
@@ -33265,8 +33537,8 @@
     },
     {
       "file": "edutrack_fe/lib/api/profile.ts",
-      "lines": 215,
-      "sha256": "47a9c7398f6c5b68f5cde7ddc027338fbbfd658037a4a0b0dd21da5134440f53",
+      "lines": 218,
+      "sha256": "0643561f55ebe5edb37800370ad51f9bb68a9a355d070252f1e452b0100fee6c",
       "imports": [
         {
           "from": "@/types/user",
@@ -33277,6 +33549,14 @@
           "bindings": "{ tokenStorage }"
         },
         {
+          "from": "@/lib/push/browser",
+          "bindings": "{ getPushDeviceType }"
+        },
+        {
+          "from": "@/types/user",
+          "bindings": "type { PushStatus }"
+        },
+        {
           "from": "./client",
           "bindings": "{ ApiError, apiRequest, getApiBaseUrl, refreshAuthSession, }"
         }
@@ -33284,7 +33564,7 @@
       "exports": [
         {
           "name": "profileApi",
-          "line": 86
+          "line": 88
         }
       ],
       "classes": [],
@@ -33292,27 +33572,27 @@
         {
           "name": "getToken",
           "signature": "getToken()",
-          "line": 16
+          "line": 18
         },
         {
           "name": "pushRequest",
           "signature": "pushRequest(path: string, options: Parameters<typeof apiRequest>[1] = {})",
-          "line": 20
+          "line": 22
         },
         {
           "name": "refreshForBinaryRequest",
           "signature": "refreshForBinaryRequest()",
-          "line": 34
+          "line": 36
         },
         {
           "name": "readBinaryError",
           "signature": "readBinaryError(response: Response)",
-          "line": 44
+          "line": 46
         },
         {
           "name": "fetchPaymentQrBlob",
           "signature": "fetchPaymentQrBlob(token: string | null)",
-          "line": 65
+          "line": 67
         }
       ],
       "types": [],
@@ -33322,72 +33602,72 @@
           "methods": [
             {
               "name": "getProfile",
-              "line": 87,
+              "line": 89,
               "signature": "getProfile()"
             },
             {
               "name": "getBanks",
-              "line": 93,
+              "line": 95,
               "signature": "getBanks()"
             },
             {
               "name": "updateProfile",
-              "line": 99,
+              "line": 101,
               "signature": "updateProfile(payload: UpdateProfilePayload)"
             },
             {
               "name": "changePassword",
-              "line": 107,
+              "line": 109,
               "signature": "changePassword(payload: ChangePasswordPayload)"
             },
             {
               "name": "uploadTeacherAvatar",
-              "line": 115,
+              "line": 117,
               "signature": "uploadTeacherAvatar(file: File)"
             },
             {
               "name": "uploadMedia",
-              "line": 126,
+              "line": 128,
               "signature": "uploadMedia(file: File)"
             },
             {
               "name": "getMediaHistory",
-              "line": 137,
+              "line": 139,
               "signature": "getMediaHistory()"
             },
             {
               "name": "uploadPaymentQr",
-              "line": 143,
+              "line": 145,
               "signature": "uploadPaymentQr(file: File, qrContent?: string, allowUnrecognized = false)"
             },
             {
               "name": "getPaymentQrBlob",
-              "line": 160,
+              "line": 162,
               "signature": "getPaymentQrBlob()"
             },
             {
               "name": "removePaymentQr",
-              "line": 180,
+              "line": 182,
               "signature": "removePaymentQr()"
             },
             {
               "name": "subscribeToPush",
-              "line": 187,
+              "line": 189,
               "signature": "subscribeToPush(subscription: unknown)"
             },
             {
               "name": "unsubscribeFromPush",
-              "line": 195,
+              "line": 198,
               "signature": "unsubscribeFromPush(endpoint: string)"
             },
             {
               "name": "getPushStatus",
-              "line": 203,
+              "line": 206,
               "signature": "getPushStatus()"
             },
             {
               "name": "testPush",
-              "line": 207,
+              "line": 210,
               "signature": "testPush(endpoint: string)"
             }
           ]
@@ -33403,7 +33683,7 @@
             "path",
             "{ ...options, token: getToken(), signal: controller.signal }"
           ],
-          "line": 25
+          "line": 27
         },
         {
           "fn": "fetch",
@@ -33411,7 +33691,7 @@
             "`${getApiBaseUrl()}/users/me/payment-qr`",
             "{ credentials: \"include\", headers: token ? { Authorization: `Bearer ${token}`, } : undefined, }"
           ],
-          "line": 66
+          "line": 68
         },
         {
           "fn": "apiRequest",
@@ -33419,7 +33699,7 @@
             "\"/users/me\"",
             "{ token: getToken(), }"
           ],
-          "line": 88
+          "line": 90
         },
         {
           "fn": "apiRequest",
@@ -33427,7 +33707,7 @@
             "\"/users/banks\"",
             "{ token: getToken(), }"
           ],
-          "line": 94
+          "line": 96
         },
         {
           "fn": "apiRequest",
@@ -33435,7 +33715,7 @@
             "\"/users/me\"",
             "{ method: \"PATCH\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 100
+          "line": 102
         },
         {
           "fn": "apiRequest",
@@ -33443,7 +33723,7 @@
             "\"/users/me/password\"",
             "{ method: \"PATCH\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 108
+          "line": 110
         },
         {
           "fn": "apiRequest",
@@ -33451,7 +33731,7 @@
             "\"/users/me/avatar\"",
             "{ method: \"POST\", token: getToken(), body: formData, }"
           ],
-          "line": 119
+          "line": 121
         },
         {
           "fn": "apiRequest",
@@ -33459,7 +33739,7 @@
             "\"/users/me/media\"",
             "{ method: \"POST\", token: getToken(), body: formData, }"
           ],
-          "line": 130
+          "line": 132
         },
         {
           "fn": "apiRequest",
@@ -33467,7 +33747,7 @@
             "\"/users/me/media\"",
             "{ token: getToken(), }"
           ],
-          "line": 138
+          "line": 140
         },
         {
           "fn": "apiRequest",
@@ -33475,7 +33755,7 @@
             "\"/users/me/payment-qr\"",
             "{ method: \"POST\", token: getToken(), body: formData, }"
           ],
-          "line": 153
+          "line": 155
         },
         {
           "fn": "apiRequest",
@@ -33483,7 +33763,7 @@
             "\"/users/me/payment-qr\"",
             "{ method: \"DELETE\", token: getToken(), }"
           ],
-          "line": 181
+          "line": 183
         }
       ],
       "headings": []
@@ -34657,57 +34937,71 @@
     },
     {
       "file": "edutrack_fe/lib/push/browser.ts",
-      "lines": 43,
-      "sha256": "c9f8e4cedd76ce19e1042be0d8510c16cd0e1b7f5404c9002029d06bdf7a6f6a",
-      "imports": [],
+      "lines": 56,
+      "sha256": "2e58b98edf27e52d9c3801f978fdfaf9b670f671ffc6e41772cb05bab24f0527",
+      "imports": [
+        {
+          "from": "@/types/user",
+          "bindings": "type { PushDeviceType }"
+        }
+      ],
       "exports": [
         {
+          "name": "getPushDeviceType",
+          "line": 5
+        },
+        {
           "name": "supportsPush",
-          "line": 1
+          "line": 14
         },
         {
           "name": "pushSupportMessage",
-          "line": 6
-        },
-        {
-          "name": "decodePublicKey",
-          "line": 11
-        },
-        {
-          "name": "subscriptionMatchesKey",
           "line": 19
         },
         {
+          "name": "decodePublicKey",
+          "line": 24
+        },
+        {
+          "name": "subscriptionMatchesKey",
+          "line": 32
+        },
+        {
           "name": "readyPushRegistration",
-          "line": 26
+          "line": 39
         }
       ],
       "classes": [],
       "functions": [
         {
+          "name": "getPushDeviceType",
+          "signature": "getPushDeviceType(): PushDeviceType",
+          "line": 5
+        },
+        {
           "name": "supportsPush",
           "signature": "supportsPush()",
-          "line": 1
+          "line": 14
         },
         {
           "name": "pushSupportMessage",
           "signature": "pushSupportMessage()",
-          "line": 6
+          "line": 19
         },
         {
           "name": "decodePublicKey",
           "signature": "decodePublicKey(value: string)",
-          "line": 11
+          "line": 24
         },
         {
           "name": "subscriptionMatchesKey",
           "signature": "subscriptionMatchesKey(subscription: PushSubscription, key: Uint8Array)",
-          "line": 19
+          "line": 32
         },
         {
           "name": "readyPushRegistration",
           "signature": "readyPushRegistration()",
-          "line": 26
+          "line": 39
         }
       ],
       "types": [],
@@ -35300,8 +35594,8 @@
     },
     {
       "file": "edutrack_fe/tests/push-notifications.spec.ts",
-      "lines": 156,
-      "sha256": "7f1822d05f2d6d2ef1ef531c259dee1683702bfcdd722430e749381802636f5b",
+      "lines": 221,
+      "sha256": "38f41117f19a7a3805ca3be34500c412f09f36b745fa41780cf6b8954b49195d",
       "imports": [
         {
           "from": "node:crypto",
@@ -35310,6 +35604,10 @@
         {
           "from": "@playwright/test",
           "bindings": "{ expect, test, type Page }"
+        },
+        {
+          "from": "../types/user",
+          "bindings": "type { PushDevice }"
         }
       ],
       "exports": [],
@@ -35317,8 +35615,8 @@
       "functions": [
         {
           "name": "setup",
-          "signature": "setup(page: Page, options: { subscribed?: boolean; permission?: \"granted\" | \"denied\" | \"default\"; unsupported?: boolean; configured?: boolean; saveFails?: boolean; testFails?: boolean; rotated?: boolean; registrationFails?: boolean; serverCount?: number } = {})",
-          "line": 9
+          "signature": "setup(page: Page, options: { subscribed?: boolean; permission?: \"granted\" | \"denied\" | \"default\"; unsupported?: boolean; configured?: boolean; saveFails?: boolean; testFails?: boolean; rotated?: boolean; registrationFails?: boolean; devices?: PushDevice[] } = {})",
+          "line": 20
         }
       ],
       "types": [],
@@ -35326,43 +35624,59 @@
       "tests": [
         {
           "label": "reconciles a browser subscription with the current account and tests this device",
-          "line": 72
+          "line": 86
         },
         {
           "label": "asks for notification permission on the first app open and enables the device",
-          "line": 82
+          "line": 96
         },
         {
           "label": "failed provider delivery never reports success and disables expired subscription",
-          "line": 92
+          "line": 106
         },
         {
           "label": "server configuration failure is visible instead of claiming push is enabled",
-          "line": 99
+          "line": 113
         },
         {
           "label": "new subscription is rolled back if saving to the backend fails",
-          "line": 105
+          "line": 119
         },
         {
           "label": "VAPID rotation requires re-enabling and replaces the old browser subscription",
-          "line": 115
+          "line": 129
         },
         {
           "label": "denied permission gives actionable guidance without requesting repeatedly",
-          "line": 125
+          "line": 139
         },
         {
           "label": "unsupported browser still shows guidance and can log out",
-          "line": 131
+          "line": 145
         },
         {
           "label": "service worker registration failure is reported without leaving an endless spinner",
-          "line": 140
+          "line": 154
         },
         {
           "label": "attendance notification deep link selects the attendance tab",
-          "line": 146
+          "line": 160
+        },
+        {
+          "label": "shows device cards with this browser first and safe legacy fallback",
+          "line": 171
+        },
+        {
+          "label": "device cards fit a phone and remain visible when this device is not subscribed",
+          "line": 186
+        },
+        {
+          "label": "enabling and disabling this device updates the cards and empty state",
+          "line": 201
+        },
+        {
+          "label": "unsupported browsers can still inspect and refresh account devices",
+          "line": 213
         }
       ],
       "routes": [],
@@ -36675,8 +36989,8 @@
     },
     {
       "file": "edutrack_fe/types/user.ts",
-      "lines": 57,
-      "sha256": "b01790546f342dbc8319c5ee075b2edad47af133edae698ca58c72315edbd638",
+      "lines": 77,
+      "sha256": "0004ab3984bd0c607208cced323fff095721f15f0907c801504dca5383ccf1a7",
       "imports": [],
       "exports": [
         {
@@ -36684,24 +36998,36 @@
           "line": 1
         },
         {
-          "name": "PaymentBank",
+          "name": "PushDeviceType",
           "line": 3
         },
         {
+          "name": "PushDevice",
+          "line": 5
+        },
+        {
+          "name": "PushStatus",
+          "line": 15
+        },
+        {
+          "name": "PaymentBank",
+          "line": 23
+        },
+        {
           "name": "User",
-          "line": 12
+          "line": 32
         },
         {
           "name": "UpdateProfilePayload",
-          "line": 34
+          "line": 54
         },
         {
           "name": "PaymentQrUploadResponse",
-          "line": 45
+          "line": 65
         },
         {
           "name": "ChangePasswordPayload",
-          "line": 53
+          "line": 73
         }
       ],
       "classes": [],
@@ -36713,28 +37039,43 @@
           "definition": "export type UserRole = \"teacher\";"
         },
         {
-          "name": "PaymentBank",
+          "name": "PushDeviceType",
           "line": 3,
+          "definition": "export type PushDeviceType = \"desktop\" | \"mobile\" | \"tablet\" | \"unknown\";"
+        },
+        {
+          "name": "PushDevice",
+          "line": 5,
+          "definition": "export type PushDevice = {\n  id: string;\n  type: PushDeviceType;\n  name: string;\n  browser: string | null;\n  os: string | null;\n  registeredAt: string | null;\n  lastSeenAt: string | null;\n};"
+        },
+        {
+          "name": "PushStatus",
+          "line": 15,
+          "definition": "export type PushStatus = {\n  configured: boolean;\n  publicKey: string | null;\n  subscriptionCount: number;\n  devices?: PushDevice[];\n  configurationError?: string;\n};"
+        },
+        {
+          "name": "PaymentBank",
+          "line": 23,
           "definition": "export type PaymentBank = {\n  id: number;\n  name: string;\n  code: string;\n  bin: string;\n  shortName: string;\n  logo: string;\n};"
         },
         {
           "name": "User",
-          "line": 12,
+          "line": 32,
           "definition": "export type User = {\n  id: string;\n  fullName: string;\n  avatarUrl?: string;\n  phone?: string;\n  address?: string;\n  bio?: string;\n  bankAccountName?: string;\n  bankAccountNumber?: string;\n  bankName?: string;\n  bankCode?: string;\n  bankBin?: string;\n  bankLogoUrl?: string;\n  email: string;\n  role: UserRole;\n  isEmailVerified: boolean;\n  hasPaymentQr: boolean;\n  paymentQrImageContentType?: string;\n  paymentQrImageSize?: number;\n  paymentQrImageUpdatedAt?: string;\n};"
         },
         {
           "name": "UpdateProfilePayload",
-          "line": 34,
+          "line": 54,
           "definition": "export type UpdateProfilePayload = {\n  fullName?: string;\n  avatarUrl?: string;\n  phone?: string;\n  address?: string;\n  bio?: string;\n  bankAccountName?: string;\n  bankAccountNumber?: string;\n  bankBin?: string;\n};"
         },
         {
           "name": "PaymentQrUploadResponse",
-          "line": 45,
+          "line": 65,
           "definition": "export type PaymentQrUploadResponse = User & {\n  paymentQrBankDetection?: {\n    bankBin: string;\n    bankLogoUrl: string;\n    bankName: string;\n  };\n};"
         },
         {
           "name": "ChangePasswordPayload",
-          "line": 53,
+          "line": 73,
           "definition": "export type ChangePasswordPayload = {\n  currentPassword: string;\n  newPassword: string;\n};"
         }
       ],

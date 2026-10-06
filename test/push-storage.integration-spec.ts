@@ -17,6 +17,8 @@ import {
   UserSchema,
 } from '../src/modules/users/schemas/user.schema';
 import { UsersService } from '../src/modules/users/users.service';
+import type { StoredPushSubscription } from '../src/modules/users/types/push-device.type';
+import { describePushDevice } from '../src/modules/users/utils/push-device';
 
 // Configuration is not part of these database-only tests. Avoid loading env
 // and the ESM-only config package in this repository's CommonJS Jest runtime.
@@ -42,7 +44,7 @@ describe('Push storage integration against isolated local MongoDB', () => {
     keys: { p256dh: 'B'.repeat(87), auth },
   });
 
-  const createUser = (subscriptions: PushSubscriptionDto[] = []) =>
+  const createUser = (subscriptions: StoredPushSubscription[] = []) =>
     userModel.create({
       fullName: 'Push integration teacher',
       email: `${randomUUID()}@example.invalid`,
@@ -128,7 +130,41 @@ describe('Push storage integration against isolated local MongoDB', () => {
     expect(afterRotation).toHaveLength(devices.length);
     expect(
       afterRotation.find((device) => device.endpoint === rotated.endpoint),
-    ).toEqual(rotated);
+    ).toMatchObject(rotated);
+  });
+
+  it('persists device metadata and preserves its registration date on key rotation', async () => {
+    const originalDate = new Date('2026-09-10T01:00:00Z');
+    const device = subscription('metadata');
+    const teacher = await createUser([
+      { ...device, registeredAt: originalDate },
+    ]);
+    const teacherId = teacher._id.toString();
+    const metadata = describePushDevice(
+      'Mozilla/5.0 (Windows NT 10.0) Chrome/143.0 Safari/537.36',
+    );
+    const registered = await users.addPushSubscription(
+      teacherId,
+      device,
+      metadata,
+    );
+    const rotated = {
+      ...device,
+      keys: { ...device.keys, auth: 'z'.repeat(22) },
+    };
+    const renewed = await users.addPushSubscription(teacherId, rotated);
+    expect(renewed.deviceId).toBe(registered.deviceId);
+    const saved = await users.getPushSubscriptions(teacherId);
+    expect(saved).toHaveLength(1);
+    expect(saved[0]).toMatchObject({
+      ...rotated,
+      device: metadata,
+      registeredAt: originalDate,
+    });
+    expect(saved[0].lastSeenAt).toBeInstanceOf(Date);
+    expect(await users.getProfile(teacherId)).not.toHaveProperty(
+      'pushSubscriptions',
+    );
   });
 
   it('deduplicates old records and removes only the requested endpoint amid another registration', async () => {

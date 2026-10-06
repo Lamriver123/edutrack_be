@@ -129,6 +129,7 @@ describe('Push API with JWT, validation and real event wiring', () => {
     expect(typeof body.publicKey).toBe('string');
     expect(Object.keys(body).sort()).toEqual([
       'configured',
+      'devices',
       'publicKey',
       'subscriptionCount',
     ]);
@@ -144,6 +145,7 @@ describe('Push API with JWT, validation and real event wiring', () => {
     expect(users.addPushSubscription).toHaveBeenCalledWith(
       USER_ID,
       expect.objectContaining(subscription),
+      undefined,
     );
     await request(server)
       .post('/api/users/me/push-subscription')
@@ -156,6 +158,49 @@ describe('Push API with JWT, validation and real event wiring', () => {
       .send({ endpoint: subscription.endpoint })
       .expect(400);
     expect(users.addPushSubscription).toHaveBeenCalledTimes(1);
+  });
+
+  it('captures safe browser metadata and uses the hint for an iPad in desktop mode', async () => {
+    await request(server)
+      .post('/api/users/me/push-subscription')
+      .auth(token(), { type: 'bearer' })
+      .set(
+        'User-Agent',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) Version/18.0 Safari/605.1.15',
+      )
+      .set('X-Push-Device-Type', 'tablet')
+      .send(subscription)
+      .expect(201);
+    expect(users.addPushSubscription).toHaveBeenCalledWith(
+      USER_ID,
+      expect.objectContaining(subscription),
+      {
+        name: 'iPad',
+        type: 'tablet',
+        os: 'iPadOS',
+        browser: 'Safari',
+      },
+    );
+  });
+
+  it('returns only the authenticated account devices and strips endpoints and push keys', async () => {
+    const own = await request(server)
+      .get('/api/users/me/push-subscription/status')
+      .auth(token(), { type: 'bearer' })
+      .expect(200);
+    const ownStatus = own.body as Awaited<ReturnType<PushService['getStatus']>>;
+    expect(ownStatus.devices).toHaveLength(1);
+    expect(JSON.stringify(own.body)).not.toContain(subscription.endpoint);
+    expect(JSON.stringify(own.body)).not.toContain(subscription.keys.auth);
+    const other = await request(server)
+      .get('/api/users/me/push-subscription/status')
+      .auth(token(OTHER_USER_ID), { type: 'bearer' })
+      .expect(200);
+    const otherStatus = other.body as Awaited<
+      ReturnType<PushService['getStatus']>
+    >;
+    expect(otherStatus.devices).toEqual([]);
+    expect(otherStatus.subscriptionCount).toBe(0);
   });
 
   it('returns actual provider acceptance instead of fire-and-forget success', async () => {

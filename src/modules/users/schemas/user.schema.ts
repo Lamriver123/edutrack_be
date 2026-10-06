@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import type { StoredPushSubscription } from '../types/push-device.type';
 
 export enum UserRole {
   Teacher = 'teacher',
@@ -118,7 +119,7 @@ export class User {
   recentMediaUrls: string[];
 
   @Prop({ type: [{ type: Object }], default: [], select: false })
-  pushSubscriptions: import('../types/push-device.type').StoredPushSubscription[];
+  pushSubscriptions: StoredPushSubscription[];
 }
 
 export type UserDocument = HydratedDocument<User>;

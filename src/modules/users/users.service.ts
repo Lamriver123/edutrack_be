@@ -482,18 +482,26 @@ export class UsersService {
                           input: { $ifNull: ['$pushSubscriptions', []] },
                           as: 'subscription',
                           cond: {
-                            $ne: ['$$subscription.endpoint', subscription.endpoint],
+                            $ne: [
+                              '$$subscription.endpoint',
+                              subscription.endpoint,
+                            ],
                           },
                         },
                       },
-                      [{
-                        endpoint: { $literal: subscription.endpoint },
-                        keys: { $literal: subscription.keys },
-                        device: device ? { $literal: device } :
-                          { $ifNull: ['$$previous.device', null] },
-                        registeredAt: { $ifNull: ['$$previous.registeredAt', now] },
-                        lastSeenAt: now,
-                      }],
+                      [
+                        {
+                          endpoint: { $literal: subscription.endpoint },
+                          keys: { $literal: subscription.keys },
+                          device: device
+                            ? { $literal: device }
+                            : { $ifNull: ['$$previous.device', null] },
+                          registeredAt: {
+                            $ifNull: ['$$previous.registeredAt', now],
+                          },
+                          lastSeenAt: now,
+                        },
+                      ],
                     ],
                   },
                 },

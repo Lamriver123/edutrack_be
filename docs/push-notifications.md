@@ -37,6 +37,36 @@ Frontend phải chạy trên HTTPS, ngoại trừ localhost phục vụ phát tr
 
 Trên iPhone/iPad, cần thêm ứng dụng vào Home Screen, mở từ biểu tượng đó và bật thông báo bằng thao tác bấm của người dùng trên phiên bản hỗ trợ Web Push. [WebKit mô tả hỗ trợ từ iOS/iPadOS 16.4](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/). `vibrate` và `requireInteraction` là tùy chọn hiển thị, không bảo đảm thiết bị sẽ rung hoặc ghim thông báo; kiểm tra quyền thông báo của hệ điều hành và chế độ Focus/Không làm phiền. [Tài liệu showNotification](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification) ghi rõ mức hỗ trợ các tùy chọn có thể khác nhau.
 
+## Danh sách thiết bị nhận thông báo
+
+Mục **Thông báo trên thiết bị** ở `/notifications` và hồ sơ hiển thị thẻ cho từng subscription của tài khoản: tên thiết bị, biểu tượng, trình duyệt/hệ điều hành và lần cập nhật đăng ký. Thẻ của trình duyệt đang dùng có nhãn **Thiết bị này**; các thẻ khác có nhãn **Đã đăng ký**. Trên điện thoại, cards xếp một cột.
+
+API `GET /api/users/me/push-subscription/status` bổ sung `devices`:
+
+```json
+{
+  "configured": true,
+  "publicKey": "<VAPID public key>",
+  "subscriptionCount": 1,
+  "devices": [{
+    "id": "<SHA-256 của endpoint>",
+    "type": "desktop",
+    "name": "Máy tính Windows",
+    "browser": "Google Chrome",
+    "os": "Windows",
+    "registeredAt": "2026-10-06T08:00:00.000Z",
+    "lastSeenAt": "2026-10-06T08:30:00.000Z"
+  }]
+}
+```
+
+- API chỉ trả đăng ký của user trong JWT, không trả endpoint, subscription keys hoặc raw User-Agent. `subscriptionCount` đếm endpoint duy nhất; một máy có nhiều trình duyệt/profile có thể xuất hiện nhiều thẻ.
+- Tên được suy đoán từ `User-Agent` và hint `X-Push-Device-Type`; không bảo đảm model phần cứng. Hint giúp phân biệt iPad dùng UA Macintosh. Nó chỉ phục vụ hiển thị; khả năng nhận push vẫn kiểm tra bằng browser APIs.
+- `lastSeenAt` là lần đồng bộ subscription với server, không phải trạng thái online hoặc thời điểm nhận thông báo. Badge **Đã đăng ký** không xác nhận gateway đã chuyển thông báo thành công tới thiết bị đó.
+- Backend lưu metadata trong `User.pushSubscriptions` cùng `registeredAt`/`lastSeenAt`, giữ thời điểm đăng ký ban đầu khi xoay keys. Cập nhật atomic giữ các thiết bị khác khi có đăng ký đồng thời.
+- Đăng ký cũ thiếu metadata hiển thị **Thiết bị chưa xác định**. Mở EduTrack trên chính trình duyệt đó để tự bổ sung thông tin, không cần thay VAPID hoặc xóa tất cả đăng ký.
+- FE mới vẫn tương thích status/subscribe của BE cũ chưa có `devices`/`deviceId`; cần triển khai cả hai để có đủ thẻ và nhãn thiết bị hiện tại. Body đăng ký không thêm field; header mới tránh lỗi validation khi deploy lệch phiên bản.
+
 ## Chẩn đoán theo từng chặng
 
 1. Gọi `GET /api` của backend đã deploy để kiểm tra API hoạt động. Nếu lần gọi đầu bị cold start, đối chiếu thời điểm đó với giờ cron đáng lẽ phải gửi; tải lại log và chọn đúng instance/version.
@@ -108,3 +138,11 @@ Suite này tạo database riêng tên `edutrack_push_test_<pid>_<uuid>`, kiểm 
 - Storage: 8 integration tests đạt trên MongoDB localhost thật với database riêng đã dọn.
 - Frontend: TypeScript, lint và production build đạt; 10 Service Worker tests và 9 Playwright UI tests đạt. Build còn cảnh báo `metadataBase` có sẵn, không liên quan Web Push.
 - Các gateway Web Push được giả lập trong kiểm thử, không gửi tới Apple/Google/Mozilla. Chưa triển khai bản sửa lên Render hoặc xác nhận thông báo hiển thị trên iPhone thật. Người dùng xác nhận đã mở PWA từ Màn hình chính trên iPhone 14 Pro Max; sau deploy cần thử nút gửi thông báo trên chính thiết bị này.
+
+## Kết quả bổ sung danh sách thiết bị ngày 2026-10-06
+
+- Backend: 4 suites / 41 unit và HTTP tests đạt; nhận diện thiết bị, dữ liệu cũ, dedupe, JWT ownership và response không lộ endpoint/keys được bao phủ.
+- Storage: 9 integration tests đạt trên MongoDB localhost với DB test riêng, gồm giữ metadata/registeredAt khi xoay keys và nhiều thiết bị ghi đồng thời.
+- Frontend: 14 Playwright UI tests đạt; đã kiểm tra ảnh desktop/mobile, cards thiết bị hiện tại, legacy, không hỗ trợ push, empty state và cập nhật danh sách sau bật/tắt. Mobile 390px không tràn ngang.
+- BE/FE build và lint các file thay đổi đạt. Cảnh báo `metadataBase` trong FE build là cảnh báo có sẵn.
+- Kiểm thử dùng API/gateway giả lập và dữ liệu MongoDB test; không xác nhận bản deploy hoặc trạng thái nhận thông báo trên thiết bị thật. Không có migration bắt buộc: thiết bị cũ sẽ bổ sung metadata khi mở lại EduTrack.
