@@ -21,6 +21,8 @@ import {
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LookupBankAccountDto } from './dto/lookup-bank-account.dto';
 import { PushSubscriptionDto } from './dto/push-subscription.dto';
+import type { PushDeviceInfo } from './types/push-device.type';
+import { pushDeviceId } from './utils/push-device';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
   PAYMENT_QR_INFO_NOT_FOUND_CODE,
@@ -449,7 +451,19 @@ export class UsersService {
     return user.pushSubscriptions ?? [];
   }
 
-  async addPushSubscription(userId: string, subscription: PushSubscriptionDto) {
+  async addPushSubscription(
+    userId: string,
+    subscription: PushSubscriptionDto,
+    device?: PushDeviceInfo,
+  ) {
+    const now = new Date();
+    const matchingEndpoint = {
+      $filter: {
+        input: { $ifNull: ['$pushSubscriptions', []] },
+        as: 'subscription',
+        cond: { $eq: ['$$subscription.endpoint', subscription.endpoint] },
+      },
+    };
     // Replace this endpoint in one atomic write: rotate keys, deduplicate old
     // records, and preserve concurrently registered devices.
     const result = await this.userModel
@@ -459,25 +473,30 @@ export class UsersService {
           {
             $set: {
               pushSubscriptions: {
-                $concatArrays: [
-                  {
-                    $filter: {
-                      input: { $ifNull: ['$pushSubscriptions', []] },
-                      as: 'subscription',
-                      cond: {
-                        $ne: ['$$subscription.endpoint', subscription.endpoint],
-                      },
-                    },
-                  },
-                  {
-                    $literal: [
+                $let: {
+                  vars: { previous: { $arrayElemAt: [matchingEndpoint, 0] } },
+                  in: {
+                    $concatArrays: [
                       {
-                        endpoint: subscription.endpoint,
-                        keys: subscription.keys,
+                        $filter: {
+                          input: { $ifNull: ['$pushSubscriptions', []] },
+                          as: 'subscription',
+                          cond: {
+                            $ne: ['$$subscription.endpoint', subscription.endpoint],
+                          },
+                        },
                       },
+                      [{
+                        endpoint: { $literal: subscription.endpoint },
+                        keys: { $literal: subscription.keys },
+                        device: device ? { $literal: device } :
+                          { $ifNull: ['$$previous.device', null] },
+                        registeredAt: { $ifNull: ['$$previous.registeredAt', now] },
+                        lastSeenAt: now,
+                      }],
                     ],
                   },
-                ],
+                },
               },
             },
           },
@@ -487,7 +506,7 @@ export class UsersService {
       .exec();
     if (!result.matchedCount)
       throw new NotFoundException('Không tìm thấy tài khoản giáo viên.');
-    return { success: true };
+    return { success: true, deviceId: pushDeviceId(subscription.endpoint) };
   }
 
   async removePushSubscription(userId: string, endpoint: string) {

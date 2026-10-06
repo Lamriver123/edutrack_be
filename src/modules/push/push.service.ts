@@ -5,6 +5,7 @@ import { createECDH } from 'node:crypto';
 import * as webpush from 'web-push';
 import { isSupportedPushEndpoint } from '../users/dto/push-subscription.dto';
 import { UsersService } from '../users/users.service';
+import { summarizePushDevices } from '../users/utils/push-device';
 
 export type PushDeliveryResult = {
   configured: boolean;
@@ -64,10 +65,12 @@ export class PushService {
 
   async getStatus(userId: string) {
     const subscriptions = await this.usersService.getPushSubscriptions(userId);
+    const devices = summarizePushDevices(subscriptions);
     return {
       configured: this.configured,
       publicKey: this.publicKey,
-      subscriptionCount: subscriptions.length,
+      subscriptionCount: devices.length,
+      devices,
       ...(this.configurationError
         ? { configurationError: this.configurationError }
         : {}),

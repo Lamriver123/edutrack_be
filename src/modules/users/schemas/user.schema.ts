@@ -118,10 +118,7 @@ export class User {
   recentMediaUrls: string[];
 
   @Prop({ type: [{ type: Object }], default: [], select: false })
-  pushSubscriptions: {
-    endpoint: string;
-    keys?: { p256dh: string; auth: string };
-  }[];
+  pushSubscriptions: import('../types/push-device.type').StoredPushSubscription[];
 }
 
 export type UserDocument = HydratedDocument<User>;
