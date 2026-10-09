@@ -525,6 +525,12 @@ Lớp có nhiều slot cùng ngày: reschedule/cancel một slot cần original 
 
 “Thu hồi lịch tạm thời” có thể khôi phục occurrence gốc của reschedule/cancel. Vì vậy revoke cũng phải kiểm tra slot khôi phục có trùng lịch mới hay không.
 
+**Nhập nội dung ngay khi tạo lịch tạm, 09/10/2026:** modal **Tạo lịch tạm** trong tab thời khóa biểu lớp có ô **Chủ đề** (tối đa 160 ký tự) và **Nội dung buổi học** (tối đa 1200 ký tự), đều không bắt buộc, cho `extra`, `one_on_one`, `reschedule`. Chọn `cancel` ẩn hai ô này và không gửi nội dung. Form trim dữ liệu, giữ nội dung khi request thất bại và reset khi mở lại modal tạo mới.
+
+`CreateTemporaryScheduleDto` nhận `topic?`/`content?`; precheck kế thừa DTO nên cũng nhận được hai field. Sau kiểm quyền sở hữu/trùng lịch dưới teacher write lock, service tạo override rồi dùng `saveSessionContent` để lưu nội dung vào `ClassSession` theo đúng lớp/ngày/giờ, giữ biểu diễn UTC và loại buổi tương ứng. Không sao chép nội dung vào override, không cần migration. Nếu lưu nội dung lỗi, service xóa override vừa tạo theo tenant/class/id rồi trả lỗi. Đây là hai thao tác ghi với bước hoàn tác khi lỗi, không phải MongoDB transaction. Payload không có nội dung vẫn theo luồng cũ, không materialize session rỗng.
+
+Calendar lớp/lịch chung và dữ liệu điểm danh/hóa đơn tiếp tục đọc nội dung từ `ClassSession`; có thể sửa sau bằng modal **Nội dung buổi học** như trước. Hai field mới chỉ thuộc request tạo; modal **Sửa lịch tạm** và API PATCH vẫn chỉnh thông tin lịch theo contract cũ.
+
 ### 8.4 SchedulesService dựng lịch
 
 1. Chọn lớp của teacher chưa archived.
@@ -585,6 +591,8 @@ Các thay đổi move/cancel/revoke/suspend cần xác định đúng occurrence
 
 Frontend cả calendar giáo viên và tab lịch lớp dùng các helper/picker chung. Thay đổi payload phải cập nhật cả hai giao diện.
 
+**Bố cục header lịch lớp, 09/10/2026:** `class-schedule-tab.module.css` dùng flex wrap cho `scheduleHero` và dành flex basis 260px cho khối tiêu đề. Cụm nút có giới hạn chiều rộng theo container và tự xuống hàng khi thiếu chỗ. Bỏ grid desktop `minmax(0, 1fr) auto`, vì cột auto của toolbar có thể ép tiêu đề/ngày thành nhiều dòng dù viewport lớn. Giữ bố cục chọn tuần/nút thao tác dành cho mobile hiện có.
+
 ## 9. Điểm danh, giá theo ngày và học phí phát sinh
 
 Nguồn: ClassesService attendance methods, [attendance-tuition.ts](../src/modules/classes/attendance-tuition.ts), price/attendance/session/tuition schemas.
@@ -615,6 +623,8 @@ Tên DB `makeupPrice` hiện được UI dùng như **giá kèm 1:1**. Không t�
 - excused → bỏ tuition.
 
 TuitionEntry.amount là snapshot. Receipt lấy snapshot này; sửa giá Class không làm đổi hóa đơn đã phát hành.
+
+**Xem lịch sử mức giá, 09/10/2026:** `GET /api/classes/:classId/price-history` được bảo vệ bằng JWT và kiểm ownership/lớp chưa archived trước khi query `ClassPriceVersion` theo teacher + class, sắp xếp `effectiveFrom` giảm dần. Response chỉ gồm `id`, `regularPrice`, `makeupPrice`, `effectiveFrom`; baseline `Date(0)` trả ngày `null` để UI ghi **Giá ban đầu**. Lớp cũ chưa có version trả giá đang lưu trong Class cùng ngày áp dụng nếu có; GET không tạo baseline hay thay đổi dữ liệu. Đây là lịch sử các mức giá theo ngày áp dụng, không phải audit từng lần cập nhật: nhiều lần lưu cùng ngày vẫn theo cơ chế upsert version hiện có.
 
 ### 9.3 Save một buổi hoặc batch
 
@@ -778,6 +788,8 @@ Payment state hiện là trạng thái hiện tại, không phải sổ giao d�
 `class-tuition-tab.tsx` quản lý overview/candidates/history, filter, selected student/class scope, xuất receipt, preview, comments, template, payment/proof, download/retry/cancel và giá theo ngày.
 
 Presentation tách ở `tuition/billing-student-list.tsx`, `receipt-history.tsx`, `receipt-dialogs.tsx`, `tuition-metric.tsx`.
+
+**Thu gọn công cụ, 09/10/2026:** bộ lọc `Từ ngày`/`Đến ngày` mặc định ẩn, mở/đóng bằng nút **Lọc**; **Xóa bộ lọc** bỏ cả hai ngày. Khi đóng bộ lọc, khoảng ngày vẫn áp dụng và được hiển thị bằng nhãn tóm tắt trên toolbar; overview, lịch sử hóa đơn và form xuất hóa đơn vẫn dùng cùng filter state. Nút **Tải lại** luôn ở toolbar. **Tùy chọn → Lịch sử học phí** mở `tuition/price-history-modal.tsx`, chỉ tải API mức giá khi mở, có loading/error/retry, mở lại tải dữ liệu mới. Menu `tuition/tuition-options.tsx` đóng khi bấm ngoài hoặc Escape. Lịch sử hóa đơn hiện có vẫn ở phần riêng của tab; không đổi nghiệp vụ tính tiền/phát hành.
 
 Wizard chọn kỳ/lớp → chọn buổi (10 đầu/tất cả/từng buổi) → exam/remarks/comments/payment note → preview → confirm issue. templateRevision gửi theo preview khi template vẫn cùng ID để BE phát hiện bản mẫu vừa đổi.
 
@@ -1446,6 +1458,33 @@ Không coi các kết quả này là mới chạy lại sau mọi chỉnh sửa.
 - FE Playwright: **14 tests pass** trong suite push hiện có, dùng API và browser gateway mock. Các regression xem chi tiết mở panel trước; case desktop kiểm mặc định thu gọn, Enter để mở, Space để đóng, vùng đóng inert và reload trở về thu gọn. Case mobile 390px kiểm cả hai trạng thái, không tràn ngang và hỗ trợ reduced motion. Bật/tắt khi panel đóng vẫn cập nhật subscription/cards/empty state đúng.
 - Đã xem ảnh thu gọn/mở rộng desktop và mobile; TypeScript, ESLint file thay đổi và production build FE pass. Cảnh báo metadataBase trong build có sẵn. Guide và chỉ mục source được cập nhật.
 - Chỉ thay đổi giao diện frontend; không đổi API, service worker hoặc backend push. Thay đổi cần deploy FE để xuất hiện trên website; kiểm thử không gửi push ra ngoài.
+
+### 18.10 Xác minh nội dung khi tạo lịch tạm ngày 09/10/2026
+
+- BE: **10 tests pass** trong `classes-temporary-content.spec.ts`, dùng model mocks. Bao phủ extra/kèm 1:1/dời lịch, tenant/sourceKey/ngày Việt Nam/giờ UTC, trim, nội dung tùy chọn, cancel, chặn trùng lịch trước ghi, hoàn tác override khi lưu nội dung lỗi, và validation của create/precheck. Chưa chạy integration với MongoDB thật cho phần bổ sung này.
+- FE: **4 Playwright tests pass** trong `tests/temporary-schedule-content.spec.ts`, dùng API mocks. Kiểm tra 1440px/390px, chỉ gửi một request tạo chứa nội dung sau xác nhận, mở lại nội dung sau reload, bỏ trống, ẩn khi hủy buổi, giữ form khi lỗi và reset khi hủy/mở lại. Đã xem ảnh modal desktop/mobile.
+- Build BE/FE pass; lint các file thay đổi pass; TypeScript FE pass. FE build vẫn có warning `metadataBase` hiện có.
+- Chạy thêm `classes-schedule-guard` và `schedules.service`: **9 regression tests pass**, gồm việc ghép nội dung/lọc buổi tạm thu hồi và guard điểm danh hiện có.
+
+### 18.11 Xác minh header lịch lớp ngày 09/10/2026
+
+- QA browser bằng Playwright với API mocks tái hiện CSS cũ ở viewport 1280px: tiêu đề còn khoảng 89px, xuống 4 dòng; khoảng ngày xuống 3 dòng.
+- CSS mới được đo tại 1920/1440/1280/1180/1024/900/768/760/390/320px và container 680px trong viewport 1920px: tiêu đề và khoảng ngày đều một dòng, nút/input không tràn khỏi header. Đã xem screenshot 1280px, 390px và container hẹp.
+- Chạy lại 4 tests `temporary-schedule-content.spec.ts`: pass. Build FE/TypeScript và kiểm tra source diff pass; không sửa backend nghiệp vụ trong đợt UI này.
+
+### 18.12 Xác minh lịch sử mức giá và bộ lọc học phí ngày 09/10/2026
+
+- BE: **6 tests pass** trong `classes-price-history` và `classes-attendance-pricing` (4 test mới + 2 regression). Kiểm ownership trước query lịch sử, filter teacher/class, thứ tự giảm dần, giới hạn field response, lớp cũ và baseline không hiển thị 1970. Dùng model mocks, chưa chạy MongoDB integration cho API đọc mới.
+- Browser QA với API mocks ở **1440px/390px**: ngày mặc định ẩn, bật/áp dụng/đóng/mở lại/xóa, khoảng ngày được gửi đúng sang candidates xuất hóa đơn, lịch sử tải khi mở, lỗi/retry, tải mới khi mở lại và modal không tràn ngang. Đã xem screenshot toolbar và lịch sử trên desktop/mobile.
+- **3 Playwright regression tests pass** trong `receipt-template-selection.spec.ts`, gồm xuất một lớp/gộp và lỗi tải template trên mobile. Cập nhật test xem trước sang iframe trong trang theo UI hiện có; test cũ chờ popup dù source đã dùng `ReceiptPreviewDialog` trước đợt sửa này.
+- Build BE/FE, TypeScript và lint các file thay đổi pass; chỉ mục/snapshot đã cập nhật, `--check` không còn source thay đổi chưa ghi nhận.
+
+### 18.13 Kiểm tra tổng hợp trước khi push ngày 09/10/2026
+
+- Chạy toàn bộ BE unit suite: **32 suites / 294 tests pass**, dùng mocks theo cấu hình Jest hiện có.
+- FE: **17 Node tests pass** cho session/access token/routing và push worker; **13 Playwright tests pass** cho nội dung lịch tạm, khôi phục lịch cố định và chọn mẫu hóa đơn. Playwright chạy trên production build local, API mocks, viewport desktop/mobile.
+- Chạy lại browser QA bộ lọc/lịch sử giá ở 1440px/390px và header lịch ở 320–1920px/container 680px: pass. Không ghi dữ liệu ứng dụng hoặc gửi push ra ngoài.
+- Production build BE/FE pass; lint toàn BE pass sau khi chuẩn hóa xuống dòng DTO push (không đổi logic). Lint toàn FE không có lỗi, còn 5 warning import chưa dùng có sẵn; FE build còn warning `metadataBase` hiện có. Chỉ mục/snapshot đã sinh lại và `--check` rỗng.
 
 ## 19. Công thức thay đổi và các bất biến
 

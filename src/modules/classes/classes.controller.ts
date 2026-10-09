@@ -84,6 +84,14 @@ export class ClassesController {
     return this.classesService.findDetail(user.userId, classId);
   }
 
+  @Get(':classId/price-history')
+  findPriceHistory(
+    @CurrentUser() user: JwtUser,
+    @Param('classId') classId: string,
+  ) {
+    return this.classesService.findPriceHistory(user.userId, classId);
+  }
+
   @Patch(':classId')
   updateClass(
     @CurrentUser() user: JwtUser,

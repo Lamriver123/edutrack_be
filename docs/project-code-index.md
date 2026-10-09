@@ -2,9 +2,9 @@
 
 Sinh từ mã nguồn bằng node scripts/project-index.cjs trong backend. Đọc [project-guide.md](project-guide.md) trước, rồi tìm đúng đường dẫn hoặc symbol trong file này. Chỉ mục ghi cấu trúc tĩnh; kiểu trả về suy luận và nghiệp vụ cần đọc hướng dẫn hoặc method đích.
 
-Mốc sinh chỉ mục: 2026-10-06 (Việt Nam). Backend: f84edeec68309376967cfa8750a8e9673cc8c8ee. Frontend: c4ddeae249dcc848024134067f601aec4cd80dbf.
+Mốc sinh chỉ mục: 2026-10-09 (Việt Nam). Backend: 97727f445dd39a5138c095182cce139e9d5edd49. Frontend: 2fb55318a89a7c3ce404db4aa37179b3934173fe.
 
-Phạm vi: 380 file mã/cấu hình/style/tài nguyên văn bản, 74389 dòng. Loại trừ dependency, build/cache, log, credential JSON, .env runtime và dữ liệu backup; .env.example chỉ chứa mẫu cấu hình. Không đọc/ghi DB hoặc gọi dịch vụ ngoài.
+Phạm vi: 385 file mã/cấu hình/style/tài nguyên văn bản, 75204 dòng. Loại trừ dependency, build/cache, log, credential JSON, .env runtime và dữ liệu backup; .env.example chỉ chứa mẫu cấu hình. Không đọc/ghi DB hoặc gọi dịch vụ ngoài.
 
 ## Cách tra cứu
 
@@ -69,14 +69,16 @@ Phạm vi: 380 file mã/cấu hình/style/tài nguyên văn bản, 74389 dòng. 
 | [edutrack_be/src/modules/classes/attendance-tuition.ts](../src/modules/classes/attendance-tuition.ts) | 30 | resolveAttendanceTuition |
 | [edutrack_be/src/modules/classes/classes-attendance-pricing.spec.ts](../src/modules/classes/classes-attendance-pricing.spec.ts) | 27 |  |
 | [edutrack_be/src/modules/classes/classes-attendance-reset.spec.ts](../src/modules/classes/classes-attendance-reset.spec.ts) | 364 |  |
+| [edutrack_be/src/modules/classes/classes-price-history.spec.ts](../src/modules/classes/classes-price-history.spec.ts) | 122 | fixture |
 | [edutrack_be/src/modules/classes/classes-schedule-guard.spec.ts](../src/modules/classes/classes-schedule-guard.spec.ts) | 77 |  |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts) | 423 | ClassesController |
+| [edutrack_be/src/modules/classes/classes-temporary-content.spec.ts](../src/modules/classes/classes-temporary-content.spec.ts) | 227 | fixture |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts) | 431 | ClassesController |
 | [edutrack_be/src/modules/classes/classes.module.ts](../src/modules/classes/classes.module.ts) | 22 | ClassesModule |
-| [edutrack_be/src/modules/classes/classes.service.ts](../src/modules/classes/classes.service.ts) | 3345 | ClassesService, ClassScheduleSlotResponse, LatestFixedScheduleResponse, ScheduleOverrideResponse, ClassSessionResponse, ClassResponse, ClassDetailResponse, ClassScheduleOverviewResponse, EnrollmentResponse, EnrollmentBulkError, EnrollmentBulkResponse, RemoveStudentsBulkResponse |
+| [edutrack_be/src/modules/classes/classes.service.ts](../src/modules/classes/classes.service.ts) | 3400 | ClassesService, ClassScheduleSlotResponse, LatestFixedScheduleResponse, ScheduleOverrideResponse, ClassSessionResponse, ClassResponse, ClassDetailResponse, ClassScheduleOverviewResponse, EnrollmentResponse, EnrollmentBulkError, EnrollmentBulkResponse, RemoveStudentsBulkResponse |
 | [edutrack_be/src/modules/classes/dto/create-class.dto.ts](../src/modules/classes/dto/create-class.dto.ts) | 57 | CreateClassDto |
 | [edutrack_be/src/modules/classes/dto/create-exam.dto.ts](../src/modules/classes/dto/create-exam.dto.ts) | 35 | CreateExamDto |
 | [edutrack_be/src/modules/classes/dto/create-fixed-schedule.dto.ts](../src/modules/classes/dto/create-fixed-schedule.dto.ts) | 39 | ScheduleSlotDto, CreateFixedScheduleDto |
-| [edutrack_be/src/modules/classes/dto/create-temporary-schedule.dto.ts](../src/modules/classes/dto/create-temporary-schedule.dto.ts) | 46 | CreateTemporaryScheduleDto |
+| [edutrack_be/src/modules/classes/dto/create-temporary-schedule.dto.ts](../src/modules/classes/dto/create-temporary-schedule.dto.ts) | 56 | CreateTemporaryScheduleDto |
 | [edutrack_be/src/modules/classes/dto/enroll-existing-student.dto.ts](../src/modules/classes/dto/enroll-existing-student.dto.ts) | 7 | EnrollExistingStudentDto |
 | [edutrack_be/src/modules/classes/dto/enroll-existing-students.dto.ts](../src/modules/classes/dto/enroll-existing-students.dto.ts) | 15 | EnrollExistingStudentsDto |
 | [edutrack_be/src/modules/classes/dto/query-classes.dto.ts](../src/modules/classes/dto/query-classes.dto.ts) | 8 | QueryClassesDto |
@@ -276,10 +278,10 @@ Phạm vi: 380 file mã/cấu hình/style/tài nguyên văn bản, 74389 dòng. 
 | [edutrack_fe/components/classes/attendance/attendance-table.tsx](../../edutrack_fe/components/classes/attendance/attendance-table.tsx) | 229 | AttendanceTable |
 | [edutrack_fe/components/classes/class-attendance-tab.module.css](../../edutrack_fe/components/classes/class-attendance-tab.module.css) | 215 |  |
 | [edutrack_fe/components/classes/class-attendance-tab.tsx](../../edutrack_fe/components/classes/class-attendance-tab.tsx) | 377 | ClassAttendanceTab, getApiErrorMessage |
-| [edutrack_fe/components/classes/class-schedule-parts.tsx](../../edutrack_fe/components/classes/class-schedule-parts.tsx) | 1498 | SummaryItem, CurrentFixedSchedule, WeekCalendar, DayHeader, PeriodHeader, CalendarCell, ScheduleEventCard, TemporarySchedulePanel, LessonAdjustmentControls, CalendarSkeleton, SelectField, DateField, TimeField, buildFixedFormFromSchedule, buildTemporaryFormFromSchedule, buildTemporaryFormFromEvent, validateFixedSchedule, buildTemporaryPayload, formatTemporarySchedule, getActionLabel, getTemporaryIcon, getEventStyle, getEventIcon, getEventLabel, formatTimeRange, getLessonContent, getCalendarCellKey, compareEventsByStartTime, getTimeOrderValue, getSessionPeriod, getSessionPeriodIcon, mapEventTypeToScheduleType, isStandaloneTemporaryAction, getTemporaryScheduleIdFromEvent, isTemporaryScheduleInWeek, buildWeekDays, formatDate, toDateInputValue, normalizeTimeInput, normalizeTimeOnBlur, getCurrentWeekStartKey, getWeekStartKey, addDaysToDateKey, isToday, parseVietnamDateKey, getVietnamDayOfWeek, toVietnamDateKey, addDays, getDayLabel, FixedScheduleForm, TemporaryScheduleForm, LessonContentForm, ScheduleConfirmAction, SelectOption, SessionPeriodValue, SchedulePeriod, emptySlot, initialFixedForm, initialTemporaryForm, initialLessonForm, dayOptions, actionOptions, calendarPeriods, unknownPeriod |
-| [edutrack_fe/components/classes/class-schedule-tab.module.css](../../edutrack_fe/components/classes/class-schedule-tab.module.css) | 1295 |  |
-| [edutrack_fe/components/classes/class-schedule-tab.tsx](../../edutrack_fe/components/classes/class-schedule-tab.tsx) | 1569 | ClassScheduleTab |
-| [edutrack_fe/components/classes/class-tuition-tab.tsx](../../edutrack_fe/components/classes/class-tuition-tab.tsx) | 1135 | downloadBlobFile, ClassTuitionTab, ReceiptPreviewDialog, PriceSettingsPanel, PriceDateField |
+| [edutrack_fe/components/classes/class-schedule-parts.tsx](../../edutrack_fe/components/classes/class-schedule-parts.tsx) | 1508 | SummaryItem, CurrentFixedSchedule, WeekCalendar, DayHeader, PeriodHeader, CalendarCell, ScheduleEventCard, TemporarySchedulePanel, LessonAdjustmentControls, CalendarSkeleton, SelectField, DateField, TimeField, buildFixedFormFromSchedule, buildTemporaryFormFromSchedule, buildTemporaryFormFromEvent, validateFixedSchedule, buildTemporaryPayload, formatTemporarySchedule, getActionLabel, getTemporaryIcon, getEventStyle, getEventIcon, getEventLabel, formatTimeRange, getLessonContent, getCalendarCellKey, compareEventsByStartTime, getTimeOrderValue, getSessionPeriod, getSessionPeriodIcon, mapEventTypeToScheduleType, isStandaloneTemporaryAction, getTemporaryScheduleIdFromEvent, isTemporaryScheduleInWeek, buildWeekDays, formatDate, toDateInputValue, normalizeTimeInput, normalizeTimeOnBlur, getCurrentWeekStartKey, getWeekStartKey, addDaysToDateKey, isToday, parseVietnamDateKey, getVietnamDayOfWeek, toVietnamDateKey, addDays, getDayLabel, FixedScheduleForm, TemporaryScheduleForm, LessonContentForm, ScheduleConfirmAction, SelectOption, SessionPeriodValue, SchedulePeriod, emptySlot, initialFixedForm, initialTemporaryForm, initialLessonForm, dayOptions, actionOptions, calendarPeriods, unknownPeriod |
+| [edutrack_fe/components/classes/class-schedule-tab.module.css](../../edutrack_fe/components/classes/class-schedule-tab.module.css) | 1296 |  |
+| [edutrack_fe/components/classes/class-schedule-tab.tsx](../../edutrack_fe/components/classes/class-schedule-tab.tsx) | 1598 | ClassScheduleTab |
+| [edutrack_fe/components/classes/class-tuition-tab.tsx](../../edutrack_fe/components/classes/class-tuition-tab.tsx) | 1181 | downloadBlobFile, ClassTuitionTab, ReceiptPreviewDialog, PriceSettingsPanel, PriceDateField |
 | [edutrack_fe/components/classes/classroom-detail-page.tsx](../../edutrack_fe/components/classes/classroom-detail-page.tsx) | 529 | ClassroomDetailPage, buildClassFormFromClass, buildClassColorUsages |
 | [edutrack_fe/components/classes/classroom-detail-tabs.tsx](../../edutrack_fe/components/classes/classroom-detail-tabs.tsx) | 765 | ClassroomDetailTabs, StudentActionMenu, StudentsTab, StudentIdentity, FutureTab |
 | [edutrack_fe/components/classes/classroom-manager.module.css](../../edutrack_fe/components/classes/classroom-manager.module.css) | 1507 |  |
@@ -300,9 +302,11 @@ Phạm vi: 380 file mã/cấu hình/style/tài nguyên văn bản, 74389 dòng. 
 | [edutrack_fe/components/classes/student-picker-modal.tsx](../../edutrack_fe/components/classes/student-picker-modal.tsx) | 445 | StudentPickerModal, StudentOption |
 | [edutrack_fe/components/classes/student-profile-panel.tsx](../../edutrack_fe/components/classes/student-profile-panel.tsx) | 242 | StudentIdentityPanel, StudentProfileContent, StudentStatus, ProfileSection, DetailItem, formatProfileDate |
 | [edutrack_fe/components/classes/tuition/billing-student-list.tsx](../../edutrack_fe/components/classes/tuition/billing-student-list.tsx) | 160 | BillingStudentList |
+| [edutrack_fe/components/classes/tuition/price-history-modal.tsx](../../edutrack_fe/components/classes/tuition/price-history-modal.tsx) | 126 | PriceHistoryModal |
 | [edutrack_fe/components/classes/tuition/receipt-dialogs.tsx](../../edutrack_fe/components/classes/tuition/receipt-dialogs.tsx) | 1115 | IssueReceiptModal, getReceiptPreviewLoadingHtml, getReceiptPreviewErrorHtml, PaymentModal, SelectField, CurrencyField, SummaryLine, StatusPill, getTuitionEntriesPeriod, getTuitionEntryLessonText, uniqueNonEmpty, toDateInputValue, buildPriceForm, formatDateInput, handleProofFile, formatDate, BillingFilterState, IssueFormState, PaymentFormState, PriceFormState, SelectOption, IssueMode, initialFilters, initialIssueForm, BULK_RECEIPT_DOWNLOAD_ID |
 | [edutrack_fe/components/classes/tuition/receipt-history.tsx](../../edutrack_fe/components/classes/tuition/receipt-history.tsx) | 609 | ReceiptHistory, ReceiptActions, SelectField, StatusPill, IconButton, getReceiptPeriodOptions, getReceiptPeriodSummary, getReceiptPeriodKey, toDateInputValue, formatDate, getPaymentLabel, getPaymentTone |
 | [edutrack_fe/components/classes/tuition/tuition-metric.tsx](../../edutrack_fe/components/classes/tuition/tuition-metric.tsx) | 66 | TuitionMetric |
+| [edutrack_fe/components/classes/tuition/tuition-options.tsx](../../edutrack_fe/components/classes/tuition/tuition-options.tsx) | 57 | TuitionOptions |
 | [edutrack_fe/components/classes/use-deferred-class-image-upload.ts](../../edutrack_fe/components/classes/use-deferred-class-image-upload.ts) | 95 | useDeferredClassImageUpload |
 | [edutrack_fe/components/classes/use-deferred-student-avatar-upload.ts](../../edutrack_fe/components/classes/use-deferred-student-avatar-upload.ts) | 79 | useDeferredStudentAvatarUpload |
 | [edutrack_fe/components/dashboard/dashboard-overview.tsx](../../edutrack_fe/components/dashboard/dashboard-overview.tsx) | 937 | DashboardOverview, StatsGrid, TodayLessonsPanel, TodayLessonItem, RevenuePanel, RevenueMetric, PendingPaymentsPanel, PendingPaymentItem, PanelHeader, StatusBadge, EmptyState, ErrorPanel, DashboardSkeleton, getLessonStatusTone, getPaymentLabel, getPaymentTone, formatDate, formatCurrentMonthLabel, getInitial |
@@ -361,7 +365,7 @@ Phạm vi: 380 file mã/cấu hình/style/tài nguyên văn bản, 74389 dòng. 
 | [edutrack_fe/lib/api/invoice-images.ts](../../edutrack_fe/lib/api/invoice-images.ts) | 29 | invoiceImagesApi |
 | [edutrack_fe/lib/api/invoice-template.ts](../../edutrack_fe/lib/api/invoice-template.ts) | 63 | invoiceTemplateApi |
 | [edutrack_fe/lib/api/profile.ts](../../edutrack_fe/lib/api/profile.ts) | 218 | getToken, pushRequest, refreshForBinaryRequest, readBinaryError, fetchPaymentQrBlob, profileApi |
-| [edutrack_fe/lib/api/school.ts](../../edutrack_fe/lib/api/school.ts) | 742 | getToken, buildQuery, schoolApi |
+| [edutrack_fe/lib/api/school.ts](../../edutrack_fe/lib/api/school.ts) | 749 | getToken, buildQuery, schoolApi |
 | [edutrack_fe/lib/api/url.ts](../../edutrack_fe/lib/api/url.ts) | 15 | getApiBaseUrl, getApiRequestUrl |
 | [edutrack_fe/lib/auth/access-token.ts](../../edutrack_fe/lib/auth/access-token.ts) | 55 | getAccessTokenPayload, getAccessTokenExpiresAt, getAccessTokenSubject, isAccessTokenExpired, shouldRefreshAccessToken |
 | [edutrack_fe/lib/auth/token-storage.ts](../../edutrack_fe/lib/auth/token-storage.ts) | 181 | removeSession, AUTH_ACCESS_TOKEN_STORAGE_KEY, AUTH_USER_STORAGE_KEY, AUTH_SESSION_EXPIRED_EVENT, AUTH_SESSION_CHANGED_EVENT, PendingOtpState, tokenStorage |
@@ -388,14 +392,15 @@ Phạm vi: 380 file mã/cấu hình/style/tài nguyên văn bản, 74389 dòng. 
 | [edutrack_fe/tests/invoice-designer.spec.ts](../../edutrack_fe/tests/invoice-designer.spec.ts) | 1083 | renderReceiptReference, mockApi, saveTemplate, openDesigner |
 | [edutrack_fe/tests/push-notifications.spec.ts](../../edutrack_fe/tests/push-notifications.spec.ts) | 258 | setup |
 | [edutrack_fe/tests/push-worker.test.mjs](../../edutrack_fe/tests/push-worker.test.mjs) | 111 | harness |
-| [edutrack_fe/tests/receipt-template-selection.spec.ts](../../edutrack_fe/tests/receipt-template-selection.spec.ts) | 260 | setup, chooseTemplate |
+| [edutrack_fe/tests/receipt-template-selection.spec.ts](../../edutrack_fe/tests/receipt-template-selection.spec.ts) | 261 | setup, chooseTemplate |
 | [edutrack_fe/tests/schedule-resume.spec.ts](../../edutrack_fe/tests/schedule-resume.spec.ts) | 130 | setup, editSlots, confirmEditedResume |
 | [edutrack_fe/tests/session-persistence.spec.ts](../../edutrack_fe/tests/session-persistence.spec.ts) | 329 | seedSession, fulfillDashboard |
 | [edutrack_fe/tests/session-routing.test.mjs](../../edutrack_fe/tests/session-routing.test.mjs) | 60 |  |
+| [edutrack_fe/tests/temporary-schedule-content.spec.ts](../../edutrack_fe/tests/temporary-schedule-content.spec.ts) | 104 | setup, confirmCreation |
 | [edutrack_fe/tsconfig.json](../../edutrack_fe/tsconfig.json) | 35 |  |
 | [edutrack_fe/types/auth.ts](../../edutrack_fe/types/auth.ts) | 70 | RegisterPayload, LoginPayload, VerifyOtpPayload, ForgotPasswordPayload, ResetPasswordPayload, ResendOtpPayload, ResendPasswordResetOtpPayload, AuthResponse, RegisterResponse, ResendOtpResponse, ForgotPasswordResponse, ResetPasswordResponse, LogoutResponse |
 | [edutrack_fe/types/invoice-template.ts](../../edutrack_fe/types/invoice-template.ts) | 45 | InvoiceTemplate, SaveInvoiceTemplate, TemplateSaveMode, InvoiceRegion, InvoiceRegionRegistry, InvoiceImage, InvoiceImagePage |
-| [edutrack_fe/types/school.ts](../../edutrack_fe/types/school.ts) | 811 | Gender, StudentStatus, ClassStatus, EnrollmentStatus, ClassScheduleSlot, ScheduleOverrideAction, SuspendFixedSchedulePayload, ResumeFixedSchedulePayload, UpdateEnrollmentStatusPayload, LatestFixedSchedule, ClassScheduleOverview, ClassTemporarySchedule, StudentParent, Student, CreateStudentPayload, UpdateStudentPayload, DeleteStudentMode, StudentBulkDeleteResult, StudentSortField, StudentSortOrder, StudentListFilters, StudentImportResult, Classroom, ClassroomDetail, CreateClassPayload, UpdateClassPayload, SaveFixedSchedulePayload, CreateTemporarySchedulePayload, UpdateTemporarySchedulePayload, ClassSessionScheduleType, SaveClassSessionContentPayload, ClassSessionContent, TeacherScheduleEventType, TeacherScheduleClass, TeacherScheduleDay, TeacherScheduleEvent, TeacherWeekSchedule, DashboardTodayLesson, DashboardRevenueStats, DashboardMonthlyRevenue, DashboardPendingPayment, DashboardOverviewData, ScheduleConflict, ScheduleConflictResult, ScheduleAvailabilityPayload, ScheduleTimeSlot, ScheduleAvailability, EnrollmentResponse, EnrollmentBulkResponse, RemoveStudentsBulkResponse, AttendanceStatus, AttendanceRecord, AttendanceResponse, TakeAttendanceRecordPayload, TakeAttendancePayload, TakeAttendanceBatchPayload, FlatAttendanceRecord, AttendanceSheetResponse, Exam, ExamScore, ExamSheetResponse, CreateExamPayload, UpdateExamPayload, TakeExamScoreEntry, TakeExamScoresBatchPayload, PaymentStatus, ReceiptPdfStatus, ReceiptScope, ReceiptTeacherSnapshot, ReceiptClassSnapshot, ReceiptStudentSnapshot, ReceiptSessionSnapshot, ReceiptExamSnapshot, ReceiptDetail, ReceiptListItem, BillingOverviewStudent, BillingOverview, StudentBillingOverviewClass, StudentBillingOverview, BillingClassSummary, BillingCandidates, IssueReceiptPayload, ReceiptPreviewResponse, FileDownloadResponse, ReceiptDownloadResponse, ReceiptBulkDownloadPayload, UpdateReceiptPaymentPayload, AiChatMessage, AiScheduleSessionResponse, AiChatResponse, AiSessionListItem, AiSessionDetail |
+| [edutrack_fe/types/school.ts](../../edutrack_fe/types/school.ts) | 823 | Gender, StudentStatus, ClassStatus, EnrollmentStatus, ClassScheduleSlot, ScheduleOverrideAction, SuspendFixedSchedulePayload, ResumeFixedSchedulePayload, UpdateEnrollmentStatusPayload, LatestFixedSchedule, ClassScheduleOverview, ClassTemporarySchedule, StudentParent, Student, CreateStudentPayload, UpdateStudentPayload, DeleteStudentMode, StudentBulkDeleteResult, StudentSortField, StudentSortOrder, StudentListFilters, StudentImportResult, Classroom, ClassroomDetail, ClassPriceHistoryEntry, CreateClassPayload, UpdateClassPayload, SaveFixedSchedulePayload, CreateTemporarySchedulePayload, UpdateTemporarySchedulePayload, ClassSessionScheduleType, SaveClassSessionContentPayload, ClassSessionContent, TeacherScheduleEventType, TeacherScheduleClass, TeacherScheduleDay, TeacherScheduleEvent, TeacherWeekSchedule, DashboardTodayLesson, DashboardRevenueStats, DashboardMonthlyRevenue, DashboardPendingPayment, DashboardOverviewData, ScheduleConflict, ScheduleConflictResult, ScheduleAvailabilityPayload, ScheduleTimeSlot, ScheduleAvailability, EnrollmentResponse, EnrollmentBulkResponse, RemoveStudentsBulkResponse, AttendanceStatus, AttendanceRecord, AttendanceResponse, TakeAttendanceRecordPayload, TakeAttendancePayload, TakeAttendanceBatchPayload, FlatAttendanceRecord, AttendanceSheetResponse, Exam, ExamScore, ExamSheetResponse, CreateExamPayload, UpdateExamPayload, TakeExamScoreEntry, TakeExamScoresBatchPayload, PaymentStatus, ReceiptPdfStatus, ReceiptScope, ReceiptTeacherSnapshot, ReceiptClassSnapshot, ReceiptStudentSnapshot, ReceiptSessionSnapshot, ReceiptExamSnapshot, ReceiptDetail, ReceiptListItem, BillingOverviewStudent, BillingOverview, StudentBillingOverviewClass, StudentBillingOverview, BillingClassSummary, BillingCandidates, IssueReceiptPayload, ReceiptPreviewResponse, FileDownloadResponse, ReceiptDownloadResponse, ReceiptBulkDownloadPayload, UpdateReceiptPaymentPayload, AiChatMessage, AiScheduleSessionResponse, AiChatResponse, AiSessionListItem, AiSessionDetail |
 | [edutrack_fe/types/user.ts](../../edutrack_fe/types/user.ts) | 77 | UserRole, PushDeviceType, PushDevice, PushStatus, PaymentBank, User, UpdateProfilePayload, PaymentQrUploadResponse, ChangePasswordPayload |
 
 ## API backend
@@ -423,36 +428,37 @@ Tất cả đường dẫn controller được thêm prefix /api tại src/main.
 | [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):57 | POST | /api/classes | create(@CurrentUser() user: JwtUser, @Body() dto: CreateClassDto) | @UseGuards(JwtAuthGuard) |
 | [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):62 | POST | /api/classes/image | uploadClassImage(@UploadedFile() file?: UploadImageFile) | @UseGuards(JwtAuthGuard) |
 | [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):82 | GET | /api/classes/:classId | findDetail(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):87 | PATCH | /api/classes/:classId | updateClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: UpdateClassDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):96 | DELETE | /api/classes/:classId | archiveClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):104 | GET | /api/classes/:classId/schedules | getSchedules(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):112 | POST | /api/classes/:classId/schedules/fixed | saveFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateFixedScheduleDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):121 | POST | /api/classes/:classId/schedules/fixed/suspend-preview | previewSuspendFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SuspendFixedScheduleDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):134 | POST | /api/classes/:classId/schedules/fixed/suspend | suspendFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SuspendFixedScheduleDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):143 | POST | /api/classes/:classId/schedules/fixed/resume | resumeFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: ResumeFixedScheduleDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):152 | POST | /api/classes/:classId/schedules/temporary | createTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateTemporaryScheduleDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):165 | PATCH | /api/classes/:classId/schedules/temporary/:scheduleId | updateTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('scheduleId') scheduleId: string, @Body() dto: UpdateTemporaryScheduleDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):180 | DELETE | /api/classes/:classId/schedules/temporary/:scheduleId | revokeTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('scheduleId') scheduleId: string) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):193 | POST | /api/classes/:classId/schedules/session-content | saveSessionContent(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SaveClassSessionContentDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):202 | POST | /api/classes/:classId/students | enrollExistingStudent(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: EnrollExistingStudentDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):215 | POST | /api/classes/:classId/students/bulk | enrollExistingStudents(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: EnrollExistingStudentsDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):228 | POST | /api/classes/:classId/students/new | createStudentAndEnroll(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateStudentDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):241 | POST | /api/classes/:classId/students/bulk-remove | removeStudentsFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: RemoveExistingStudentsDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):254 | PATCH | /api/classes/:classId/students/:studentId/status | updateStudentEnrollmentStatus(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string, @Body() dto: UpdateEnrollmentStatusDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):269 | DELETE | /api/classes/:classId/students/:studentId/hard | hardDeleteStudentFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):282 | DELETE | /api/classes/:classId/students/:studentId | removeStudentFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):295 | GET | /api/classes/:classId/attendance | getAttendance(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Query('date') date: string, @Query('startTime') startTime: string, @Query('endTime') endTime: string) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):312 | GET | /api/classes/:id/attendance-sheet | getAttendanceSheet(@CurrentUser() user: JwtUser, @Param('id') classId: string) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):320 | POST | /api/classes/:id/attendance-batch | takeAttendanceBatch(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: TakeAttendanceBatchDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):329 | GET | /api/classes/:classId/attendance-overview | getAttendanceOverview(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):337 | POST | /api/classes/:classId/attendance | takeAttendance(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: TakeAttendanceDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):348 | GET | /api/classes/:id/exam-sheet | getExamSheet(@CurrentUser() user: JwtUser, @Param('id') classId: string) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):353 | POST | /api/classes/:id/exams | createExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: CreateExamDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):362 | PATCH | /api/classes/:id/exams/:examId | updateExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Param('examId') examId: string, @Body() dto: UpdateExamDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):372 | DELETE | /api/classes/:id/exams/:examId | deleteExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Param('examId') examId: string) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):381 | POST | /api/classes/:id/exams/file | uploadExamFile(@UploadedFile() file?: UploadImageFile) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):396 | POST | /api/classes/:id/exam-scores | takeExamScoresBatch(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: TakeExamScoresBatchDto) | @UseGuards(JwtAuthGuard) |
-| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):405 | POST | /api/classes/:id/exam-scores/evidence | uploadExamEvidenceImage(@UploadedFile() file?: UploadImageFile) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):87 | GET | /api/classes/:classId/price-history | findPriceHistory(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):95 | PATCH | /api/classes/:classId | updateClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: UpdateClassDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):104 | DELETE | /api/classes/:classId | archiveClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):112 | GET | /api/classes/:classId/schedules | getSchedules(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):120 | POST | /api/classes/:classId/schedules/fixed | saveFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateFixedScheduleDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):129 | POST | /api/classes/:classId/schedules/fixed/suspend-preview | previewSuspendFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SuspendFixedScheduleDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):142 | POST | /api/classes/:classId/schedules/fixed/suspend | suspendFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SuspendFixedScheduleDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):151 | POST | /api/classes/:classId/schedules/fixed/resume | resumeFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: ResumeFixedScheduleDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):160 | POST | /api/classes/:classId/schedules/temporary | createTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateTemporaryScheduleDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):173 | PATCH | /api/classes/:classId/schedules/temporary/:scheduleId | updateTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('scheduleId') scheduleId: string, @Body() dto: UpdateTemporaryScheduleDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):188 | DELETE | /api/classes/:classId/schedules/temporary/:scheduleId | revokeTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('scheduleId') scheduleId: string) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):201 | POST | /api/classes/:classId/schedules/session-content | saveSessionContent(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SaveClassSessionContentDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):210 | POST | /api/classes/:classId/students | enrollExistingStudent(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: EnrollExistingStudentDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):223 | POST | /api/classes/:classId/students/bulk | enrollExistingStudents(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: EnrollExistingStudentsDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):236 | POST | /api/classes/:classId/students/new | createStudentAndEnroll(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateStudentDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):249 | POST | /api/classes/:classId/students/bulk-remove | removeStudentsFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: RemoveExistingStudentsDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):262 | PATCH | /api/classes/:classId/students/:studentId/status | updateStudentEnrollmentStatus(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string, @Body() dto: UpdateEnrollmentStatusDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):277 | DELETE | /api/classes/:classId/students/:studentId/hard | hardDeleteStudentFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):290 | DELETE | /api/classes/:classId/students/:studentId | removeStudentFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):303 | GET | /api/classes/:classId/attendance | getAttendance(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Query('date') date: string, @Query('startTime') startTime: string, @Query('endTime') endTime: string) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):320 | GET | /api/classes/:id/attendance-sheet | getAttendanceSheet(@CurrentUser() user: JwtUser, @Param('id') classId: string) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):328 | POST | /api/classes/:id/attendance-batch | takeAttendanceBatch(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: TakeAttendanceBatchDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):337 | GET | /api/classes/:classId/attendance-overview | getAttendanceOverview(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):345 | POST | /api/classes/:classId/attendance | takeAttendance(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: TakeAttendanceDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):356 | GET | /api/classes/:id/exam-sheet | getExamSheet(@CurrentUser() user: JwtUser, @Param('id') classId: string) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):361 | POST | /api/classes/:id/exams | createExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: CreateExamDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):370 | PATCH | /api/classes/:id/exams/:examId | updateExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Param('examId') examId: string, @Body() dto: UpdateExamDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):380 | DELETE | /api/classes/:id/exams/:examId | deleteExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Param('examId') examId: string) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):389 | POST | /api/classes/:id/exams/file | uploadExamFile(@UploadedFile() file?: UploadImageFile) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):404 | POST | /api/classes/:id/exam-scores | takeExamScoresBatch(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: TakeExamScoresBatchDto) | @UseGuards(JwtAuthGuard) |
+| [edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts):413 | POST | /api/classes/:id/exam-scores/evidence | uploadExamEvidenceImage(@UploadedFile() file?: UploadImageFile) | @UseGuards(JwtAuthGuard) |
 | [edutrack_be/src/modules/dashboard/dashboard.controller.ts](../src/modules/dashboard/dashboard.controller.ts):12 | GET | /api/dashboard/overview | getOverview(@CurrentUser() user: JwtUser) | @UseGuards(JwtAuthGuard) |
 | [edutrack_be/src/modules/invoice-template/invoice-images.controller.ts](../src/modules/invoice-template/invoice-images.controller.ts):28 | GET | /api/invoice-images | list(@CurrentUser() user: JwtUser, @Query() query: QueryInvoiceImagesDto) | @UseGuards(JwtAuthGuard) |
 | [edutrack_be/src/modules/invoice-template/invoice-images.controller.ts](../src/modules/invoice-template/invoice-images.controller.ts):33 | POST | /api/invoice-images | upload(@CurrentUser() user: JwtUser, @UploadedFile() file?: UploadImageFile) | @UseGuards(JwtAuthGuard) |
@@ -1317,6 +1323,22 @@ Test labels (khai báo, không phải kết quả thực thi):
 - Dòng 331: rejects clearing when billed tuition exists even if the attendance flag is stale
 - Dòng 348: resets the status on the MongoDB standalone fallback path too
 
+### edutrack_be/src/modules/classes/classes-price-history.spec.ts
+
+[edutrack_be/src/modules/classes/classes-price-history.spec.ts](../src/modules/classes/classes-price-history.spec.ts) — 122 dòng.
+
+Dependencies: `@nestjs/common`, `mongoose`, `./classes.service`, `../school-management/enums`.
+
+Functions: `fixture(ownedClass: typeof classroom \| null = classroom, versions: unknown[] = [])` (dòng 10).
+
+Test labels (khai báo, không phải kết quả thực thi):
+
+- Dòng 45: Class price history
+- Dòng 46: checks ownership before reading price versions and returns only public price fields
+- Dòng 78: refuses a class that does not belong to the teacher without reading its history
+- Dòng 86: returns the existing class price for legacy classes with no saved versions
+- Dòng 100: represents the legacy baseline as the initial price instead of a misleading 1970 date
+
 ### edutrack_be/src/modules/classes/classes-schedule-guard.spec.ts
 
 [edutrack_be/src/modules/classes/classes-schedule-guard.spec.ts](../src/modules/classes/classes-schedule-guard.spec.ts) — 77 dòng.
@@ -1328,9 +1350,28 @@ Test labels (khai báo, không phải kết quả thực thi):
 - Dòng 10: ClassesService schedule attendance guard
 - Dòng 11: does not delete overrides or suspend the fixed schedule when attendance blocks removal
 
+### edutrack_be/src/modules/classes/classes-temporary-content.spec.ts
+
+[edutrack_be/src/modules/classes/classes-temporary-content.spec.ts](../src/modules/classes/classes-temporary-content.spec.ts) — 227 dòng.
+
+Dependencies: `@nestjs/common`, `mongoose`, `./classes.service`, `./dto/create-temporary-schedule.dto`, `../schedules/dto/check-schedule.dto`, `../school-management/enums`.
+
+Functions: `fixture()` (dòng 22).
+
+Test labels (khai báo, không phải kết quả thực thi):
+
+- Dòng 73: Temporary schedule with initial lesson content
+- Dòng 74: saves %s content in the matching tenant/session with UTC hours
+- Dòng 122: keeps content optional and does not materialize an empty session
+- Dòng 145: rolls back the new override when content cannot be saved
+- Dòng 168: does not save either record when conflict checking blocks creation
+- Dòng 188: Initial lesson content validation
+- Dòng 195: accepts content in both the creation and precheck requests
+- Dòng 214: rejects invalid content: %j
+
 ### edutrack_be/src/modules/classes/classes.controller.ts
 
-[edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts) — 423 dòng.
+[edutrack_be/src/modules/classes/classes.controller.ts](../src/modules/classes/classes.controller.ts) — 431 dòng.
 
 Dependencies: `@nestjs/common`, `@nestjs/platform-express`, `../../common/decorators/current-user.decorator`, `../../common/types/authenticated-request.type`, `../auth/guards/jwt-auth.guard`, `../students/dto/create-student.dto`, `./classes.service`, `../cloudinary/cloudinary.service`, `./dto/create-class.dto`, `./dto/create-fixed-schedule.dto`, `./dto/create-temporary-schedule.dto`, `./dto/enroll-existing-student.dto`, `./dto/enroll-existing-students.dto`, `./dto/query-classes.dto`, `./dto/remove-existing-students.dto`, `./dto/save-class-session-content.dto`, `./dto/take-attendance-batch.dto`, `./dto/update-class.dto`, `./dto/update-temporary-schedule.dto`, `./dto/take-attendance.dto`, `./dto/create-exam.dto`, `./dto/update-exam.dto`, `./dto/take-exam-scores-batch.dto`, `./dto/suspend-fixed-schedule.dto`, `./dto/resume-fixed-schedule.dto`, `./dto/update-enrollment-status.dto`.
 
@@ -1342,36 +1383,37 @@ Dependencies: `@nestjs/common`, `@nestjs/platform-express`, `../../common/decora
 | create | 57 | public create(@CurrentUser() user: JwtUser, @Body() dto: CreateClassDto) | @Post() |
 | uploadClassImage | 62 | public uploadClassImage(@UploadedFile() file?: UploadImageFile) | @Post('image') @UseInterceptors( FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024, }, }), ) |
 | findDetail | 82 | public findDetail(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @Get(':classId') |
-| updateClass | 87 | public updateClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: UpdateClassDto) | @Patch(':classId') |
-| archiveClass | 96 | public archiveClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @Delete(':classId') |
-| getSchedules | 104 | public getSchedules(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @Get(':classId/schedules') |
-| saveFixedSchedule | 112 | public saveFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateFixedScheduleDto) | @Post(':classId/schedules/fixed') |
-| previewSuspendFixedSchedule | 121 | public previewSuspendFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SuspendFixedScheduleDto) | @Post(':classId/schedules/fixed/suspend-preview') |
-| suspendFixedSchedule | 134 | public suspendFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SuspendFixedScheduleDto) | @Post(':classId/schedules/fixed/suspend') |
-| resumeFixedSchedule | 143 | public resumeFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: ResumeFixedScheduleDto) | @Post(':classId/schedules/fixed/resume') |
-| createTemporarySchedule | 152 | public createTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateTemporaryScheduleDto) | @Post(':classId/schedules/temporary') |
-| updateTemporarySchedule | 165 | public updateTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('scheduleId') scheduleId: string, @Body() dto: UpdateTemporaryScheduleDto) | @Patch(':classId/schedules/temporary/:scheduleId') |
-| revokeTemporarySchedule | 180 | public revokeTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('scheduleId') scheduleId: string) | @Delete(':classId/schedules/temporary/:scheduleId') |
-| saveSessionContent | 193 | public saveSessionContent(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SaveClassSessionContentDto) | @Post(':classId/schedules/session-content') |
-| enrollExistingStudent | 202 | public enrollExistingStudent(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: EnrollExistingStudentDto) | @Post(':classId/students') |
-| enrollExistingStudents | 215 | public enrollExistingStudents(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: EnrollExistingStudentsDto) | @Post(':classId/students/bulk') |
-| createStudentAndEnroll | 228 | public createStudentAndEnroll(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateStudentDto) | @Post(':classId/students/new') |
-| removeStudentsFromClass | 241 | public removeStudentsFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: RemoveExistingStudentsDto) | @Post(':classId/students/bulk-remove') |
-| updateStudentEnrollmentStatus | 254 | public updateStudentEnrollmentStatus(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string, @Body() dto: UpdateEnrollmentStatusDto) | @Patch(':classId/students/:studentId/status') |
-| hardDeleteStudentFromClass | 269 | public hardDeleteStudentFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string) | @Delete(':classId/students/:studentId/hard') |
-| removeStudentFromClass | 282 | public removeStudentFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string) | @Delete(':classId/students/:studentId') |
-| getAttendance | 295 | public getAttendance(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Query('date') date: string, @Query('startTime') startTime: string, @Query('endTime') endTime: string) | @Get(':classId/attendance') |
-| getAttendanceSheet | 312 | public getAttendanceSheet(@CurrentUser() user: JwtUser, @Param('id') classId: string) | @Get(':id/attendance-sheet') |
-| takeAttendanceBatch | 320 | public takeAttendanceBatch(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: TakeAttendanceBatchDto) | @Post(':id/attendance-batch') |
-| getAttendanceOverview | 329 | public getAttendanceOverview(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @Get(':classId/attendance-overview') |
-| takeAttendance | 337 | public takeAttendance(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: TakeAttendanceDto) | @Post(':classId/attendance') |
-| getExamSheet | 348 | public getExamSheet(@CurrentUser() user: JwtUser, @Param('id') classId: string) | @Get(':id/exam-sheet') |
-| createExam | 353 | public createExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: CreateExamDto) | @Post(':id/exams') |
-| updateExam | 362 | public updateExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Param('examId') examId: string, @Body() dto: UpdateExamDto) | @Patch(':id/exams/:examId') |
-| deleteExam | 372 | public deleteExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Param('examId') examId: string) | @Delete(':id/exams/:examId') |
-| uploadExamFile | 381 | public uploadExamFile(@UploadedFile() file?: UploadImageFile) | @Post(':id/exams/file') @UseInterceptors( FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024, // 5MB }, }), ) |
-| takeExamScoresBatch | 396 | public takeExamScoresBatch(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: TakeExamScoresBatchDto) | @Post(':id/exam-scores') |
-| uploadExamEvidenceImage | 405 | public uploadExamEvidenceImage(@UploadedFile() file?: UploadImageFile) | @Post(':id/exam-scores/evidence') @UseInterceptors( FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024, // 5MB }, }), ) |
+| findPriceHistory | 87 | public findPriceHistory(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @Get(':classId/price-history') |
+| updateClass | 95 | public updateClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: UpdateClassDto) | @Patch(':classId') |
+| archiveClass | 104 | public archiveClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @Delete(':classId') |
+| getSchedules | 112 | public getSchedules(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @Get(':classId/schedules') |
+| saveFixedSchedule | 120 | public saveFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateFixedScheduleDto) | @Post(':classId/schedules/fixed') |
+| previewSuspendFixedSchedule | 129 | public previewSuspendFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SuspendFixedScheduleDto) | @Post(':classId/schedules/fixed/suspend-preview') |
+| suspendFixedSchedule | 142 | public suspendFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SuspendFixedScheduleDto) | @Post(':classId/schedules/fixed/suspend') |
+| resumeFixedSchedule | 151 | public resumeFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: ResumeFixedScheduleDto) | @Post(':classId/schedules/fixed/resume') |
+| createTemporarySchedule | 160 | public createTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateTemporaryScheduleDto) | @Post(':classId/schedules/temporary') |
+| updateTemporarySchedule | 173 | public updateTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('scheduleId') scheduleId: string, @Body() dto: UpdateTemporaryScheduleDto) | @Patch(':classId/schedules/temporary/:scheduleId') |
+| revokeTemporarySchedule | 188 | public revokeTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('scheduleId') scheduleId: string) | @Delete(':classId/schedules/temporary/:scheduleId') |
+| saveSessionContent | 201 | public saveSessionContent(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SaveClassSessionContentDto) | @Post(':classId/schedules/session-content') |
+| enrollExistingStudent | 210 | public enrollExistingStudent(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: EnrollExistingStudentDto) | @Post(':classId/students') |
+| enrollExistingStudents | 223 | public enrollExistingStudents(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: EnrollExistingStudentsDto) | @Post(':classId/students/bulk') |
+| createStudentAndEnroll | 236 | public createStudentAndEnroll(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateStudentDto) | @Post(':classId/students/new') |
+| removeStudentsFromClass | 249 | public removeStudentsFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: RemoveExistingStudentsDto) | @Post(':classId/students/bulk-remove') |
+| updateStudentEnrollmentStatus | 262 | public updateStudentEnrollmentStatus(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string, @Body() dto: UpdateEnrollmentStatusDto) | @Patch(':classId/students/:studentId/status') |
+| hardDeleteStudentFromClass | 277 | public hardDeleteStudentFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string) | @Delete(':classId/students/:studentId/hard') |
+| removeStudentFromClass | 290 | public removeStudentFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string) | @Delete(':classId/students/:studentId') |
+| getAttendance | 303 | public getAttendance(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Query('date') date: string, @Query('startTime') startTime: string, @Query('endTime') endTime: string) | @Get(':classId/attendance') |
+| getAttendanceSheet | 320 | public getAttendanceSheet(@CurrentUser() user: JwtUser, @Param('id') classId: string) | @Get(':id/attendance-sheet') |
+| takeAttendanceBatch | 328 | public takeAttendanceBatch(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: TakeAttendanceBatchDto) | @Post(':id/attendance-batch') |
+| getAttendanceOverview | 337 | public getAttendanceOverview(@CurrentUser() user: JwtUser, @Param('classId') classId: string) | @Get(':classId/attendance-overview') |
+| takeAttendance | 345 | public takeAttendance(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: TakeAttendanceDto) | @Post(':classId/attendance') |
+| getExamSheet | 356 | public getExamSheet(@CurrentUser() user: JwtUser, @Param('id') classId: string) | @Get(':id/exam-sheet') |
+| createExam | 361 | public createExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: CreateExamDto) | @Post(':id/exams') |
+| updateExam | 370 | public updateExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Param('examId') examId: string, @Body() dto: UpdateExamDto) | @Patch(':id/exams/:examId') |
+| deleteExam | 380 | public deleteExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Param('examId') examId: string) | @Delete(':id/exams/:examId') |
+| uploadExamFile | 389 | public uploadExamFile(@UploadedFile() file?: UploadImageFile) | @Post(':id/exams/file') @UseInterceptors( FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024, // 5MB }, }), ) |
+| takeExamScoresBatch | 404 | public takeExamScoresBatch(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: TakeExamScoresBatchDto) | @Post(':id/exam-scores') |
+| uploadExamEvidenceImage | 413 | public uploadExamEvidenceImage(@UploadedFile() file?: UploadImageFile) | @Post(':id/exam-scores/evidence') @UseInterceptors( FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024, // 5MB }, }), ) |
 
 Exports: `ClassesController` (44).
 
@@ -1390,7 +1432,7 @@ Exports: `ClassesModule` (10).
 
 ### edutrack_be/src/modules/classes/classes.service.ts
 
-[edutrack_be/src/modules/classes/classes.service.ts](../src/modules/classes/classes.service.ts) — 3345 dòng.
+[edutrack_be/src/modules/classes/classes.service.ts](../src/modules/classes/classes.service.ts) — 3400 dòng.
 
 Dependencies: `@nestjs/common`, `@nestjs/mongoose`, `mongoose`, `../../common/utils/search-normalizer`, `../../common/utils/vietnam-time`, `../school-management/enums`, `../school-management/schemas/class.schema`, `../school-management/schemas/class-price-version.schema`, `../school-management/schemas/class-session.schema`, `../school-management/schemas/attendance.schema`, `../school-management/schemas/tuition-entry.schema`, `../school-management/schemas/exam.schema`, `../school-management/schemas/exam-score.schema`, `../school-management/schemas/class-enrollment.schema`, `../school-management/schemas/schedule-version.schema`, `../school-management/schemas/schedule-override.schema`, `../school-management/schemas/student.schema`, `../students/dto/create-student.dto`, `../students/students.service`, `../schedules/schedules.service`, `../schedules/schedule-conflicts.service`, `./dto/create-class.dto`, `./dto/create-fixed-schedule.dto`, `./dto/create-temporary-schedule.dto`, `./dto/query-classes.dto`, `./dto/save-class-session-content.dto`, `./dto/update-class.dto`, `./dto/update-temporary-schedule.dto`, `./dto/take-attendance.dto`, `./dto/take-attendance-batch.dto`, `./dto/create-exam.dto`, `./dto/update-exam.dto`, `./dto/take-exam-scores-batch.dto`, `./dto/suspend-fixed-schedule.dto`, `./dto/resume-fixed-schedule.dto`, `./dto/update-enrollment-status.dto`, `./attendance-tuition`.
 
@@ -1411,78 +1453,79 @@ Dependencies: `@nestjs/common`, `@nestjs/mongoose`, `mongoose`, `../../common/ut
 | resumeFixedSchedule | 847 | public resumeFixedSchedule(teacherId: string, classId: string, dto: ResumeFixedScheduleDto) |  |
 | createTemporarySchedule | 942 | public createTemporarySchedule(teacherId: string, classId: string, dto: CreateTemporaryScheduleDto) |  |
 | createTemporaryScheduleLocked | 952 | private createTemporaryScheduleLocked(teacherId: string, classId: string, dto: CreateTemporaryScheduleDto) |  |
-| updateTemporarySchedule | 982 | public updateTemporarySchedule(teacherId: string, classId: string, scheduleId: string, dto: UpdateTemporaryScheduleDto) |  |
-| updateTemporaryScheduleLocked | 993 | private updateTemporaryScheduleLocked(teacherId: string, classId: string, scheduleId: string, dto: UpdateTemporaryScheduleDto) |  |
-| revokeTemporarySchedule | 1068 | public revokeTemporarySchedule(teacherId: string, classId: string, scheduleId: string) |  |
-| revokeTemporaryScheduleLocked | 1078 | private revokeTemporaryScheduleLocked(teacherId: string, classId: string, scheduleId: string) |  |
-| saveSessionContent | 1108 | public saveSessionContent(teacherId: string, classId: string, dto: SaveClassSessionContentDto): Promise<ClassSessionResponse> |  |
-| enrollExistingStudent | 1191 | public enrollExistingStudent(teacherId: string, classId: string, studentId: string) |  |
-| enrollExistingStudents | 1210 | public enrollExistingStudents(teacherId: string, classId: string, studentIds: string[]): Promise<EnrollmentBulkResponse> |  |
-| createStudentAndEnroll | 1255 | public createStudentAndEnroll(teacherId: string, classId: string, dto: CreateStudentDto) |  |
-| removeStudentFromClass | 1289 | public removeStudentFromClass(teacherId: string, classId: string, studentId: string) |  |
-| removeStudentsFromClass | 1331 | public removeStudentsFromClass(teacherId: string, classId: string, studentIds: string[]): Promise<RemoveStudentsBulkResponse> |  |
-| getAttendance | 1396 | public getAttendance(teacherId: string, classId: string, dateString: string, startTimeString: string, endTimeString: string) |  |
-| getAttendanceSheet | 1491 | public getAttendanceSheet(teacherId: string, classId: string) |  |
-| takeAttendanceBatch | 1573 | public takeAttendanceBatch(teacherId: string, classId: string, dto: TakeAttendanceBatchDto) |  |
-| takeAttendanceBatchLocked | 1583 | private takeAttendanceBatchLocked(teacherId: string, classId: string, dto: TakeAttendanceBatchDto) |  |
-| takeAttendance | 1630 | public takeAttendance(teacherId: string, classId: string, dto: TakeAttendanceDto) |  |
-| takeAttendanceLocked | 1640 | private takeAttendanceLocked(teacherId: string, classId: string, dto: TakeAttendanceDto) |  |
-| saveAttendanceForSession | 1669 | private saveAttendanceForSession(teacherId: string, classId: string, dto: TakeAttendanceDto, dbSession?: ClientSession) |  |
-| resolveSessionScheduleType | 1973 | private resolveSessionScheduleType(scheduleEventType?: AttendanceScheduleEventType) |  |
-| getAttendanceOverview | 1995 | public getAttendanceOverview(teacherIdStr: string, classIdStr: string) |  |
-| getPopulatedAttendanceSession | 2044 | private getPopulatedAttendanceSession(session: Types.ObjectId \| PopulatedAttendanceSession \| null \| undefined): PopulatedAttendanceSession \| null |  |
-| getAttendanceSessionId | 2059 | private getAttendanceSessionId(session: Types.ObjectId \| PopulatedAttendanceSession \| null \| undefined) |  |
-| findBilledTuitionLocks | 2073 | private findBilledTuitionLocks(teacherId: Types.ObjectId, classId: Types.ObjectId, attendanceIdValues: ObjectIdValue[], sessionIdValues: ObjectIdValue[], studentIdValues: ObjectIdValue[], dbSession?: ClientSession): Promise<AttendanceBillingLocks> |  |
-| hasBilledTuitionEntry | 2137 | private hasBilledTuitionEntry(teacherId: Types.ObjectId, classId: Types.ObjectId, sessionId: Types.ObjectId, studentId: Types.ObjectId, attendanceId?: Types.ObjectId, dbSession?: ClientSession) |  |
-| toUniqueObjectIds | 2162 | private toUniqueObjectIds(values: ObjectIdValue[]) |  |
-| calculateAttendanceSummary | 2182 | private calculateAttendanceSummary(records: AttendanceSummaryRecord[]) |  |
-| resolveClassColorIndex | 2206 | private resolveClassColorIndex(teacherId: Types.ObjectId, requestedColorIndex?: number) |  |
-| normalizeColorIndex | 2237 | private normalizeColorIndex(colorIndex: number) |  |
-| normalizeColorHex | 2245 | private normalizeColorHex(colorHex: string \| undefined) |  |
-| countActiveStudentsInClass | 2259 | private countActiveStudentsInClass(teacherId: Types.ObjectId, classId: Types.ObjectId) |  |
-| deactivateClassEnrollments | 2272 | private deactivateClassEnrollments(teacherId: Types.ObjectId, classId: Types.ObjectId) |  |
-| findClassForTeacherOrThrow | 2293 | private findClassForTeacherOrThrow(teacherId: string, classId: string \| Types.ObjectId, session?: ClientSession) |  |
-| findActiveStudentsInClass | 2320 | private findActiveStudentsInClass(teacherId: string, classId: Types.ObjectId) |  |
-| createActiveEnrollment | 2347 | private createActiveEnrollment(teacherId: string, classId: Types.ObjectId, studentId: Types.ObjectId, session?: ClientSession) |  |
-| createStudentEnrollmentEntities | 2411 | private createStudentEnrollmentEntities(teacherId: string, classId: string, dto: CreateStudentDto, session?: ClientSession): Promise<StudentEnrollmentCreationResult> |  |
-| toClassResponse | 2436 | private toClassResponse(classroom: ClassDocument, studentCount: number, latestFixedSchedule: LatestFixedScheduleResponse \| null = null): ClassResponse |  |
-| resolvePriceEffectiveFrom | 2458 | private resolvePriceEffectiveFrom(value?: string) |  |
-| ensureClassPriceBaseline | 2466 | private ensureClassPriceBaseline(teacherId: Types.ObjectId, classroom: ClassDocument) |  |
-| upsertClassPriceVersion | 2492 | private upsertClassPriceVersion(teacherId: Types.ObjectId, classId: Types.ObjectId, price: PriceSnapshot, effectiveFrom: Date) |  |
-| findClassPriceForDate | 2524 | private findClassPriceForDate(teacherId: Types.ObjectId, classroom: ClassDocument, sessionDate: Date, dbSession?: ClientSession): Promise<PriceSnapshot> |  |
-| getFallbackClassPrice | 2547 | private getFallbackClassPrice(classroom: ClassDocument): PriceSnapshot |  |
-| normalizeSlot | 2554 | private normalizeSlot(slot: ScheduleSlotDto): ClassScheduleSlotResponse |  |
-| buildTemporarySchedulePayload | 2570 | private buildTemporarySchedulePayload(dto: CreateTemporaryScheduleDto) |  |
-| buildOptionalTemporaryTimePayload | 2634 | private buildOptionalTemporaryTimePayload(startTime: string \| undefined, endTime: string \| undefined) |  |
-| findLatestFixedScheduleMap | 2654 | private findLatestFixedScheduleMap(teacherId: Types.ObjectId, classIds: Types.ObjectId[]) |  |
-| findLatestFixedSchedule | 2687 | private findLatestFixedSchedule(teacherId: Types.ObjectId, classId: Types.ObjectId) |  |
-| toLatestFixedScheduleResponse | 2703 | private toLatestFixedScheduleResponse(schedule: LeanScheduleVersion): LatestFixedScheduleResponse |  |
-| toScheduleOverrideResponse | 2717 | private toScheduleOverrideResponse(schedule: LeanScheduleOverride \| ScheduleOverrideDocument): ScheduleOverrideResponse |  |
-| toClassSessionResponse | 2740 | private toClassSessionResponse(session: ClassSessionDocument): ClassSessionResponse |  |
-| toVietnamScheduleSlot | 2760 | private toVietnamScheduleSlot(slot: ClassScheduleSlotResponse, timeStorage?: 'utc' \| 'vietnam') |  |
-| toVietnamTime | 2777 | private toVietnamTime(time: string \| undefined, timeStorage?: 'utc' \| 'vietnam') |  |
-| toEnrollmentResponse | 2788 | private toEnrollmentResponse(enrollment: ClassEnrollmentDocument, student: StudentDocument): EnrollmentResponse |  |
-| getEnrollmentErrorMessage | 2803 | private getEnrollmentErrorMessage(error: unknown) |  |
-| toObjectId | 2834 | private toObjectId(value: string, fieldName: string) |  |
-| parseDate | 2842 | private parseDate(value: string, label: string) |  |
-| toVietnamDateKey | 2874 | private toVietnamDateKey(date: Date) |  |
-| getCurrentVietnamDate | 2883 | private getCurrentVietnamDate() |  |
-| requireDate | 2887 | private requireDate(value: string \| undefined, label: string) |  |
-| requireTime | 2895 | private requireTime(value: string \| undefined, label: string) |  |
-| getPreviousMoment | 2903 | private getPreviousMoment(date: Date) |  |
-| isStartBeforeEnd | 2907 | private isStartBeforeEnd(startTime: string, endTime: string) |  |
-| buildClassSessionSourceKey | 2911 | private buildClassSessionSourceKey(classId: string, date: string, startTime: string, endTime: string) |  |
-| updateStudentEnrollmentStatus | 2920 | public updateStudentEnrollmentStatus(teacherId: string, classId: string, studentId: string, dto: UpdateEnrollmentStatusDto) |  |
-| getEnrollmentDetail | 2957 | private getEnrollmentDetail(enrollment: ClassEnrollmentDocument) |  |
-| hardDeleteStudentFromClass | 2968 | public hardDeleteStudentFromClass(teacherId: string, classId: string, studentId: string) |  |
-| getExamSheet | 3017 | public getExamSheet(teacherIdStr: string, classIdStr: string) |  |
-| createExam | 3063 | public createExam(teacherIdStr: string, classIdStr: string, dto: CreateExamDto) |  |
-| updateExam | 3097 | public updateExam(teacherIdStr: string, classIdStr: string, examIdStr: string, dto: UpdateExamDto) |  |
-| deleteExam | 3140 | public deleteExam(teacherIdStr: string, classIdStr: string, examIdStr: string) |  |
-| takeExamScoresBatch | 3189 | public takeExamScoresBatch(teacherIdStr: string, classIdStr: string, dto: TakeExamScoresBatchDto) |  |
-| isDuplicateKeyError | 3306 | private isDuplicateKeyError(error: unknown) |  |
-| isTransactionUnsupportedError | 3315 | private isTransactionUnsupportedError(error: unknown) |  |
-| getErrorCode | 3332 | private getErrorCode(error: unknown) |  |
+| updateTemporarySchedule | 1008 | public updateTemporarySchedule(teacherId: string, classId: string, scheduleId: string, dto: UpdateTemporaryScheduleDto) |  |
+| updateTemporaryScheduleLocked | 1019 | private updateTemporaryScheduleLocked(teacherId: string, classId: string, scheduleId: string, dto: UpdateTemporaryScheduleDto) |  |
+| revokeTemporarySchedule | 1094 | public revokeTemporarySchedule(teacherId: string, classId: string, scheduleId: string) |  |
+| revokeTemporaryScheduleLocked | 1104 | private revokeTemporaryScheduleLocked(teacherId: string, classId: string, scheduleId: string) |  |
+| saveSessionContent | 1134 | public saveSessionContent(teacherId: string, classId: string, dto: SaveClassSessionContentDto): Promise<ClassSessionResponse> |  |
+| enrollExistingStudent | 1217 | public enrollExistingStudent(teacherId: string, classId: string, studentId: string) |  |
+| enrollExistingStudents | 1236 | public enrollExistingStudents(teacherId: string, classId: string, studentIds: string[]): Promise<EnrollmentBulkResponse> |  |
+| createStudentAndEnroll | 1281 | public createStudentAndEnroll(teacherId: string, classId: string, dto: CreateStudentDto) |  |
+| removeStudentFromClass | 1315 | public removeStudentFromClass(teacherId: string, classId: string, studentId: string) |  |
+| removeStudentsFromClass | 1357 | public removeStudentsFromClass(teacherId: string, classId: string, studentIds: string[]): Promise<RemoveStudentsBulkResponse> |  |
+| getAttendance | 1422 | public getAttendance(teacherId: string, classId: string, dateString: string, startTimeString: string, endTimeString: string) |  |
+| getAttendanceSheet | 1517 | public getAttendanceSheet(teacherId: string, classId: string) |  |
+| takeAttendanceBatch | 1599 | public takeAttendanceBatch(teacherId: string, classId: string, dto: TakeAttendanceBatchDto) |  |
+| takeAttendanceBatchLocked | 1609 | private takeAttendanceBatchLocked(teacherId: string, classId: string, dto: TakeAttendanceBatchDto) |  |
+| takeAttendance | 1656 | public takeAttendance(teacherId: string, classId: string, dto: TakeAttendanceDto) |  |
+| takeAttendanceLocked | 1666 | private takeAttendanceLocked(teacherId: string, classId: string, dto: TakeAttendanceDto) |  |
+| saveAttendanceForSession | 1695 | private saveAttendanceForSession(teacherId: string, classId: string, dto: TakeAttendanceDto, dbSession?: ClientSession) |  |
+| resolveSessionScheduleType | 1999 | private resolveSessionScheduleType(scheduleEventType?: AttendanceScheduleEventType) |  |
+| getAttendanceOverview | 2021 | public getAttendanceOverview(teacherIdStr: string, classIdStr: string) |  |
+| getPopulatedAttendanceSession | 2070 | private getPopulatedAttendanceSession(session: Types.ObjectId \| PopulatedAttendanceSession \| null \| undefined): PopulatedAttendanceSession \| null |  |
+| getAttendanceSessionId | 2085 | private getAttendanceSessionId(session: Types.ObjectId \| PopulatedAttendanceSession \| null \| undefined) |  |
+| findBilledTuitionLocks | 2099 | private findBilledTuitionLocks(teacherId: Types.ObjectId, classId: Types.ObjectId, attendanceIdValues: ObjectIdValue[], sessionIdValues: ObjectIdValue[], studentIdValues: ObjectIdValue[], dbSession?: ClientSession): Promise<AttendanceBillingLocks> |  |
+| hasBilledTuitionEntry | 2163 | private hasBilledTuitionEntry(teacherId: Types.ObjectId, classId: Types.ObjectId, sessionId: Types.ObjectId, studentId: Types.ObjectId, attendanceId?: Types.ObjectId, dbSession?: ClientSession) |  |
+| toUniqueObjectIds | 2188 | private toUniqueObjectIds(values: ObjectIdValue[]) |  |
+| calculateAttendanceSummary | 2208 | private calculateAttendanceSummary(records: AttendanceSummaryRecord[]) |  |
+| resolveClassColorIndex | 2232 | private resolveClassColorIndex(teacherId: Types.ObjectId, requestedColorIndex?: number) |  |
+| normalizeColorIndex | 2263 | private normalizeColorIndex(colorIndex: number) |  |
+| normalizeColorHex | 2271 | private normalizeColorHex(colorHex: string \| undefined) |  |
+| countActiveStudentsInClass | 2285 | private countActiveStudentsInClass(teacherId: Types.ObjectId, classId: Types.ObjectId) |  |
+| deactivateClassEnrollments | 2298 | private deactivateClassEnrollments(teacherId: Types.ObjectId, classId: Types.ObjectId) |  |
+| findClassForTeacherOrThrow | 2319 | private findClassForTeacherOrThrow(teacherId: string, classId: string \| Types.ObjectId, session?: ClientSession) |  |
+| findActiveStudentsInClass | 2346 | private findActiveStudentsInClass(teacherId: string, classId: Types.ObjectId) |  |
+| createActiveEnrollment | 2373 | private createActiveEnrollment(teacherId: string, classId: Types.ObjectId, studentId: Types.ObjectId, session?: ClientSession) |  |
+| createStudentEnrollmentEntities | 2437 | private createStudentEnrollmentEntities(teacherId: string, classId: string, dto: CreateStudentDto, session?: ClientSession): Promise<StudentEnrollmentCreationResult> |  |
+| toClassResponse | 2462 | private toClassResponse(classroom: ClassDocument, studentCount: number, latestFixedSchedule: LatestFixedScheduleResponse \| null = null): ClassResponse |  |
+| findPriceHistory | 2484 | public findPriceHistory(teacherId: string, classId: string) |  |
+| resolvePriceEffectiveFrom | 2513 | private resolvePriceEffectiveFrom(value?: string) |  |
+| ensureClassPriceBaseline | 2521 | private ensureClassPriceBaseline(teacherId: Types.ObjectId, classroom: ClassDocument) |  |
+| upsertClassPriceVersion | 2547 | private upsertClassPriceVersion(teacherId: Types.ObjectId, classId: Types.ObjectId, price: PriceSnapshot, effectiveFrom: Date) |  |
+| findClassPriceForDate | 2579 | private findClassPriceForDate(teacherId: Types.ObjectId, classroom: ClassDocument, sessionDate: Date, dbSession?: ClientSession): Promise<PriceSnapshot> |  |
+| getFallbackClassPrice | 2602 | private getFallbackClassPrice(classroom: ClassDocument): PriceSnapshot |  |
+| normalizeSlot | 2609 | private normalizeSlot(slot: ScheduleSlotDto): ClassScheduleSlotResponse |  |
+| buildTemporarySchedulePayload | 2625 | private buildTemporarySchedulePayload(dto: CreateTemporaryScheduleDto) |  |
+| buildOptionalTemporaryTimePayload | 2689 | private buildOptionalTemporaryTimePayload(startTime: string \| undefined, endTime: string \| undefined) |  |
+| findLatestFixedScheduleMap | 2709 | private findLatestFixedScheduleMap(teacherId: Types.ObjectId, classIds: Types.ObjectId[]) |  |
+| findLatestFixedSchedule | 2742 | private findLatestFixedSchedule(teacherId: Types.ObjectId, classId: Types.ObjectId) |  |
+| toLatestFixedScheduleResponse | 2758 | private toLatestFixedScheduleResponse(schedule: LeanScheduleVersion): LatestFixedScheduleResponse |  |
+| toScheduleOverrideResponse | 2772 | private toScheduleOverrideResponse(schedule: LeanScheduleOverride \| ScheduleOverrideDocument): ScheduleOverrideResponse |  |
+| toClassSessionResponse | 2795 | private toClassSessionResponse(session: ClassSessionDocument): ClassSessionResponse |  |
+| toVietnamScheduleSlot | 2815 | private toVietnamScheduleSlot(slot: ClassScheduleSlotResponse, timeStorage?: 'utc' \| 'vietnam') |  |
+| toVietnamTime | 2832 | private toVietnamTime(time: string \| undefined, timeStorage?: 'utc' \| 'vietnam') |  |
+| toEnrollmentResponse | 2843 | private toEnrollmentResponse(enrollment: ClassEnrollmentDocument, student: StudentDocument): EnrollmentResponse |  |
+| getEnrollmentErrorMessage | 2858 | private getEnrollmentErrorMessage(error: unknown) |  |
+| toObjectId | 2889 | private toObjectId(value: string, fieldName: string) |  |
+| parseDate | 2897 | private parseDate(value: string, label: string) |  |
+| toVietnamDateKey | 2929 | private toVietnamDateKey(date: Date) |  |
+| getCurrentVietnamDate | 2938 | private getCurrentVietnamDate() |  |
+| requireDate | 2942 | private requireDate(value: string \| undefined, label: string) |  |
+| requireTime | 2950 | private requireTime(value: string \| undefined, label: string) |  |
+| getPreviousMoment | 2958 | private getPreviousMoment(date: Date) |  |
+| isStartBeforeEnd | 2962 | private isStartBeforeEnd(startTime: string, endTime: string) |  |
+| buildClassSessionSourceKey | 2966 | private buildClassSessionSourceKey(classId: string, date: string, startTime: string, endTime: string) |  |
+| updateStudentEnrollmentStatus | 2975 | public updateStudentEnrollmentStatus(teacherId: string, classId: string, studentId: string, dto: UpdateEnrollmentStatusDto) |  |
+| getEnrollmentDetail | 3012 | private getEnrollmentDetail(enrollment: ClassEnrollmentDocument) |  |
+| hardDeleteStudentFromClass | 3023 | public hardDeleteStudentFromClass(teacherId: string, classId: string, studentId: string) |  |
+| getExamSheet | 3072 | public getExamSheet(teacherIdStr: string, classIdStr: string) |  |
+| createExam | 3118 | public createExam(teacherIdStr: string, classIdStr: string, dto: CreateExamDto) |  |
+| updateExam | 3152 | public updateExam(teacherIdStr: string, classIdStr: string, examIdStr: string, dto: UpdateExamDto) |  |
+| deleteExam | 3195 | public deleteExam(teacherIdStr: string, classIdStr: string, examIdStr: string) |  |
+| takeExamScoresBatch | 3244 | public takeExamScoresBatch(teacherIdStr: string, classIdStr: string, dto: TakeExamScoresBatchDto) |  |
+| isDuplicateKeyError | 3361 | private isDuplicateKeyError(error: unknown) |  |
+| isTransactionUnsupportedError | 3370 | private isTransactionUnsupportedError(error: unknown) |  |
+| getErrorCode | 3387 | private getErrorCode(error: unknown) |  |
 
 Exports: `ClassScheduleSlotResponse` (97), `LatestFixedScheduleResponse` (103), `ScheduleOverrideResponse` (111), `ClassSessionResponse` (124), `ClassResponse` (136), `ClassDetailResponse` (152), `ClassScheduleOverviewResponse` (156), `EnrollmentResponse` (163), `EnrollmentBulkError` (173), `EnrollmentBulkResponse` (179), `RemoveStudentsBulkResponse` (187), `ClassesService` (287).
 
@@ -1746,7 +1789,7 @@ Exports: `ScheduleSlotDto` (15), `CreateFixedScheduleDto` (29).
 
 ### edutrack_be/src/modules/classes/dto/create-temporary-schedule.dto.ts
 
-[edutrack_be/src/modules/classes/dto/create-temporary-schedule.dto.ts](../src/modules/classes/dto/create-temporary-schedule.dto.ts) — 46 dòng.
+[edutrack_be/src/modules/classes/dto/create-temporary-schedule.dto.ts](../src/modules/classes/dto/create-temporary-schedule.dto.ts) — 56 dòng.
 
 Dependencies: `class-validator`, `../../school-management/enums`.
 
@@ -1762,6 +1805,8 @@ Dependencies: `class-validator`, `../../school-management/enums`.
 | startTime | 33 | string (optional) | @IsOptional() @Matches(timePattern) |
 | endTime | 37 | string (optional) | @IsOptional() @Matches(timePattern) |
 | reason | 41 | string (optional) | @IsOptional() @IsString() @MaxLength(300) |
+| topic | 46 | string (optional) | @IsOptional() @IsString() @MaxLength(160) |
+| content | 51 | string (optional) | @IsOptional() @IsString() @MaxLength(1200) |
 
 Exports: `CreateTemporaryScheduleDto` (13).
 
@@ -6402,13 +6447,13 @@ API calls (trích tham số tĩnh, tối đa 180 ký tự/tham số):
 
 ### edutrack_fe/components/classes/class-schedule-parts.tsx
 
-[edutrack_fe/components/classes/class-schedule-parts.tsx](../../edutrack_fe/components/classes/class-schedule-parts.tsx) — 1498 dòng.
+[edutrack_fe/components/classes/class-schedule-parts.tsx](../../edutrack_fe/components/classes/class-schedule-parts.tsx) — 1508 dòng.
 
 Dependencies: `lucide-react`, `react`, `react`, `react-dom`, `@/types/school`, `./classroom-ui`, `./classroom-utils`, `./classroom-manager.module.css`, `./class-schedule-tab.module.css`.
 
-Functions: `SummaryItem({ icon, label, value, }: { icon: ReactNode; label: string; value: string; })` (dòng 223); `CurrentFixedSchedule({ schedule, isSuspended, onSuspend, onResume, }: { schedule: LatestFixedSchedule \| null; isSuspended?: boolean; onSuspend?: () => void; onResume?: () => void; })` (dòng 243); `WeekCalendar({ days, eventsByDateAndPeriod, onEventSelect, periods, }: { days: TeacherScheduleDay[]; eventsByDateAndPeriod: Map<string, TeacherScheduleEvent[]>; onEventSelect: (event: TeacherScheduleEvent) => void; periods: SchedulePeriod[]; })` (dòng 305); `DayHeader({ day }: { day: TeacherScheduleDay })` (dòng 375); `PeriodHeader({ period }: { period: SchedulePeriod })` (dòng 384); `CalendarCell({ day, events, onEventSelect, period, }: { day: TeacherScheduleDay; events: TeacherScheduleEvent[]; onEventSelect: (event: TeacherScheduleEvent) => void; period: SchedulePeriod; })` (dòng 398); `ScheduleEventCard({ event, onSelect, }: { event: TeacherScheduleEvent; onSelect: () => void; })` (dòng 436); `TemporarySchedulePanel({ isRevoking, onEdit, onRevoke, schedules, }: { isRevoking: boolean; onEdit: (schedule: ClassTemporarySchedule) => void; onRevoke: (scheduleId: string) => void; schedules: ClassTemporarySchedule[]; })` (dòng 486); `LessonAdjustmentControls({ event, form, isSaving, mode, onCancel, onChange, onModeChange, onSave, }: { event: TeacherScheduleEvent; form: TemporaryScheduleForm; isSaving: boolean; mode: ScheduleOverrideAction \| ""; onCancel: () => void; onChange: Dispatch<SetStateAction<TemporaryScheduleForm>>; onModeChange: (mode: ScheduleOverrideAction) => void; onSave: () => void; })` (dòng 555); `CalendarSkeleton({ days, periods, }: { days: TeacherScheduleDay[]; periods: SchedulePeriod[]; })` (dòng 694); `SelectField({ label, onChange, options, value, }: { label: string; onChange: (value: string) => void; options: SelectOption[]; value: string; })` (dòng 748); `DateField({ label, onChange, value, }: { label: string; onChange: (value: string) => void; value: string; })` (dòng 900); `TimeField({ label, onChange, value, }: { label: string; onChange: (value: string) => void; value: string; })` (dòng 925); `buildFixedFormFromSchedule(schedule: LatestFixedSchedule \| null): FixedScheduleForm` (dòng 955); `buildTemporaryFormFromSchedule(schedule: ClassTemporarySchedule): TemporaryScheduleForm` (dòng 970); `buildTemporaryFormFromEvent(event: TeacherScheduleEvent, action: ScheduleOverrideAction): TemporaryScheduleForm` (dòng 985); `validateFixedSchedule(form: FixedScheduleForm)` (dòng 1018); `buildTemporaryPayload(form: TemporaryScheduleForm): CreateTemporarySchedulePayload \| string` (dòng 1044); `formatTemporarySchedule(schedule: ClassTemporarySchedule)` (dòng 1101); `getActionLabel(action: ScheduleOverrideAction)` (dòng 1115); `getTemporaryIcon(action: ScheduleOverrideAction)` (dòng 1131); `getEventStyle(event: TeacherScheduleEvent)` (dòng 1147); `getEventIcon(type: TeacherScheduleEventType)` (dòng 1161); `getEventLabel(type: TeacherScheduleEventType)` (dòng 1181); `formatTimeRange(event: TeacherScheduleEvent)` (dòng 1205); `getLessonContent(event: TeacherScheduleEvent)` (dòng 1213); `getCalendarCellKey(date: string, period: SessionPeriodValue)` (dòng 1219); `compareEventsByStartTime(firstEvent: TeacherScheduleEvent, secondEvent: TeacherScheduleEvent)` (dòng 1223); `getTimeOrderValue(time?: string)` (dòng 1233); `getSessionPeriod(time?: string): { label: string; value: SessionPeriodValue; }` (dòng 1243); `getSessionPeriodIcon(period: SessionPeriodValue)` (dòng 1276); `mapEventTypeToScheduleType(type: TeacherScheduleEventType)` (dòng 1292); `isStandaloneTemporaryAction(action: ScheduleOverrideAction)` (dòng 1312); `getTemporaryScheduleIdFromEvent(event: TeacherScheduleEvent)` (dòng 1316); `isTemporaryScheduleInWeek(schedule: ClassTemporarySchedule, weekStartKey: string)` (dòng 1324); `buildWeekDays(weekStartKey: string): TeacherScheduleDay[]` (dòng 1337); `formatDate(value?: string)` (dòng 1348); `toDateInputValue(value?: string)` (dòng 1362); `normalizeTimeInput(value: string)` (dòng 1381); `normalizeTimeOnBlur(value: string)` (dòng 1391); `getCurrentWeekStartKey(): string` (dòng 1405); `getWeekStartKey(dateKey: string): string` (dòng 1418); `addDaysToDateKey(dateKey: string, days: number): string` (dòng 1430); `isToday(dateKey: string)` (dòng 1440); `parseVietnamDateKey(value: string)` (dòng 1444); `getVietnamDayOfWeek(date: Date)` (dòng 1467); `toVietnamDateKey(date: Date)` (dòng 1474); `addDays(date: Date, days: number)` (dòng 1483); `getDayLabel(dayOfWeek: number)` (dòng 1487).
+Functions: `SummaryItem({ icon, label, value, }: { icon: ReactNode; label: string; value: string; })` (dòng 227); `CurrentFixedSchedule({ schedule, isSuspended, onSuspend, onResume, }: { schedule: LatestFixedSchedule \| null; isSuspended?: boolean; onSuspend?: () => void; onResume?: () => void; })` (dòng 247); `WeekCalendar({ days, eventsByDateAndPeriod, onEventSelect, periods, }: { days: TeacherScheduleDay[]; eventsByDateAndPeriod: Map<string, TeacherScheduleEvent[]>; onEventSelect: (event: TeacherScheduleEvent) => void; periods: SchedulePeriod[]; })` (dòng 309); `DayHeader({ day }: { day: TeacherScheduleDay })` (dòng 379); `PeriodHeader({ period }: { period: SchedulePeriod })` (dòng 388); `CalendarCell({ day, events, onEventSelect, period, }: { day: TeacherScheduleDay; events: TeacherScheduleEvent[]; onEventSelect: (event: TeacherScheduleEvent) => void; period: SchedulePeriod; })` (dòng 402); `ScheduleEventCard({ event, onSelect, }: { event: TeacherScheduleEvent; onSelect: () => void; })` (dòng 440); `TemporarySchedulePanel({ isRevoking, onEdit, onRevoke, schedules, }: { isRevoking: boolean; onEdit: (schedule: ClassTemporarySchedule) => void; onRevoke: (scheduleId: string) => void; schedules: ClassTemporarySchedule[]; })` (dòng 490); `LessonAdjustmentControls({ event, form, isSaving, mode, onCancel, onChange, onModeChange, onSave, }: { event: TeacherScheduleEvent; form: TemporaryScheduleForm; isSaving: boolean; mode: ScheduleOverrideAction \| ""; onCancel: () => void; onChange: Dispatch<SetStateAction<TemporaryScheduleForm>>; onModeChange: (mode: ScheduleOverrideAction) => void; onSave: () => void; })` (dòng 559); `CalendarSkeleton({ days, periods, }: { days: TeacherScheduleDay[]; periods: SchedulePeriod[]; })` (dòng 698); `SelectField({ label, onChange, options, value, }: { label: string; onChange: (value: string) => void; options: SelectOption[]; value: string; })` (dòng 752); `DateField({ label, onChange, value, }: { label: string; onChange: (value: string) => void; value: string; })` (dòng 904); `TimeField({ label, onChange, value, }: { label: string; onChange: (value: string) => void; value: string; })` (dòng 929); `buildFixedFormFromSchedule(schedule: LatestFixedSchedule \| null): FixedScheduleForm` (dòng 959); `buildTemporaryFormFromSchedule(schedule: ClassTemporarySchedule): TemporaryScheduleForm` (dòng 974); `buildTemporaryFormFromEvent(event: TeacherScheduleEvent, action: ScheduleOverrideAction): TemporaryScheduleForm` (dòng 991); `validateFixedSchedule(form: FixedScheduleForm)` (dòng 1026); `buildTemporaryPayload(form: TemporaryScheduleForm): CreateTemporarySchedulePayload \| string` (dòng 1052); `formatTemporarySchedule(schedule: ClassTemporarySchedule)` (dòng 1111); `getActionLabel(action: ScheduleOverrideAction)` (dòng 1125); `getTemporaryIcon(action: ScheduleOverrideAction)` (dòng 1141); `getEventStyle(event: TeacherScheduleEvent)` (dòng 1157); `getEventIcon(type: TeacherScheduleEventType)` (dòng 1171); `getEventLabel(type: TeacherScheduleEventType)` (dòng 1191); `formatTimeRange(event: TeacherScheduleEvent)` (dòng 1215); `getLessonContent(event: TeacherScheduleEvent)` (dòng 1223); `getCalendarCellKey(date: string, period: SessionPeriodValue)` (dòng 1229); `compareEventsByStartTime(firstEvent: TeacherScheduleEvent, secondEvent: TeacherScheduleEvent)` (dòng 1233); `getTimeOrderValue(time?: string)` (dòng 1243); `getSessionPeriod(time?: string): { label: string; value: SessionPeriodValue; }` (dòng 1253); `getSessionPeriodIcon(period: SessionPeriodValue)` (dòng 1286); `mapEventTypeToScheduleType(type: TeacherScheduleEventType)` (dòng 1302); `isStandaloneTemporaryAction(action: ScheduleOverrideAction)` (dòng 1322); `getTemporaryScheduleIdFromEvent(event: TeacherScheduleEvent)` (dòng 1326); `isTemporaryScheduleInWeek(schedule: ClassTemporarySchedule, weekStartKey: string)` (dòng 1334); `buildWeekDays(weekStartKey: string): TeacherScheduleDay[]` (dòng 1347); `formatDate(value?: string)` (dòng 1358); `toDateInputValue(value?: string)` (dòng 1372); `normalizeTimeInput(value: string)` (dòng 1391); `normalizeTimeOnBlur(value: string)` (dòng 1401); `getCurrentWeekStartKey(): string` (dòng 1415); `getWeekStartKey(dateKey: string): string` (dòng 1428); `addDaysToDateKey(dateKey: string, days: number): string` (dòng 1440); `isToday(dateKey: string)` (dòng 1450); `parseVietnamDateKey(value: string)` (dòng 1454); `getVietnamDayOfWeek(date: Date)` (dòng 1477); `toVietnamDateKey(date: Date)` (dòng 1484); `addDays(date: Date, days: number)` (dòng 1493); `getDayLabel(dayOfWeek: number)` (dòng 1497).
 
-Exports: `FixedScheduleForm` (43), `TemporaryScheduleForm` (48), `LessonContentForm` (59), `ScheduleConfirmAction` (64), `SelectOption` (71), `SessionPeriodValue` (77), `SchedulePeriod` (80), `emptySlot` (86), `initialFixedForm` (92), `initialTemporaryForm` (97), `initialLessonForm` (106), `dayOptions` (111), `actionOptions` (121), `calendarPeriods` (132), `unknownPeriod` (150), `SummaryItem` (223), `CurrentFixedSchedule` (243), `WeekCalendar` (305), `TemporarySchedulePanel` (486), `LessonAdjustmentControls` (555), `CalendarSkeleton` (694), `SelectField` (748), `DateField` (900), `TimeField` (925), `buildFixedFormFromSchedule` (955), `buildTemporaryFormFromSchedule` (970), `buildTemporaryFormFromEvent` (985), `validateFixedSchedule` (1018), `buildTemporaryPayload` (1044), `getActionLabel` (1115), `getEventStyle` (1147), `getEventIcon` (1161), `formatTimeRange` (1205), `getCalendarCellKey` (1219), `compareEventsByStartTime` (1223), `getSessionPeriod` (1243), `mapEventTypeToScheduleType` (1292), `isStandaloneTemporaryAction` (1312), `getTemporaryScheduleIdFromEvent` (1316), `isTemporaryScheduleInWeek` (1324), `buildWeekDays` (1337), `formatDate` (1348), `getCurrentWeekStartKey` (1405), `getWeekStartKey` (1418), `addDaysToDateKey` (1430).
+Exports: `FixedScheduleForm` (43), `TemporaryScheduleForm` (48), `LessonContentForm` (61), `ScheduleConfirmAction` (66), `SelectOption` (73), `SessionPeriodValue` (79), `SchedulePeriod` (82), `emptySlot` (88), `initialFixedForm` (94), `initialTemporaryForm` (99), `initialLessonForm` (110), `dayOptions` (115), `actionOptions` (125), `calendarPeriods` (136), `unknownPeriod` (154), `SummaryItem` (227), `CurrentFixedSchedule` (247), `WeekCalendar` (309), `TemporarySchedulePanel` (490), `LessonAdjustmentControls` (559), `CalendarSkeleton` (698), `SelectField` (752), `DateField` (904), `TimeField` (929), `buildFixedFormFromSchedule` (959), `buildTemporaryFormFromSchedule` (974), `buildTemporaryFormFromEvent` (991), `validateFixedSchedule` (1026), `buildTemporaryPayload` (1052), `getActionLabel` (1125), `getEventStyle` (1157), `getEventIcon` (1171), `formatTimeRange` (1215), `getCalendarCellKey` (1229), `compareEventsByStartTime` (1233), `getSessionPeriod` (1253), `mapEventTypeToScheduleType` (1302), `isStandaloneTemporaryAction` (1322), `getTemporaryScheduleIdFromEvent` (1326), `isTemporaryScheduleInWeek` (1334), `buildWeekDays` (1347), `formatDate` (1358), `getCurrentWeekStartKey` (1415), `getWeekStartKey` (1428), `addDaysToDateKey` (1440).
 
 Type contracts / enum values (mã khai báo tại mốc khảo sát):
 
@@ -6428,29 +6473,31 @@ export type TemporaryScheduleForm = {
   startTime: string;
   endTime: string;
   reason: string;
+  topic: string;
+  content: string;
 };
-// line 59
+// line 61
 export type LessonContentForm = {
   topic: string;
   content: string;
 };
-// line 64
+// line 66
 export type ScheduleConfirmAction =
   | { type: "fixed" }
   | { type: "temporary" }
   | { scheduleId: string; type: "revoke" }
   | { type: "lessonContent" }
   | { type: "lessonAdjustment" };
-// line 71
+// line 73
 export type SelectOption = {
   icon?: ReactNode;
   label: string;
   value: string;
 };
-// line 77
+// line 79
 export type SessionPeriodValue =
   "morning" | "afternoon" | "evening" | "unknown";
-// line 80
+// line 82
 export type SchedulePeriod = {
   label: string;
   timeHint: string;
@@ -6460,7 +6507,7 @@ export type SchedulePeriod = {
 
 ### edutrack_fe/components/classes/class-schedule-tab.tsx
 
-[edutrack_fe/components/classes/class-schedule-tab.tsx](../../edutrack_fe/components/classes/class-schedule-tab.tsx) — 1569 dòng.
+[edutrack_fe/components/classes/class-schedule-tab.tsx](../../edutrack_fe/components/classes/class-schedule-tab.tsx) — 1598 dòng.
 
 Dependencies: `lucide-react`, `react`, `react`, `@/lib/api/school`, `@/types/school`, `./classroom-ui`, `./classroom-utils`, `./classroom-manager.module.css`, `./class-schedule-tab.module.css`, `../schedule/schedule-availability-picker`, `../schedule/schedule-source-picker`, `../schedule/schedule-conflict-feedback`, `@/components/ui/notice-provider`, `./class-schedule-parts`.
 
@@ -6490,33 +6537,33 @@ API calls (trích tham số tĩnh, tối đa 180 ký tự/tham số):
 
 ### edutrack_fe/components/classes/class-tuition-tab.tsx
 
-[edutrack_fe/components/classes/class-tuition-tab.tsx](../../edutrack_fe/components/classes/class-tuition-tab.tsx) — 1135 dòng.
+[edutrack_fe/components/classes/class-tuition-tab.tsx](../../edutrack_fe/components/classes/class-tuition-tab.tsx) — 1181 dòng.
 
-Dependencies: `lucide-react`, `react`, `@/lib/api/school`, `@/lib/files/open-pdf-in-new-tab`, `@/types/invoice-template`, `./tuition/receipt-history`, `./tuition/billing-student-list`, `./tuition/tuition-metric`, `./tuition/receipt-dialogs`, `@/types/school`, `./classroom-utils`, `./classroom-ui`, `@/components/ui/notice-provider`.
+Dependencies: `lucide-react`, `react`, `@/lib/api/school`, `@/lib/files/open-pdf-in-new-tab`, `@/types/invoice-template`, `./tuition/receipt-history`, `./tuition/billing-student-list`, `./tuition/tuition-metric`, `./tuition/tuition-options`, `./tuition/price-history-modal`, `./tuition/receipt-dialogs`, `@/types/school`, `./classroom-utils`, `./classroom-ui`, `@/components/ui/notice-provider`.
 
-Functions: `downloadBlobFile(blob: Blob, fileName: string, fallbackMimeType: string, extension: string)` (dòng 67); `ClassTuitionTab({ classroom, initialIssueMode = "class", initialIssueStudent, onClassUpdated, onInitialIssueHandled, }: { classroom: ClassroomDetail; initialIssueMode?: IssueMode; initialIssueStudent?: Student \| null; onClassUpdated?: (classroom: Classroom) => void; onInitialIssueHandled?: () => void; })` (dòng 94); `ReceiptPreviewDialog({ html, onClose, }: { html: string; onClose: () => void; })` (dòng 991); `PriceSettingsPanel({ form, isLoading, makeupPrice, onChange, onSubmit, priceEffectiveFrom, regularPrice, }: { form: PriceFormState; isLoading: boolean; makeupPrice: number; onChange: (form: PriceFormState) => void; onSubmit: () => void; priceEffectiveFrom?: string \| null; regularPrice: number; })` (dòng 1022); `PriceDateField({ onChange, value, }: { onChange: (value: string) => void; value: string; })` (dòng 1107).
+Functions: `downloadBlobFile(blob: Blob, fileName: string, fallbackMimeType: string, extension: string)` (dòng 70); `ClassTuitionTab({ classroom, initialIssueMode = "class", initialIssueStudent, onClassUpdated, onInitialIssueHandled, }: { classroom: ClassroomDetail; initialIssueMode?: IssueMode; initialIssueStudent?: Student \| null; onClassUpdated?: (classroom: Classroom) => void; onInitialIssueHandled?: () => void; })` (dòng 97); `ReceiptPreviewDialog({ html, onClose, }: { html: string; onClose: () => void; })` (dòng 1037); `PriceSettingsPanel({ form, isLoading, makeupPrice, onChange, onSubmit, priceEffectiveFrom, regularPrice, }: { form: PriceFormState; isLoading: boolean; makeupPrice: number; onChange: (form: PriceFormState) => void; onSubmit: () => void; priceEffectiveFrom?: string \| null; regularPrice: number; })` (dòng 1068); `PriceDateField({ onChange, value, }: { onChange: (value: string) => void; value: string; })` (dòng 1153).
 
-Exports: `ClassTuitionTab` (94).
+Exports: `ClassTuitionTab` (97).
 
 API calls (trích tham số tĩnh, tối đa 180 ký tự/tham số):
 
-- Dòng 158: `schoolApi.getBillingOverview(classroom.id, filters)`
-- Dòng 159: `schoolApi.listReceipts({ classId: classroom.id, fromDate: filters.fromDate \|\| undefined, toDate: filters.toDate \|\| undefined, })`
-- Dòng 293: `schoolApi.getStudentBillingOverview(student.id, candidateFilters)`
-- Dòng 308: `schoolApi.getStudentBillingCandidates(student.id, { ...candidateFilters, classIds: effectiveClassIds, })`
-- Dòng 318: `schoolApi.getBillingCandidates(classroom.id, student.id, candidateFilters)`
-- Dòng 386: `schoolApi.previewStudentReceipt(selectedStudent.id, payload)`
-- Dòng 387: `schoolApi.previewReceipt(classroom.id, selectedStudent.id, payload)`
-- Dòng 420: `schoolApi.issueStudentReceipt(selectedStudent.id, payload)`
-- Dòng 421: `schoolApi.issueReceipt(classroom.id, selectedStudent.id, payload)`
-- Dòng 494: `schoolApi.getReceiptDownload(receipt.id)`
-- Dòng 512: `schoolApi.getReceiptDownload(receipt.id)`
-- Dòng 532: `schoolApi.downloadReceipts({ receiptIds: selectedReceipts.map((receipt) => receipt.id), })`
-- Dòng 557: `schoolApi.retryReceiptPdf(receipt.id)`
-- Dòng 577: `schoolApi.cancelReceipt(receiptToCancel.id)`
-- Dòng 641: `schoolApi.uploadReceiptPaymentProof(paymentReceipt.id, paymentForm.proofFile)`
-- Dòng 647: `schoolApi.updateReceiptPayment(paymentReceipt.id, { paymentStatus: paymentForm.paymentStatus, paidAmount: paymentForm.paymentStatus === "partially_paid" ? parsedPaidAmount : undefined, paidAt: paymentForm.paymentStatus === "unpaid)`
-- Dòng 752: `schoolApi.updateClass(classroom.id, { regularPrice, makeupPrice, priceEffectiveFrom: priceForm.priceEffectiveFrom, })`
+- Dòng 163: `schoolApi.getBillingOverview(classroom.id, filters)`
+- Dòng 164: `schoolApi.listReceipts({ classId: classroom.id, fromDate: filters.fromDate \|\| undefined, toDate: filters.toDate \|\| undefined, })`
+- Dòng 298: `schoolApi.getStudentBillingOverview(student.id, candidateFilters)`
+- Dòng 313: `schoolApi.getStudentBillingCandidates(student.id, { ...candidateFilters, classIds: effectiveClassIds, })`
+- Dòng 323: `schoolApi.getBillingCandidates(classroom.id, student.id, candidateFilters)`
+- Dòng 391: `schoolApi.previewStudentReceipt(selectedStudent.id, payload)`
+- Dòng 392: `schoolApi.previewReceipt(classroom.id, selectedStudent.id, payload)`
+- Dòng 425: `schoolApi.issueStudentReceipt(selectedStudent.id, payload)`
+- Dòng 426: `schoolApi.issueReceipt(classroom.id, selectedStudent.id, payload)`
+- Dòng 499: `schoolApi.getReceiptDownload(receipt.id)`
+- Dòng 517: `schoolApi.getReceiptDownload(receipt.id)`
+- Dòng 537: `schoolApi.downloadReceipts({ receiptIds: selectedReceipts.map((receipt) => receipt.id), })`
+- Dòng 562: `schoolApi.retryReceiptPdf(receipt.id)`
+- Dòng 582: `schoolApi.cancelReceipt(receiptToCancel.id)`
+- Dòng 646: `schoolApi.uploadReceiptPaymentProof(paymentReceipt.id, paymentForm.proofFile)`
+- Dòng 652: `schoolApi.updateReceiptPayment(paymentReceipt.id, { paymentStatus: paymentForm.paymentStatus, paidAmount: paymentForm.paymentStatus === "partially_paid" ? parsedPaidAmount : undefined, paidAt: paymentForm.paymentStatus === "unpaid)`
+- Dòng 757: `schoolApi.updateClass(classroom.id, { regularPrice, makeupPrice, priceEffectiveFrom: priceForm.priceEffectiveFrom, })`
 
 ### edutrack_fe/components/classes/classroom-detail-page.tsx
 
@@ -6904,6 +6951,16 @@ Functions: `BillingStudentList({ onIssue, students, }: { onIssue: (row: BillingO
 
 Exports: `BillingStudentList` (16).
 
+### edutrack_fe/components/classes/tuition/price-history-modal.tsx
+
+[edutrack_fe/components/classes/tuition/price-history-modal.tsx](../../edutrack_fe/components/classes/tuition/price-history-modal.tsx) — 126 dòng.
+
+Dependencies: `lucide-react`, `react`, `@/lib/api/school`, `@/types/school`, `../classroom-ui`, `../classroom-utils`, `./receipt-dialogs`.
+
+Functions: `PriceHistoryModal({ classId, className, onClose, }: { classId: string; className: string; onClose: () => void; })` (dòng 20).
+
+Exports: `PriceHistoryModal` (20).
+
 ### edutrack_fe/components/classes/tuition/receipt-dialogs.tsx
 
 [edutrack_fe/components/classes/tuition/receipt-dialogs.tsx](../../edutrack_fe/components/classes/tuition/receipt-dialogs.tsx) — 1115 dòng.
@@ -6992,6 +7049,16 @@ Type contracts / enum values (mã khai báo tại mốc khảo sát):
 // line 3
 type TuitionMetricTone = "primary" | "info" | "warning" | "success";
 ```
+
+### edutrack_fe/components/classes/tuition/tuition-options.tsx
+
+[edutrack_fe/components/classes/tuition/tuition-options.tsx](../../edutrack_fe/components/classes/tuition/tuition-options.tsx) — 57 dòng.
+
+Dependencies: `lucide-react`, `react`.
+
+Functions: `TuitionOptions({ onPriceHistory, }: { onPriceHistory: () => void; })` (dòng 6).
+
+Exports: `TuitionOptions` (6).
 
 ### edutrack_fe/components/classes/use-deferred-class-image-upload.ts
 
@@ -8051,154 +8118,156 @@ API calls (trích tham số tĩnh, tối đa 180 ký tự/tham số):
 
 ### edutrack_fe/lib/api/school.ts
 
-[edutrack_fe/lib/api/school.ts](../../edutrack_fe/lib/api/school.ts) — 742 dòng.
+[edutrack_fe/lib/api/school.ts](../../edutrack_fe/lib/api/school.ts) — 749 dòng.
 
 Dependencies: `@/lib/auth/token-storage`, `@/types/school`, `./client`.
 
-Functions: `getToken()` (dòng 62); `buildQuery(params: Record<string, string \| string[] \| undefined>)` (dòng 66).
+Functions: `getToken()` (dòng 63); `buildQuery(params: Record<string, string \| string[] \| undefined>)` (dòng 67).
 
-Exports: `schoolApi` (90).
+Exports: `schoolApi` (91).
 
 Object API: **schoolApi**
 
-- Dòng 91: `getDashboardOverview()`
-- Dòng 97: `checkFixedSchedule(classId: string, payload: SaveFixedSchedulePayload)`
-- Dòng 102: `checkTemporarySchedule(classId: string, payload: CreateTemporarySchedulePayload, ignoreOverrideId?: string)`
-- Dòng 107: `getScheduleAvailability(payload: ScheduleAvailabilityPayload)`
-- Dòng 112: `getScheduleSourceSlots(classId: string, date: string, ignoreOverrideId?: string)`
-- Dòng 116: `listStudents(filters: StudentListFilters = {})`
-- Dòng 122: `downloadStudentImportTemplate(): Promise<FileDownloadResponse>`
-- Dòng 128: `importStudents(file: File)`
-- Dòng 139: `listClasses(search?: string)`
-- Dòng 153: `createClass(payload: CreateClassPayload)`
-- Dòng 161: `updateClass(classId: string, payload: UpdateClassPayload)`
-- Dòng 169: `deleteClass(classId: string)`
-- Dòng 176: `uploadClassImage(file: File)`
-- Dòng 187: `getClassDetail(classId: string)`
-- Dòng 193: `getClassSchedules(classId: string)`
-- Dòng 199: `saveFixedSchedule(classId: string, payload: SaveFixedSchedulePayload)`
-- Dòng 207: `previewSuspendFixedSchedule(classId: string, payload: SuspendFixedSchedulePayload)`
-- Dòng 218: `suspendFixedSchedule(classId: string, payload: SuspendFixedSchedulePayload)`
-- Dòng 226: `resumeFixedSchedule(classId: string, payload: ResumeFixedSchedulePayload)`
-- Dòng 234: `createTemporarySchedule(classId: string, payload: CreateTemporarySchedulePayload)`
-- Dòng 248: `updateTemporarySchedule(classId: string, scheduleId: string, payload: UpdateTemporarySchedulePayload)`
-- Dòng 263: `revokeTemporarySchedule(classId: string, scheduleId: string)`
-- Dòng 273: `saveClassSessionContent(classId: string, payload: SaveClassSessionContentPayload)`
-- Dòng 287: `searchStudents(search: string)`
-- Dòng 293: `createStudent(payload: CreateStudentPayload)`
-- Dòng 301: `updateStudent(studentId: string, payload: UpdateStudentPayload)`
-- Dòng 309: `deleteStudent(studentId: string, mode: DeleteStudentMode)`
-- Dòng 321: `deleteStudents(studentIds: string[], mode: DeleteStudentMode)`
-- Dòng 329: `uploadStudentAvatar(file: File)`
-- Dòng 340: `enrollExistingStudent(classId: string, studentId: string)`
-- Dòng 348: `enrollExistingStudents(classId: string, studentIds: string[])`
-- Dòng 359: `createStudentAndEnroll(classId: string, payload: CreateStudentPayload)`
-- Dòng 370: `removeStudentFromClass(classId: string, studentId: string)`
-- Dòng 380: `removeStudentsFromClass(classId: string, studentIds: string[])`
-- Dòng 391: `updateStudentEnrollmentStatus(classId: string, studentId: string, payload: UpdateEnrollmentStatusPayload)`
-- Dòng 399: `hardDeleteStudentFromClass(classId: string, studentId: string)`
-- Dòng 406: `getTeacherWeekSchedule(weekStart?: string)`
-- Dòng 423: `getAttendance(classId: string, date: string, startTime: string, endTime: string)`
-- Dòng 443: `getAttendanceOverview(classId: string)`
-- Dòng 450: `takeAttendance(classId: string, payload: TakeAttendancePayload)`
-- Dòng 458: `getAttendanceSheet(classId: string)`
-- Dòng 465: `takeAttendanceBatch(classId: string, payload: TakeAttendanceBatchPayload)`
-- Dòng 474: `getExamSheet(classId: string)`
-- Dòng 481: `createExam(classId: string, payload: CreateExamPayload)`
-- Dòng 489: `updateExam(classId: string, examId: string, payload: UpdateExamPayload)`
-- Dòng 497: `deleteExam(classId: string, examId: string)`
-- Dòng 504: `uploadExamFile(classId: string, file: File)`
-- Dòng 515: `uploadExamEvidenceImage(classId: string, file: File)`
-- Dòng 526: `takeExamScoresBatch(classId: string, payload: TakeExamScoresBatchPayload)`
-- Dòng 534: `getBillingOverview(classId: string, filters: { fromDate?: string; toDate?: string } = {})`
-- Dòng 546: `getBillingCandidates(classId: string, studentId: string, filters: { fromDate?: string; toDate?: string } = {})`
-- Dòng 559: `getStudentBillingOverview(studentId: string, filters: { classIds?: string[]; fromDate?: string; toDate?: string } = {})`
-- Dòng 571: `getStudentBillingCandidates(studentId: string, filters: { classIds?: string[]; fromDate?: string; toDate?: string } = {})`
-- Dòng 583: `previewReceipt(classId: string, studentId: string, payload: IssueReceiptPayload)`
-- Dòng 598: `issueReceipt(classId: string, studentId: string, payload: IssueReceiptPayload)`
-- Dòng 609: `previewStudentReceipt(studentId: string, payload: IssueReceiptPayload)`
-- Dòng 620: `issueStudentReceipt(studentId: string, payload: IssueReceiptPayload)`
-- Dòng 628: `listReceipts(filters: { classId?: string; studentId?: string; paymentStatus?: PaymentStatus; fromDate?: string; toDate?: string; } = {})`
-- Dòng 647: `getReceiptDownload(receiptId: string): Promise<ReceiptDownloadResponse>`
-- Dòng 656: `getReceiptDetail(receiptId: string)`
-- Dòng 663: `downloadReceipts(payload: ReceiptBulkDownloadPayload): Promise<ReceiptDownloadResponse>`
-- Dòng 671: `retryReceiptPdf(receiptId: string)`
-- Dòng 678: `updateReceiptPayment(receiptId: string, payload: UpdateReceiptPaymentPayload)`
-- Dòng 689: `cancelReceipt(receiptId: string)`
-- Dòng 696: `uploadReceiptPaymentProof(receiptId: string, file: File)`
-- Dòng 712: `createAiScheduleSession()`
-- Dòng 719: `sendAiScheduleMessage(sessionId: string, message: string)`
-- Dòng 727: `listAiScheduleSessions()`
-- Dòng 733: `getAiScheduleSession(sessionId: string)`
+- Dòng 92: `getDashboardOverview()`
+- Dòng 98: `checkFixedSchedule(classId: string, payload: SaveFixedSchedulePayload)`
+- Dòng 103: `checkTemporarySchedule(classId: string, payload: CreateTemporarySchedulePayload, ignoreOverrideId?: string)`
+- Dòng 108: `getScheduleAvailability(payload: ScheduleAvailabilityPayload)`
+- Dòng 113: `getScheduleSourceSlots(classId: string, date: string, ignoreOverrideId?: string)`
+- Dòng 117: `listStudents(filters: StudentListFilters = {})`
+- Dòng 123: `downloadStudentImportTemplate(): Promise<FileDownloadResponse>`
+- Dòng 129: `importStudents(file: File)`
+- Dòng 140: `listClasses(search?: string)`
+- Dòng 154: `createClass(payload: CreateClassPayload)`
+- Dòng 162: `updateClass(classId: string, payload: UpdateClassPayload)`
+- Dòng 170: `deleteClass(classId: string)`
+- Dòng 177: `uploadClassImage(file: File)`
+- Dòng 188: `getClassDetail(classId: string)`
+- Dòng 194: `getClassPriceHistory(classId: string)`
+- Dòng 200: `getClassSchedules(classId: string)`
+- Dòng 206: `saveFixedSchedule(classId: string, payload: SaveFixedSchedulePayload)`
+- Dòng 214: `previewSuspendFixedSchedule(classId: string, payload: SuspendFixedSchedulePayload)`
+- Dòng 225: `suspendFixedSchedule(classId: string, payload: SuspendFixedSchedulePayload)`
+- Dòng 233: `resumeFixedSchedule(classId: string, payload: ResumeFixedSchedulePayload)`
+- Dòng 241: `createTemporarySchedule(classId: string, payload: CreateTemporarySchedulePayload)`
+- Dòng 255: `updateTemporarySchedule(classId: string, scheduleId: string, payload: UpdateTemporarySchedulePayload)`
+- Dòng 270: `revokeTemporarySchedule(classId: string, scheduleId: string)`
+- Dòng 280: `saveClassSessionContent(classId: string, payload: SaveClassSessionContentPayload)`
+- Dòng 294: `searchStudents(search: string)`
+- Dòng 300: `createStudent(payload: CreateStudentPayload)`
+- Dòng 308: `updateStudent(studentId: string, payload: UpdateStudentPayload)`
+- Dòng 316: `deleteStudent(studentId: string, mode: DeleteStudentMode)`
+- Dòng 328: `deleteStudents(studentIds: string[], mode: DeleteStudentMode)`
+- Dòng 336: `uploadStudentAvatar(file: File)`
+- Dòng 347: `enrollExistingStudent(classId: string, studentId: string)`
+- Dòng 355: `enrollExistingStudents(classId: string, studentIds: string[])`
+- Dòng 366: `createStudentAndEnroll(classId: string, payload: CreateStudentPayload)`
+- Dòng 377: `removeStudentFromClass(classId: string, studentId: string)`
+- Dòng 387: `removeStudentsFromClass(classId: string, studentIds: string[])`
+- Dòng 398: `updateStudentEnrollmentStatus(classId: string, studentId: string, payload: UpdateEnrollmentStatusPayload)`
+- Dòng 406: `hardDeleteStudentFromClass(classId: string, studentId: string)`
+- Dòng 413: `getTeacherWeekSchedule(weekStart?: string)`
+- Dòng 430: `getAttendance(classId: string, date: string, startTime: string, endTime: string)`
+- Dòng 450: `getAttendanceOverview(classId: string)`
+- Dòng 457: `takeAttendance(classId: string, payload: TakeAttendancePayload)`
+- Dòng 465: `getAttendanceSheet(classId: string)`
+- Dòng 472: `takeAttendanceBatch(classId: string, payload: TakeAttendanceBatchPayload)`
+- Dòng 481: `getExamSheet(classId: string)`
+- Dòng 488: `createExam(classId: string, payload: CreateExamPayload)`
+- Dòng 496: `updateExam(classId: string, examId: string, payload: UpdateExamPayload)`
+- Dòng 504: `deleteExam(classId: string, examId: string)`
+- Dòng 511: `uploadExamFile(classId: string, file: File)`
+- Dòng 522: `uploadExamEvidenceImage(classId: string, file: File)`
+- Dòng 533: `takeExamScoresBatch(classId: string, payload: TakeExamScoresBatchPayload)`
+- Dòng 541: `getBillingOverview(classId: string, filters: { fromDate?: string; toDate?: string } = {})`
+- Dòng 553: `getBillingCandidates(classId: string, studentId: string, filters: { fromDate?: string; toDate?: string } = {})`
+- Dòng 566: `getStudentBillingOverview(studentId: string, filters: { classIds?: string[]; fromDate?: string; toDate?: string } = {})`
+- Dòng 578: `getStudentBillingCandidates(studentId: string, filters: { classIds?: string[]; fromDate?: string; toDate?: string } = {})`
+- Dòng 590: `previewReceipt(classId: string, studentId: string, payload: IssueReceiptPayload)`
+- Dòng 605: `issueReceipt(classId: string, studentId: string, payload: IssueReceiptPayload)`
+- Dòng 616: `previewStudentReceipt(studentId: string, payload: IssueReceiptPayload)`
+- Dòng 627: `issueStudentReceipt(studentId: string, payload: IssueReceiptPayload)`
+- Dòng 635: `listReceipts(filters: { classId?: string; studentId?: string; paymentStatus?: PaymentStatus; fromDate?: string; toDate?: string; } = {})`
+- Dòng 654: `getReceiptDownload(receiptId: string): Promise<ReceiptDownloadResponse>`
+- Dòng 663: `getReceiptDetail(receiptId: string)`
+- Dòng 670: `downloadReceipts(payload: ReceiptBulkDownloadPayload): Promise<ReceiptDownloadResponse>`
+- Dòng 678: `retryReceiptPdf(receiptId: string)`
+- Dòng 685: `updateReceiptPayment(receiptId: string, payload: UpdateReceiptPaymentPayload)`
+- Dòng 696: `cancelReceipt(receiptId: string)`
+- Dòng 703: `uploadReceiptPaymentProof(receiptId: string, file: File)`
+- Dòng 719: `createAiScheduleSession()`
+- Dòng 726: `sendAiScheduleMessage(sessionId: string, message: string)`
+- Dòng 734: `listAiScheduleSessions()`
+- Dòng 740: `getAiScheduleSession(sessionId: string)`
 
 API calls (trích tham số tĩnh, tối đa 180 ký tự/tham số):
 
-- Dòng 92: `apiRequest("/dashboard/overview", { token: getToken(), })`
-- Dòng 98: `apiRequest("/schedules/conflicts/check-fixed", { method: "POST", token: getToken(), body: JSON.stringify({ ...payload, classId }), })`
-- Dòng 103: `apiRequest("/schedules/conflicts/check-temporary", { method: "POST", token: getToken(), body: JSON.stringify({ ...payload, classId, ignoreOverrideId }), })`
-- Dòng 108: `apiRequest("/schedules/availability", { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 113: `apiRequest('/schedules/source-slots${buildQuery({ classId, date, ignoreOverrideId })}', { token: getToken() })`
-- Dòng 117: `apiRequest('/students${buildQuery(filters)}', { token: getToken(), })`
-- Dòng 132: `apiRequest("/students/import", { method: "POST", token: getToken(), body: formData, })`
-- Dòng 148: `apiRequest('/classes${queryString ? '?${queryString}' : ""}', { token: getToken(), })`
-- Dòng 154: `apiRequest("/classes", { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 162: `apiRequest('/classes/${classId}', { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 170: `apiRequest('/classes/${classId}', { method: "DELETE", token: getToken(), })`
-- Dòng 180: `apiRequest("/classes/image", { method: "POST", token: getToken(), body: formData, })`
-- Dòng 188: `apiRequest('/classes/${classId}', { token: getToken(), })`
-- Dòng 194: `apiRequest('/classes/${classId}/schedules', { token: getToken(), })`
-- Dòng 200: `apiRequest('/classes/${classId}/schedules/fixed', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 208: `apiRequest('/classes/${classId}/schedules/fixed/suspend-preview', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 219: `apiRequest('/classes/${classId}/schedules/fixed/suspend', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 227: `apiRequest('/classes/${classId}/schedules/fixed/resume', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 238: `apiRequest('/classes/${classId}/schedules/temporary', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 253: `apiRequest('/classes/${classId}/schedules/temporary/${scheduleId}', { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 264: `apiRequest('/classes/${classId}/schedules/temporary/${scheduleId}', { method: "DELETE", token: getToken(), })`
-- Dòng 277: `apiRequest('/classes/${classId}/schedules/session-content', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 288: `apiRequest('/students${buildQuery({ limit: "12", search })}', { token: getToken(), })`
-- Dòng 294: `apiRequest("/students", { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 302: `apiRequest('/students/${studentId}', { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 312: `apiRequest('/students/${studentId}?${params.toString()}', { method: "DELETE", token: getToken(), })`
-- Dòng 322: `apiRequest("/students/bulk-delete", { method: "POST", token: getToken(), body: JSON.stringify({ mode, studentIds }), })`
-- Dòng 333: `apiRequest("/students/avatar", { method: "POST", token: getToken(), body: formData, })`
-- Dòng 341: `apiRequest('/classes/${classId}/students', { method: "POST", token: getToken(), body: JSON.stringify({ studentId }), })`
-- Dòng 349: `apiRequest('/classes/${classId}/students/bulk', { method: "POST", token: getToken(), body: JSON.stringify({ studentIds }), })`
-- Dòng 360: `apiRequest('/classes/${classId}/students/new', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 371: `apiRequest('/classes/${classId}/students/${studentId}', { method: "DELETE", token: getToken(), })`
-- Dòng 381: `apiRequest('/classes/${classId}/students/bulk-remove', { method: "POST", token: getToken(), body: JSON.stringify({ studentIds }), })`
-- Dòng 392: `apiRequest('/classes/${classId}/students/${studentId}/status', { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 400: `apiRequest('/classes/${classId}/students/${studentId}/hard', { method: "DELETE", token: getToken(), })`
-- Dòng 415: `apiRequest('/schedules/week${queryString ? '?${queryString}' : ""}', { token: getToken(), })`
-- Dòng 435: `apiRequest('/classes/${classId}/attendance?${params.toString()}', { token: getToken(), })`
-- Dòng 444: `apiRequest('/classes/${classId}/attendance-overview', { method: "GET", token: getToken(), })`
-- Dòng 451: `apiRequest('/classes/${classId}/attendance', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 459: `apiRequest('/classes/${classId}/attendance-sheet', { method: "GET", token: getToken(), })`
-- Dòng 466: `apiRequest('/classes/${classId}/attendance-batch', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 475: `apiRequest('/classes/${classId}/exam-sheet', { method: "GET", token: getToken(), })`
-- Dòng 482: `apiRequest('/classes/${classId}/exams', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 490: `apiRequest('/classes/${classId}/exams/${examId}', { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 498: `apiRequest('/classes/${classId}/exams/${examId}', { method: "DELETE", token: getToken(), })`
-- Dòng 508: `apiRequest('/classes/${classId}/exams/file', { method: "POST", token: getToken(), body: formData, })`
-- Dòng 519: `apiRequest('/classes/${classId}/exam-scores/evidence', { method: "POST", token: getToken(), body: formData, })`
-- Dòng 527: `apiRequest('/classes/${classId}/exam-scores', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 538: `apiRequest('/classes/${classId}/billing/overview${buildQuery(filters)}', { token: getToken(), })`
-- Dòng 551: `apiRequest('/classes/${classId}/students/${studentId}/billing-candidates${buildQuery(filters)}', { token: getToken(), })`
-- Dòng 563: `apiRequest('/students/${studentId}/billing/overview${buildQuery(filters)}', { token: getToken(), })`
-- Dòng 575: `apiRequest('/students/${studentId}/billing-candidates${buildQuery(filters)}', { token: getToken(), })`
-- Dòng 588: `apiRequest('/classes/${classId}/students/${studentId}/receipts/preview', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 599: `apiRequest('/classes/${classId}/students/${studentId}/receipts', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 610: `apiRequest('/students/${studentId}/receipts/preview', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 621: `apiRequest('/students/${studentId}/receipts', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 637: `apiRequest('/receipts${buildQuery(filters)}', { token: getToken(), })`
-- Dòng 657: `apiRequest('/receipts/${receiptId}', { cache: "no-store", token: getToken(), })`
-- Dòng 672: `apiRequest('/receipts/${receiptId}/render-pdf', { method: "POST", token: getToken(), })`
-- Dòng 682: `apiRequest('/receipts/${receiptId}/payment', { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
-- Dòng 690: `apiRequest('/receipts/${receiptId}', { method: "DELETE", token: getToken(), })`
-- Dòng 700: `apiRequest('/receipts/${receiptId}/payment-proof', { method: "POST", token: getToken(), body: formData, })`
-- Dòng 713: `apiRequest("/ai/schedule-suggest", { method: "POST", token: getToken(), })`
-- Dòng 720: `apiRequest("/ai/schedule-suggest/chat", { method: "POST", token: getToken(), body: JSON.stringify({ sessionId, message }), })`
-- Dòng 728: `apiRequest("/ai/schedule-suggest/sessions", { token: getToken(), })`
-- Dòng 734: `apiRequest('/ai/schedule-suggest/sessions/${sessionId}', { token: getToken(), })`
+- Dòng 93: `apiRequest("/dashboard/overview", { token: getToken(), })`
+- Dòng 99: `apiRequest("/schedules/conflicts/check-fixed", { method: "POST", token: getToken(), body: JSON.stringify({ ...payload, classId }), })`
+- Dòng 104: `apiRequest("/schedules/conflicts/check-temporary", { method: "POST", token: getToken(), body: JSON.stringify({ ...payload, classId, ignoreOverrideId }), })`
+- Dòng 109: `apiRequest("/schedules/availability", { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 114: `apiRequest('/schedules/source-slots${buildQuery({ classId, date, ignoreOverrideId })}', { token: getToken() })`
+- Dòng 118: `apiRequest('/students${buildQuery(filters)}', { token: getToken(), })`
+- Dòng 133: `apiRequest("/students/import", { method: "POST", token: getToken(), body: formData, })`
+- Dòng 149: `apiRequest('/classes${queryString ? '?${queryString}' : ""}', { token: getToken(), })`
+- Dòng 155: `apiRequest("/classes", { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 163: `apiRequest('/classes/${classId}', { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 171: `apiRequest('/classes/${classId}', { method: "DELETE", token: getToken(), })`
+- Dòng 181: `apiRequest("/classes/image", { method: "POST", token: getToken(), body: formData, })`
+- Dòng 189: `apiRequest('/classes/${classId}', { token: getToken(), })`
+- Dòng 195: `apiRequest('/classes/${classId}/price-history', { token: getToken(), })`
+- Dòng 201: `apiRequest('/classes/${classId}/schedules', { token: getToken(), })`
+- Dòng 207: `apiRequest('/classes/${classId}/schedules/fixed', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 215: `apiRequest('/classes/${classId}/schedules/fixed/suspend-preview', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 226: `apiRequest('/classes/${classId}/schedules/fixed/suspend', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 234: `apiRequest('/classes/${classId}/schedules/fixed/resume', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 245: `apiRequest('/classes/${classId}/schedules/temporary', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 260: `apiRequest('/classes/${classId}/schedules/temporary/${scheduleId}', { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 271: `apiRequest('/classes/${classId}/schedules/temporary/${scheduleId}', { method: "DELETE", token: getToken(), })`
+- Dòng 284: `apiRequest('/classes/${classId}/schedules/session-content', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 295: `apiRequest('/students${buildQuery({ limit: "12", search })}', { token: getToken(), })`
+- Dòng 301: `apiRequest("/students", { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 309: `apiRequest('/students/${studentId}', { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 319: `apiRequest('/students/${studentId}?${params.toString()}', { method: "DELETE", token: getToken(), })`
+- Dòng 329: `apiRequest("/students/bulk-delete", { method: "POST", token: getToken(), body: JSON.stringify({ mode, studentIds }), })`
+- Dòng 340: `apiRequest("/students/avatar", { method: "POST", token: getToken(), body: formData, })`
+- Dòng 348: `apiRequest('/classes/${classId}/students', { method: "POST", token: getToken(), body: JSON.stringify({ studentId }), })`
+- Dòng 356: `apiRequest('/classes/${classId}/students/bulk', { method: "POST", token: getToken(), body: JSON.stringify({ studentIds }), })`
+- Dòng 367: `apiRequest('/classes/${classId}/students/new', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 378: `apiRequest('/classes/${classId}/students/${studentId}', { method: "DELETE", token: getToken(), })`
+- Dòng 388: `apiRequest('/classes/${classId}/students/bulk-remove', { method: "POST", token: getToken(), body: JSON.stringify({ studentIds }), })`
+- Dòng 399: `apiRequest('/classes/${classId}/students/${studentId}/status', { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 407: `apiRequest('/classes/${classId}/students/${studentId}/hard', { method: "DELETE", token: getToken(), })`
+- Dòng 422: `apiRequest('/schedules/week${queryString ? '?${queryString}' : ""}', { token: getToken(), })`
+- Dòng 442: `apiRequest('/classes/${classId}/attendance?${params.toString()}', { token: getToken(), })`
+- Dòng 451: `apiRequest('/classes/${classId}/attendance-overview', { method: "GET", token: getToken(), })`
+- Dòng 458: `apiRequest('/classes/${classId}/attendance', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 466: `apiRequest('/classes/${classId}/attendance-sheet', { method: "GET", token: getToken(), })`
+- Dòng 473: `apiRequest('/classes/${classId}/attendance-batch', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 482: `apiRequest('/classes/${classId}/exam-sheet', { method: "GET", token: getToken(), })`
+- Dòng 489: `apiRequest('/classes/${classId}/exams', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 497: `apiRequest('/classes/${classId}/exams/${examId}', { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 505: `apiRequest('/classes/${classId}/exams/${examId}', { method: "DELETE", token: getToken(), })`
+- Dòng 515: `apiRequest('/classes/${classId}/exams/file', { method: "POST", token: getToken(), body: formData, })`
+- Dòng 526: `apiRequest('/classes/${classId}/exam-scores/evidence', { method: "POST", token: getToken(), body: formData, })`
+- Dòng 534: `apiRequest('/classes/${classId}/exam-scores', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 545: `apiRequest('/classes/${classId}/billing/overview${buildQuery(filters)}', { token: getToken(), })`
+- Dòng 558: `apiRequest('/classes/${classId}/students/${studentId}/billing-candidates${buildQuery(filters)}', { token: getToken(), })`
+- Dòng 570: `apiRequest('/students/${studentId}/billing/overview${buildQuery(filters)}', { token: getToken(), })`
+- Dòng 582: `apiRequest('/students/${studentId}/billing-candidates${buildQuery(filters)}', { token: getToken(), })`
+- Dòng 595: `apiRequest('/classes/${classId}/students/${studentId}/receipts/preview', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 606: `apiRequest('/classes/${classId}/students/${studentId}/receipts', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 617: `apiRequest('/students/${studentId}/receipts/preview', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 628: `apiRequest('/students/${studentId}/receipts', { method: "POST", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 644: `apiRequest('/receipts${buildQuery(filters)}', { token: getToken(), })`
+- Dòng 664: `apiRequest('/receipts/${receiptId}', { cache: "no-store", token: getToken(), })`
+- Dòng 679: `apiRequest('/receipts/${receiptId}/render-pdf', { method: "POST", token: getToken(), })`
+- Dòng 689: `apiRequest('/receipts/${receiptId}/payment', { method: "PATCH", token: getToken(), body: JSON.stringify(payload), })`
+- Dòng 697: `apiRequest('/receipts/${receiptId}', { method: "DELETE", token: getToken(), })`
+- Dòng 707: `apiRequest('/receipts/${receiptId}/payment-proof', { method: "POST", token: getToken(), body: formData, })`
+- Dòng 720: `apiRequest("/ai/schedule-suggest", { method: "POST", token: getToken(), })`
+- Dòng 727: `apiRequest("/ai/schedule-suggest/chat", { method: "POST", token: getToken(), body: JSON.stringify({ sessionId, message }), })`
+- Dòng 735: `apiRequest("/ai/schedule-suggest/sessions", { token: getToken(), })`
+- Dòng 741: `apiRequest('/ai/schedule-suggest/sessions/${sessionId}', { token: getToken(), })`
 
 ### edutrack_fe/lib/api/url.ts
 
@@ -8438,7 +8507,7 @@ Test labels (khai báo, không phải kết quả thực thi):
 
 ### edutrack_fe/tests/receipt-template-selection.spec.ts
 
-[edutrack_fe/tests/receipt-template-selection.spec.ts](../../edutrack_fe/tests/receipt-template-selection.spec.ts) — 260 dòng.
+[edutrack_fe/tests/receipt-template-selection.spec.ts](../../edutrack_fe/tests/receipt-template-selection.spec.ts) — 261 dòng.
 
 Dependencies: `@playwright/test`.
 
@@ -8446,7 +8515,7 @@ Functions: `setup(page: Page, merged = false, failure = { active: false })` (dò
 
 Test labels (khai báo, không phải kết quả thực thi):
 
-- Dòng 230: blocks issuance on template load errors, retries and fits mobile
+- Dòng 231: blocks issuance on template load errors, retries and fits mobile
 
 ### edutrack_fe/tests/schedule-resume.spec.ts
 
@@ -8491,6 +8560,19 @@ Test labels (khai báo, không phải kết quả thực thi):
 - Dòng 7: routes auth through the same-origin proxy and keeps other API calls direct
 - Dòng 28: Next proxies only auth endpoints to the backend API
 - Dòng 53: the installed PWA opens the protected session-restoring route
+
+### edutrack_fe/tests/temporary-schedule-content.spec.ts
+
+[edutrack_fe/tests/temporary-schedule-content.spec.ts](../../edutrack_fe/tests/temporary-schedule-content.spec.ts) — 104 dòng.
+
+Dependencies: `@playwright/test`, `../types/school`.
+
+Functions: `setup(page: Page, rejectWrite = false)` (dòng 7); `confirmCreation(page: Page)` (dòng 53).
+
+Test labels (khai báo, không phải kết quả thực thi):
+
+- Dòng 80: allows an empty lesson and hides content fields for cancellation
+- Dòng 95: keeps entered content when creation fails and resets it when the teacher cancels
 
 ### edutrack_fe/types/auth.ts
 
@@ -8634,9 +8716,9 @@ export type InvoiceImagePage = {
 
 ### edutrack_fe/types/school.ts
 
-[edutrack_fe/types/school.ts](../../edutrack_fe/types/school.ts) — 811 dòng.
+[edutrack_fe/types/school.ts](../../edutrack_fe/types/school.ts) — 823 dòng.
 
-Exports: `Gender` (1), `StudentStatus` (3), `ClassStatus` (5), `EnrollmentStatus` (7), `ClassScheduleSlot` (9), `ScheduleOverrideAction` (15), `SuspendFixedSchedulePayload` (21), `ResumeFixedSchedulePayload` (25), `UpdateEnrollmentStatusPayload` (30), `LatestFixedSchedule` (34), `ClassScheduleOverview` (43), `ClassTemporarySchedule` (50), `StudentParent` (63), `Student` (70), `CreateStudentPayload` (86), `UpdateStudentPayload` (100), `DeleteStudentMode` (104), `StudentBulkDeleteResult` (106), `StudentSortField` (119), `StudentSortOrder` (125), `StudentListFilters` (127), `StudentImportResult` (136), `Classroom` (147), `ClassroomDetail` (163), `CreateClassPayload` (167), `UpdateClassPayload` (178), `SaveFixedSchedulePayload` (182), `CreateTemporarySchedulePayload` (187), `UpdateTemporarySchedulePayload` (198), `ClassSessionScheduleType` (200), `SaveClassSessionContentPayload` (207), `ClassSessionContent` (216), `TeacherScheduleEventType` (228), `TeacherScheduleClass` (236), `TeacherScheduleDay` (244), `TeacherScheduleEvent` (249), `TeacherWeekSchedule` (270), `DashboardTodayLesson` (278), `DashboardRevenueStats` (284), `DashboardMonthlyRevenue` (293), `DashboardPendingPayment` (299), `DashboardOverviewData` (322), `ScheduleConflict` (343), `ScheduleConflictResult` (348), `ScheduleAvailabilityPayload` (352), `ScheduleTimeSlot` (358), `ScheduleAvailability` (359), `EnrollmentResponse` (361), `EnrollmentBulkResponse` (371), `RemoveStudentsBulkResponse` (383), `AttendanceStatus` (395), `AttendanceRecord` (397), `AttendanceResponse` (408), `TakeAttendanceRecordPayload` (423), `TakeAttendancePayload` (429), `TakeAttendanceBatchPayload` (437), `FlatAttendanceRecord` (441), `AttendanceSheetResponse` (450), `Exam` (455), `ExamScore` (465), `ExamSheetResponse` (474), `CreateExamPayload` (480), `UpdateExamPayload` (489), `TakeExamScoreEntry` (491), `TakeExamScoresBatchPayload` (499), `PaymentStatus` (503), `ReceiptPdfStatus` (509), `ReceiptScope` (510), `ReceiptTeacherSnapshot` (512), `ReceiptClassSnapshot` (527), `ReceiptStudentSnapshot` (535), `ReceiptSessionSnapshot` (543), `ReceiptExamSnapshot` (570), `ReceiptDetail` (585), `ReceiptListItem` (628), `BillingOverviewStudent` (652), `BillingOverview` (662), `StudentBillingOverviewClass` (676), `StudentBillingOverview` (692), `BillingClassSummary` (703), `BillingCandidates` (711), `IssueReceiptPayload` (728), `ReceiptPreviewResponse` (752), `FileDownloadResponse` (758), `ReceiptDownloadResponse` (764), `ReceiptBulkDownloadPayload` (766), `UpdateReceiptPaymentPayload` (770), `AiChatMessage` (781), `AiScheduleSessionResponse` (787), `AiChatResponse` (793), `AiSessionListItem` (797), `AiSessionDetail` (805).
+Exports: `Gender` (1), `StudentStatus` (3), `ClassStatus` (5), `EnrollmentStatus` (7), `ClassScheduleSlot` (9), `ScheduleOverrideAction` (15), `SuspendFixedSchedulePayload` (21), `ResumeFixedSchedulePayload` (25), `UpdateEnrollmentStatusPayload` (30), `LatestFixedSchedule` (34), `ClassScheduleOverview` (43), `ClassTemporarySchedule` (50), `StudentParent` (63), `Student` (70), `CreateStudentPayload` (86), `UpdateStudentPayload` (100), `DeleteStudentMode` (104), `StudentBulkDeleteResult` (106), `StudentSortField` (119), `StudentSortOrder` (125), `StudentListFilters` (127), `StudentImportResult` (136), `Classroom` (147), `ClassroomDetail` (163), `ClassPriceHistoryEntry` (167), `CreateClassPayload` (174), `UpdateClassPayload` (185), `SaveFixedSchedulePayload` (189), `CreateTemporarySchedulePayload` (194), `UpdateTemporarySchedulePayload` (207), `ClassSessionScheduleType` (212), `SaveClassSessionContentPayload` (219), `ClassSessionContent` (228), `TeacherScheduleEventType` (240), `TeacherScheduleClass` (248), `TeacherScheduleDay` (256), `TeacherScheduleEvent` (261), `TeacherWeekSchedule` (282), `DashboardTodayLesson` (290), `DashboardRevenueStats` (296), `DashboardMonthlyRevenue` (305), `DashboardPendingPayment` (311), `DashboardOverviewData` (334), `ScheduleConflict` (355), `ScheduleConflictResult` (360), `ScheduleAvailabilityPayload` (364), `ScheduleTimeSlot` (370), `ScheduleAvailability` (371), `EnrollmentResponse` (373), `EnrollmentBulkResponse` (383), `RemoveStudentsBulkResponse` (395), `AttendanceStatus` (407), `AttendanceRecord` (409), `AttendanceResponse` (420), `TakeAttendanceRecordPayload` (435), `TakeAttendancePayload` (441), `TakeAttendanceBatchPayload` (449), `FlatAttendanceRecord` (453), `AttendanceSheetResponse` (462), `Exam` (467), `ExamScore` (477), `ExamSheetResponse` (486), `CreateExamPayload` (492), `UpdateExamPayload` (501), `TakeExamScoreEntry` (503), `TakeExamScoresBatchPayload` (511), `PaymentStatus` (515), `ReceiptPdfStatus` (521), `ReceiptScope` (522), `ReceiptTeacherSnapshot` (524), `ReceiptClassSnapshot` (539), `ReceiptStudentSnapshot` (547), `ReceiptSessionSnapshot` (555), `ReceiptExamSnapshot` (582), `ReceiptDetail` (597), `ReceiptListItem` (640), `BillingOverviewStudent` (664), `BillingOverview` (674), `StudentBillingOverviewClass` (688), `StudentBillingOverview` (704), `BillingClassSummary` (715), `BillingCandidates` (723), `IssueReceiptPayload` (740), `ReceiptPreviewResponse` (764), `FileDownloadResponse` (770), `ReceiptDownloadResponse` (776), `ReceiptBulkDownloadPayload` (778), `UpdateReceiptPaymentPayload` (782), `AiChatMessage` (793), `AiScheduleSessionResponse` (799), `AiChatResponse` (805), `AiSessionListItem` (809), `AiSessionDetail` (817).
 
 Type contracts / enum values (mã khai báo tại mốc khảo sát):
 
@@ -8808,6 +8890,13 @@ export type ClassroomDetail = Classroom & {
   students: Student[];
 };
 // line 167
+export type ClassPriceHistoryEntry = {
+  id: string | null;
+  regularPrice: number;
+  makeupPrice: number;
+  effectiveFrom: string | null;
+};
+// line 174
 export type CreateClassPayload = {
   name: string;
   description?: string;
@@ -8818,16 +8907,16 @@ export type CreateClassPayload = {
   makeupPrice: number;
   priceEffectiveFrom?: string;
 };
-// line 178
+// line 185
 export type UpdateClassPayload = Partial<CreateClassPayload> & {
   status?: ClassStatus;
 };
-// line 182
+// line 189
 export type SaveFixedSchedulePayload = {
   effectiveFrom: string;
   schedules: ClassScheduleSlot[];
 };
-// line 187
+// line 194
 export type CreateTemporarySchedulePayload = {
   action: ScheduleOverrideAction;
   originalDate?: string;
@@ -8837,17 +8926,22 @@ export type CreateTemporarySchedulePayload = {
   startTime?: string;
   endTime?: string;
   reason?: string;
+  topic?: string;
+  content?: string;
 };
-// line 198
-export type UpdateTemporarySchedulePayload = CreateTemporarySchedulePayload;
-// line 200
+// line 207
+export type UpdateTemporarySchedulePayload = Omit<
+  CreateTemporarySchedulePayload,
+  "topic" | "content"
+>;
+// line 212
 export type ClassSessionScheduleType =
   | "fixed"
   | "temporary"
   | "extra"
   | "one_on_one"
   | "manual";
-// line 207
+// line 219
 export type SaveClassSessionContentPayload = {
   date: string;
   startTime: string;
@@ -8856,7 +8950,7 @@ export type SaveClassSessionContentPayload = {
   topic?: string;
   content?: string;
 };
-// line 216
+// line 228
 export type ClassSessionContent = {
   id: string;
   classId: string;
@@ -8868,7 +8962,7 @@ export type ClassSessionContent = {
   topic?: string;
   content?: string;
 };
-// line 228
+// line 240
 export type TeacherScheduleEventType =
   | "fixed"
   | "extra"
@@ -8876,7 +8970,7 @@ export type TeacherScheduleEventType =
   | "reschedule"
   | "cancel"
   | "manual";
-// line 236
+// line 248
 export type TeacherScheduleClass = {
   id: string;
   name: string;
@@ -8884,12 +8978,12 @@ export type TeacherScheduleClass = {
   colorIndex: number;
   colorHex?: string;
 };
-// line 244
+// line 256
 export type TeacherScheduleDay = {
   date: string;
   dayOfWeek: number;
 };
-// line 249
+// line 261
 export type TeacherScheduleEvent = {
   id: string;
   classId: string;
@@ -8910,7 +9004,7 @@ export type TeacherScheduleEvent = {
   content?: string;
   lessonContent?: string;
 };
-// line 270
+// line 282
 export type TeacherWeekSchedule = {
   weekStart: string;
   weekEnd: string;
@@ -8918,13 +9012,13 @@ export type TeacherWeekSchedule = {
   classes: TeacherScheduleClass[];
   events: TeacherScheduleEvent[];
 };
-// line 278
+// line 290
 export type DashboardTodayLesson = TeacherScheduleEvent & {
   displayTitle: string;
   statusLabel: string;
   typeLabel: string;
 };
-// line 284
+// line 296
 export type DashboardRevenueStats = {
   issuedAmount: number;
   paidAmount: number;
@@ -8933,13 +9027,13 @@ export type DashboardRevenueStats = {
   pendingReceiptCount: number;
   receiptCount: number;
 };
-// line 293
+// line 305
 export type DashboardMonthlyRevenue = {
   month: number;
   issuedAmount: number;
   collectedAmount: number;
 };
-// line 299
+// line 311
 export type DashboardPendingPayment = {
   id: string;
   classId?: string;
@@ -8962,7 +9056,7 @@ export type DashboardPendingPayment = {
   studentName: string;
   totalAmount: number;
 };
-// line 322
+// line 334
 export type DashboardOverviewData = {
   generatedAt: string;
   today: string;
@@ -8983,29 +9077,29 @@ export type DashboardOverviewData = {
   todayLessons: DashboardTodayLesson[];
   pendingPayments: DashboardPendingPayment[];
 };
-// line 343
+// line 355
 export type ScheduleConflict = {
   classId: string; className: string; scheduleId: string;
   date: string; startTime: string; endTime: string;
   type: "fixed" | "temporary"; message: string;
 };
-// line 348
+// line 360
 export type ScheduleConflictResult = {
   blockingConflicts: ScheduleConflict[];
   warnings: ScheduleConflict[];
 };
-// line 352
+// line 364
 export type ScheduleAvailabilityPayload = {
   classId: string; mode: "fixed" | "temporary"; date: string;
   dayOfWeek?: number; duration: number; startTime: string; endTime: string;
   ignoreOverrideId?: string; originalDate?: string;
   originalStartTime?: string; originalEndTime?: string;
 };
-// line 358
+// line 370
 export type ScheduleTimeSlot = { startTime: string; endTime: string };
-// line 359
+// line 371
 export type ScheduleAvailability = { slots: ScheduleTimeSlot[]; warnings: ScheduleConflict[] };
-// line 361
+// line 373
 export type EnrollmentResponse = {
   id: string;
   classId: string;
@@ -9015,7 +9109,7 @@ export type EnrollmentResponse = {
   leftAt?: string | null;
   student: Student;
 };
-// line 371
+// line 383
 export type EnrollmentBulkResponse = {
   totalCount: number;
   successCount: number;
@@ -9027,7 +9121,7 @@ export type EnrollmentBulkResponse = {
     message: string;
   }>;
 };
-// line 383
+// line 395
 export type RemoveStudentsBulkResponse = {
   totalCount: number;
   successCount: number;
@@ -9039,9 +9133,9 @@ export type RemoveStudentsBulkResponse = {
     message: string;
   }>;
 };
-// line 395
+// line 407
 export type AttendanceStatus = "present" | "absent" | "excused" | "late";
-// line 397
+// line 409
 export type AttendanceRecord = {
   id: string;
   studentId: string;
@@ -9052,7 +9146,7 @@ export type AttendanceRecord = {
   note?: string;
   isBilled?: boolean;
 };
-// line 408
+// line 420
 export type AttendanceResponse = {
   sessionId: string | null;
   classId: string;
@@ -9067,13 +9161,13 @@ export type AttendanceResponse = {
     excused: number;
   };
 };
-// line 423
+// line 435
 export interface TakeAttendanceRecordPayload {
   studentId: string;
   status?: AttendanceStatus | null;
   note?: string;
 }
-// line 429
+// line 441
 export type TakeAttendancePayload = {
   date: string;
   startTime: string;
@@ -9081,11 +9175,11 @@ export type TakeAttendancePayload = {
   scheduleEventType?: Exclude<TeacherScheduleEventType, "cancel"> | "manual";
   records: TakeAttendanceRecordPayload[];
 };
-// line 437
+// line 449
 export type TakeAttendanceBatchPayload = {
   sessions: TakeAttendancePayload[];
 };
-// line 441
+// line 453
 export type FlatAttendanceRecord = {
   id: string;
   sessionId: string;
@@ -9094,12 +9188,12 @@ export type FlatAttendanceRecord = {
   note: string;
   isBilled?: boolean;
 };
-// line 450
+// line 462
 export type AttendanceSheetResponse = {
   sessions: TeacherScheduleEvent[];
   records: FlatAttendanceRecord[];
 };
-// line 455
+// line 467
 export type Exam = {
   id: string;
   title: string;
@@ -9109,7 +9203,7 @@ export type Exam = {
   fileUrl?: string;
   fileName?: string;
 };
-// line 465
+// line 477
 export type ExamScore = {
   id: string;
   examId: string;
@@ -9118,13 +9212,13 @@ export type ExamScore = {
   note?: string;
   evidenceImages?: string[];
 };
-// line 474
+// line 486
 export type ExamSheetResponse = {
   students: Student[];
   exams: Exam[];
   scores: ExamScore[];
 };
-// line 480
+// line 492
 export type CreateExamPayload = {
   title: string;
   testDate: string;
@@ -9133,9 +9227,9 @@ export type CreateExamPayload = {
   fileUrl?: string;
   fileName?: string;
 };
-// line 489
+// line 501
 export type UpdateExamPayload = Partial<CreateExamPayload>;
-// line 491
+// line 503
 export type TakeExamScoreEntry = {
   examId: string;
   studentId: string;
@@ -9143,21 +9237,21 @@ export type TakeExamScoreEntry = {
   note?: string;
   evidenceImages?: string[];
 };
-// line 499
+// line 511
 export type TakeExamScoresBatchPayload = {
   scores: TakeExamScoreEntry[];
 };
-// line 503
+// line 515
 export type PaymentStatus =
   | "unpaid"
   | "partially_paid"
   | "paid"
   | "cancelled";
-// line 509
+// line 521
 export type ReceiptPdfStatus = "pending" | "generated" | "failed";
-// line 510
+// line 522
 export type ReceiptScope = "class" | "multi_class";
-// line 512
+// line 524
 export type ReceiptTeacherSnapshot = {
   fullName: string;
   email: string;
@@ -9172,7 +9266,7 @@ export type ReceiptTeacherSnapshot = {
   bankLogoUrl?: string;
   hasPaymentQr: boolean;
 };
-// line 527
+// line 539
 export type ReceiptClassSnapshot = {
   classId?: string;
   className: string;
@@ -9180,7 +9274,7 @@ export type ReceiptClassSnapshot = {
   regularPrice: number;
   makeupPrice: number;
 };
-// line 535
+// line 547
 export type ReceiptStudentSnapshot = {
   studentCode?: string;
   fullName: string;
@@ -9188,7 +9282,7 @@ export type ReceiptStudentSnapshot = {
   parentName?: string;
   parentPhone?: string;
 };
-// line 543
+// line 555
 export type ReceiptSessionSnapshot = {
   tuitionEntryId: string;
   attendanceId?: string;
@@ -9215,7 +9309,7 @@ export type ReceiptSessionSnapshot = {
   amount: number;
   note?: string;
 };
-// line 570
+// line 582
 export type ReceiptExamSnapshot = {
   examId?: string;
   examScoreId?: string;
@@ -9230,7 +9324,7 @@ export type ReceiptExamSnapshot = {
   evidenceImages?: string[];
   teacherRemark?: string;
 };
-// line 585
+// line 597
 export type ReceiptDetail = {
   template?: { id: string; name: string; version: number; revision: string };
   id: string;
@@ -9273,7 +9367,7 @@ export type ReceiptDetail = {
   pdfGeneratedAt?: string | null;
   pdfFailedReason?: string | null;
 };
-// line 628
+// line 640
 export type ReceiptListItem = {
   id: string;
   classId: string;
@@ -9297,7 +9391,7 @@ export type ReceiptListItem = {
   pdfStatus: ReceiptPdfStatus;
   pdfUrl?: string | null;
 };
-// line 652
+// line 664
 export type BillingOverviewStudent = {
   student: Student;
   unbilledLessonCount: number;
@@ -9307,7 +9401,7 @@ export type BillingOverviewStudent = {
   reachedSuggestedCycle: boolean;
   latestReceipt?: ReceiptListItem | null;
 };
-// line 662
+// line 674
 export type BillingOverview = {
   classId: string;
   className: string;
@@ -9321,7 +9415,7 @@ export type BillingOverview = {
   };
   students: BillingOverviewStudent[];
 };
-// line 676
+// line 688
 export type StudentBillingOverviewClass = {
   class: {
     id: string;
@@ -9337,7 +9431,7 @@ export type StudentBillingOverviewClass = {
   reachedSuggestedCycle: boolean;
   latestReceipt?: ReceiptListItem | null;
 };
-// line 692
+// line 704
 export type StudentBillingOverview = {
   student: Student;
   classes: StudentBillingOverviewClass[];
@@ -9348,7 +9442,7 @@ export type StudentBillingOverview = {
     readyToIssueCount: number;
   };
 };
-// line 703
+// line 715
 export type BillingClassSummary = {
   id: string;
   name: string;
@@ -9356,7 +9450,7 @@ export type BillingClassSummary = {
   regularPrice: number;
   makeupPrice: number;
 };
-// line 711
+// line 723
 export type BillingCandidates = {
   class: BillingClassSummary;
   classes?: BillingClassSummary[];
@@ -9373,7 +9467,7 @@ export type BillingCandidates = {
     examCount: number;
   };
 };
-// line 728
+// line 740
 export type IssueReceiptPayload = {
   templateId?: string;
   templateRevision?: string;
@@ -9397,25 +9491,25 @@ export type IssueReceiptPayload = {
     teacherRemark: string;
   }>;
 };
-// line 752
+// line 764
 export type ReceiptPreviewResponse = {
   template: { id: string; name: string; version: number; revision: string };
   receipt: ReceiptDetail;
   html: string;
 };
-// line 758
+// line 770
 export type FileDownloadResponse = {
   blob: Blob;
   contentType?: string;
   fileName: string;
 };
-// line 764
+// line 776
 export type ReceiptDownloadResponse = FileDownloadResponse;
-// line 766
+// line 778
 export type ReceiptBulkDownloadPayload = {
   receiptIds: string[];
 };
-// line 770
+// line 782
 export type UpdateReceiptPaymentPayload = {
   paymentStatus: Exclude<PaymentStatus, "cancelled">;
   paidAmount?: number;
@@ -9424,23 +9518,23 @@ export type UpdateReceiptPaymentPayload = {
   paymentProofUrl?: string;
   paymentProofPublicId?: string;
 };
-// line 781
+// line 793
 export type AiChatMessage = {
   role: "user" | "ai";
   text: string;
   timestamp: string;
 };
-// line 787
+// line 799
 export type AiScheduleSessionResponse = {
   sessionId: string;
   scheduleContext: string;
   greeting: string;
 };
-// line 793
+// line 805
 export type AiChatResponse = {
   reply: string;
 };
-// line 797
+// line 809
 export type AiSessionListItem = {
   sessionId: string;
   messageCount: number;
@@ -9448,7 +9542,7 @@ export type AiSessionListItem = {
   createdAt: string;
   preview: string;
 };
-// line 805
+// line 817
 export type AiSessionDetail = {
   sessionId: string;
   messages: AiChatMessage[];

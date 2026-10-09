@@ -976,6 +976,32 @@ export class ClassesService {
       },
     ]);
 
+    if (
+      dto.action !== ScheduleOverrideAction.Cancel &&
+      (dto.topic?.trim() || dto.content?.trim())
+    ) {
+      try {
+        await this.saveSessionContent(teacherId, classId, {
+          date: dto.newDate!,
+          startTime: dto.startTime!,
+          endTime: dto.endTime!,
+          scheduleType: this.resolveSessionScheduleType(dto.action),
+          topic: dto.topic,
+          content: dto.content,
+        });
+      } catch (error) {
+        // A failed content save must not leave a partially created schedule.
+        await this.scheduleOverrideModel
+          .deleteOne({
+            _id: temporarySchedule._id,
+            teacherId: teacherObjectId,
+            classId: classroom._id,
+          })
+          .exec();
+        throw error;
+      }
+    }
+
     return this.toScheduleOverrideResponse(temporarySchedule);
   }
 
@@ -2453,6 +2479,35 @@ export class ClassesService {
       studentCount,
       latestFixedSchedule,
     };
+  }
+
+  async findPriceHistory(teacherId: string, classId: string) {
+    const teacherObjectId = this.toObjectId(teacherId, 'teacherId');
+    const classroom = await this.findClassForTeacherOrThrow(teacherId, classId);
+    const versions = await this.classPriceVersionModel
+      .find({ teacherId: teacherObjectId, classId: classroom._id })
+      .sort({ effectiveFrom: -1 })
+      .lean()
+      .exec();
+
+    if (!versions.length) {
+      return [
+        {
+          id: null,
+          regularPrice: classroom.regularPrice,
+          makeupPrice: classroom.makeupPrice,
+          effectiveFrom: classroom.priceEffectiveFrom ?? null,
+        },
+      ];
+    }
+
+    return versions.map((version) => ({
+      id: version._id.toString(),
+      regularPrice: version.regularPrice,
+      makeupPrice: version.makeupPrice,
+      effectiveFrom:
+        version.effectiveFrom.getTime() === 0 ? null : version.effectiveFrom,
+    }));
   }
 
   private resolvePriceEffectiveFrom(value?: string) {

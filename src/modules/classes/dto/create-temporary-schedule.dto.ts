@@ -42,4 +42,14 @@ export class CreateTemporaryScheduleDto {
   @IsString()
   @MaxLength(300)
   reason?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
+  topic?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1200)
+  content?: string;
 }

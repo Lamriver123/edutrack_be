@@ -1,8 +1,8 @@
 {
-  "surveyedAt": "2026-10-06",
+  "surveyedAt": "2026-10-09",
   "commits": {
-    "backend": "f84edeec68309376967cfa8750a8e9673cc8c8ee",
-    "frontend": "c4ddeae249dcc848024134067f601aec4cd80dbf"
+    "backend": "97727f445dd39a5138c095182cce139e9d5edd49",
+    "frontend": "2fb55318a89a7c3ce404db4aa37179b3934173fe"
   },
   "files": [
     {
@@ -3679,6 +3679,66 @@
       "headings": []
     },
     {
+      "file": "edutrack_be/src/modules/classes/classes-price-history.spec.ts",
+      "lines": 122,
+      "sha256": "5708619d9e518dbf6fecca14f2eb5d02ee76b9ef03a9b81a9e1b1119b11cd35e",
+      "imports": [
+        {
+          "from": "@nestjs/common",
+          "bindings": "{ NotFoundException }"
+        },
+        {
+          "from": "mongoose",
+          "bindings": "{ Types }"
+        },
+        {
+          "from": "./classes.service",
+          "bindings": "{ ClassesService }"
+        },
+        {
+          "from": "../school-management/enums",
+          "bindings": "{ ClassStatus }"
+        }
+      ],
+      "exports": [],
+      "classes": [],
+      "functions": [
+        {
+          "name": "fixture",
+          "signature": "fixture(ownedClass: typeof classroom | null = classroom, versions: unknown[] = [])",
+          "line": 10
+        }
+      ],
+      "types": [],
+      "objects": [],
+      "tests": [
+        {
+          "label": "Class price history",
+          "line": 45
+        },
+        {
+          "label": "checks ownership before reading price versions and returns only public price fields",
+          "line": 46
+        },
+        {
+          "label": "refuses a class that does not belong to the teacher without reading its history",
+          "line": 78
+        },
+        {
+          "label": "returns the existing class price for legacy classes with no saved versions",
+          "line": 86
+        },
+        {
+          "label": "represents the legacy baseline as the initial price instead of a misleading 1970 date",
+          "line": 100
+        }
+      ],
+      "routes": [],
+      "indexes": [],
+      "calls": [],
+      "headings": []
+    },
+    {
       "file": "edutrack_be/src/modules/classes/classes-schedule-guard.spec.ts",
       "lines": 77,
       "sha256": "8b227f124fa7ae3a70fc5c801356faeebbf3c6c10763915c400bdc73e1e0895d",
@@ -3717,9 +3777,89 @@
       "headings": []
     },
     {
+      "file": "edutrack_be/src/modules/classes/classes-temporary-content.spec.ts",
+      "lines": 227,
+      "sha256": "4be95d5dd12675626081e3400bd4164abd017d8b6511defe1f58edaa09e716f4",
+      "imports": [
+        {
+          "from": "@nestjs/common",
+          "bindings": "{ ConflictException, ValidationPipe }"
+        },
+        {
+          "from": "mongoose",
+          "bindings": "{ Types }"
+        },
+        {
+          "from": "./classes.service",
+          "bindings": "{ ClassesService }"
+        },
+        {
+          "from": "./dto/create-temporary-schedule.dto",
+          "bindings": "{ CreateTemporaryScheduleDto }"
+        },
+        {
+          "from": "../schedules/dto/check-schedule.dto",
+          "bindings": "{ CheckTemporaryScheduleDto }"
+        },
+        {
+          "from": "../school-management/enums",
+          "bindings": "{ ScheduleOverrideAction, ScheduleType, }"
+        }
+      ],
+      "exports": [],
+      "classes": [],
+      "functions": [
+        {
+          "name": "fixture",
+          "signature": "fixture()",
+          "line": 22
+        }
+      ],
+      "types": [],
+      "objects": [],
+      "tests": [
+        {
+          "label": "Temporary schedule with initial lesson content",
+          "line": 73
+        },
+        {
+          "label": "saves %s content in the matching tenant/session with UTC hours",
+          "line": 74
+        },
+        {
+          "label": "keeps content optional and does not materialize an empty session",
+          "line": 122
+        },
+        {
+          "label": "rolls back the new override when content cannot be saved",
+          "line": 145
+        },
+        {
+          "label": "does not save either record when conflict checking blocks creation",
+          "line": 168
+        },
+        {
+          "label": "Initial lesson content validation",
+          "line": 188
+        },
+        {
+          "label": "accepts content in both the creation and precheck requests",
+          "line": 195
+        },
+        {
+          "label": "rejects invalid content: %j",
+          "line": 214
+        }
+      ],
+      "routes": [],
+      "indexes": [],
+      "calls": [],
+      "headings": []
+    },
+    {
       "file": "edutrack_be/src/modules/classes/classes.controller.ts",
-      "lines": 423,
-      "sha256": "16edda98cbec608581ffb12a480e3477ee5c89b359a6386be0cf463193c79dc0",
+      "lines": 431,
+      "sha256": "9f9a6ba2dffee80152196b5048a3d33ca663ba453e625c745fbb1d10bd53563f",
       "imports": [
         {
           "from": "@nestjs/common",
@@ -3879,8 +4019,17 @@
               "visibility": "public"
             },
             {
-              "name": "updateClass",
+              "name": "findPriceHistory",
               "line": 87,
+              "decorators": [
+                "@Get(':classId/price-history')"
+              ],
+              "signature": "findPriceHistory(@CurrentUser() user: JwtUser, @Param('classId') classId: string)",
+              "visibility": "public"
+            },
+            {
+              "name": "updateClass",
+              "line": 95,
               "decorators": [
                 "@Patch(':classId')"
               ],
@@ -3889,7 +4038,7 @@
             },
             {
               "name": "archiveClass",
-              "line": 96,
+              "line": 104,
               "decorators": [
                 "@Delete(':classId')"
               ],
@@ -3898,7 +4047,7 @@
             },
             {
               "name": "getSchedules",
-              "line": 104,
+              "line": 112,
               "decorators": [
                 "@Get(':classId/schedules')"
               ],
@@ -3907,7 +4056,7 @@
             },
             {
               "name": "saveFixedSchedule",
-              "line": 112,
+              "line": 120,
               "decorators": [
                 "@Post(':classId/schedules/fixed')"
               ],
@@ -3916,7 +4065,7 @@
             },
             {
               "name": "previewSuspendFixedSchedule",
-              "line": 121,
+              "line": 129,
               "decorators": [
                 "@Post(':classId/schedules/fixed/suspend-preview')"
               ],
@@ -3925,7 +4074,7 @@
             },
             {
               "name": "suspendFixedSchedule",
-              "line": 134,
+              "line": 142,
               "decorators": [
                 "@Post(':classId/schedules/fixed/suspend')"
               ],
@@ -3934,7 +4083,7 @@
             },
             {
               "name": "resumeFixedSchedule",
-              "line": 143,
+              "line": 151,
               "decorators": [
                 "@Post(':classId/schedules/fixed/resume')"
               ],
@@ -3943,7 +4092,7 @@
             },
             {
               "name": "createTemporarySchedule",
-              "line": 152,
+              "line": 160,
               "decorators": [
                 "@Post(':classId/schedules/temporary')"
               ],
@@ -3952,7 +4101,7 @@
             },
             {
               "name": "updateTemporarySchedule",
-              "line": 165,
+              "line": 173,
               "decorators": [
                 "@Patch(':classId/schedules/temporary/:scheduleId')"
               ],
@@ -3961,7 +4110,7 @@
             },
             {
               "name": "revokeTemporarySchedule",
-              "line": 180,
+              "line": 188,
               "decorators": [
                 "@Delete(':classId/schedules/temporary/:scheduleId')"
               ],
@@ -3970,7 +4119,7 @@
             },
             {
               "name": "saveSessionContent",
-              "line": 193,
+              "line": 201,
               "decorators": [
                 "@Post(':classId/schedules/session-content')"
               ],
@@ -3979,7 +4128,7 @@
             },
             {
               "name": "enrollExistingStudent",
-              "line": 202,
+              "line": 210,
               "decorators": [
                 "@Post(':classId/students')"
               ],
@@ -3988,7 +4137,7 @@
             },
             {
               "name": "enrollExistingStudents",
-              "line": 215,
+              "line": 223,
               "decorators": [
                 "@Post(':classId/students/bulk')"
               ],
@@ -3997,7 +4146,7 @@
             },
             {
               "name": "createStudentAndEnroll",
-              "line": 228,
+              "line": 236,
               "decorators": [
                 "@Post(':classId/students/new')"
               ],
@@ -4006,7 +4155,7 @@
             },
             {
               "name": "removeStudentsFromClass",
-              "line": 241,
+              "line": 249,
               "decorators": [
                 "@Post(':classId/students/bulk-remove')"
               ],
@@ -4015,7 +4164,7 @@
             },
             {
               "name": "updateStudentEnrollmentStatus",
-              "line": 254,
+              "line": 262,
               "decorators": [
                 "@Patch(':classId/students/:studentId/status')"
               ],
@@ -4024,7 +4173,7 @@
             },
             {
               "name": "hardDeleteStudentFromClass",
-              "line": 269,
+              "line": 277,
               "decorators": [
                 "@Delete(':classId/students/:studentId/hard')"
               ],
@@ -4033,7 +4182,7 @@
             },
             {
               "name": "removeStudentFromClass",
-              "line": 282,
+              "line": 290,
               "decorators": [
                 "@Delete(':classId/students/:studentId')"
               ],
@@ -4042,7 +4191,7 @@
             },
             {
               "name": "getAttendance",
-              "line": 295,
+              "line": 303,
               "decorators": [
                 "@Get(':classId/attendance')"
               ],
@@ -4051,7 +4200,7 @@
             },
             {
               "name": "getAttendanceSheet",
-              "line": 312,
+              "line": 320,
               "decorators": [
                 "@Get(':id/attendance-sheet')"
               ],
@@ -4060,7 +4209,7 @@
             },
             {
               "name": "takeAttendanceBatch",
-              "line": 320,
+              "line": 328,
               "decorators": [
                 "@Post(':id/attendance-batch')"
               ],
@@ -4069,7 +4218,7 @@
             },
             {
               "name": "getAttendanceOverview",
-              "line": 329,
+              "line": 337,
               "decorators": [
                 "@Get(':classId/attendance-overview')"
               ],
@@ -4078,7 +4227,7 @@
             },
             {
               "name": "takeAttendance",
-              "line": 337,
+              "line": 345,
               "decorators": [
                 "@Post(':classId/attendance')"
               ],
@@ -4087,7 +4236,7 @@
             },
             {
               "name": "getExamSheet",
-              "line": 348,
+              "line": 356,
               "decorators": [
                 "@Get(':id/exam-sheet')"
               ],
@@ -4096,7 +4245,7 @@
             },
             {
               "name": "createExam",
-              "line": 353,
+              "line": 361,
               "decorators": [
                 "@Post(':id/exams')"
               ],
@@ -4105,7 +4254,7 @@
             },
             {
               "name": "updateExam",
-              "line": 362,
+              "line": 370,
               "decorators": [
                 "@Patch(':id/exams/:examId')"
               ],
@@ -4114,7 +4263,7 @@
             },
             {
               "name": "deleteExam",
-              "line": 372,
+              "line": 380,
               "decorators": [
                 "@Delete(':id/exams/:examId')"
               ],
@@ -4123,7 +4272,7 @@
             },
             {
               "name": "uploadExamFile",
-              "line": 381,
+              "line": 389,
               "decorators": [
                 "@Post(':id/exams/file')",
                 "@UseInterceptors( FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024, // 5MB }, }), )"
@@ -4133,7 +4282,7 @@
             },
             {
               "name": "takeExamScoresBatch",
-              "line": 396,
+              "line": 404,
               "decorators": [
                 "@Post(':id/exam-scores')"
               ],
@@ -4142,7 +4291,7 @@
             },
             {
               "name": "uploadExamEvidenceImage",
-              "line": 405,
+              "line": 413,
               "decorators": [
                 "@Post(':id/exam-scores/evidence')",
                 "@UseInterceptors( FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024, // 5MB }, }), )"
@@ -4196,12 +4345,21 @@
         },
         {
           "controller": "@Controller('classes')",
+          "verb": "GET",
+          "path": "/api/classes/:classId/price-history",
+          "guard": "@UseGuards(JwtAuthGuard)",
+          "route": "@Get(':classId/price-history')",
+          "method": "findPriceHistory(@CurrentUser() user: JwtUser, @Param('classId') classId: string)",
+          "line": 87
+        },
+        {
+          "controller": "@Controller('classes')",
           "verb": "PATCH",
           "path": "/api/classes/:classId",
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Patch(':classId')",
           "method": "updateClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: UpdateClassDto)",
-          "line": 87
+          "line": 95
         },
         {
           "controller": "@Controller('classes')",
@@ -4210,7 +4368,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Delete(':classId')",
           "method": "archiveClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string)",
-          "line": 96
+          "line": 104
         },
         {
           "controller": "@Controller('classes')",
@@ -4219,7 +4377,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Get(':classId/schedules')",
           "method": "getSchedules(@CurrentUser() user: JwtUser, @Param('classId') classId: string)",
-          "line": 104
+          "line": 112
         },
         {
           "controller": "@Controller('classes')",
@@ -4228,7 +4386,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':classId/schedules/fixed')",
           "method": "saveFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateFixedScheduleDto)",
-          "line": 112
+          "line": 120
         },
         {
           "controller": "@Controller('classes')",
@@ -4237,7 +4395,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':classId/schedules/fixed/suspend-preview')",
           "method": "previewSuspendFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SuspendFixedScheduleDto)",
-          "line": 121
+          "line": 129
         },
         {
           "controller": "@Controller('classes')",
@@ -4246,7 +4404,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':classId/schedules/fixed/suspend')",
           "method": "suspendFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SuspendFixedScheduleDto)",
-          "line": 134
+          "line": 142
         },
         {
           "controller": "@Controller('classes')",
@@ -4255,7 +4413,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':classId/schedules/fixed/resume')",
           "method": "resumeFixedSchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: ResumeFixedScheduleDto)",
-          "line": 143
+          "line": 151
         },
         {
           "controller": "@Controller('classes')",
@@ -4264,7 +4422,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':classId/schedules/temporary')",
           "method": "createTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateTemporaryScheduleDto)",
-          "line": 152
+          "line": 160
         },
         {
           "controller": "@Controller('classes')",
@@ -4273,7 +4431,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Patch(':classId/schedules/temporary/:scheduleId')",
           "method": "updateTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('scheduleId') scheduleId: string, @Body() dto: UpdateTemporaryScheduleDto)",
-          "line": 165
+          "line": 173
         },
         {
           "controller": "@Controller('classes')",
@@ -4282,7 +4440,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Delete(':classId/schedules/temporary/:scheduleId')",
           "method": "revokeTemporarySchedule(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('scheduleId') scheduleId: string)",
-          "line": 180
+          "line": 188
         },
         {
           "controller": "@Controller('classes')",
@@ -4291,7 +4449,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':classId/schedules/session-content')",
           "method": "saveSessionContent(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: SaveClassSessionContentDto)",
-          "line": 193
+          "line": 201
         },
         {
           "controller": "@Controller('classes')",
@@ -4300,7 +4458,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':classId/students')",
           "method": "enrollExistingStudent(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: EnrollExistingStudentDto)",
-          "line": 202
+          "line": 210
         },
         {
           "controller": "@Controller('classes')",
@@ -4309,7 +4467,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':classId/students/bulk')",
           "method": "enrollExistingStudents(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: EnrollExistingStudentsDto)",
-          "line": 215
+          "line": 223
         },
         {
           "controller": "@Controller('classes')",
@@ -4318,7 +4476,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':classId/students/new')",
           "method": "createStudentAndEnroll(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: CreateStudentDto)",
-          "line": 228
+          "line": 236
         },
         {
           "controller": "@Controller('classes')",
@@ -4327,7 +4485,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':classId/students/bulk-remove')",
           "method": "removeStudentsFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: RemoveExistingStudentsDto)",
-          "line": 241
+          "line": 249
         },
         {
           "controller": "@Controller('classes')",
@@ -4336,7 +4494,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Patch(':classId/students/:studentId/status')",
           "method": "updateStudentEnrollmentStatus(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string, @Body() dto: UpdateEnrollmentStatusDto)",
-          "line": 254
+          "line": 262
         },
         {
           "controller": "@Controller('classes')",
@@ -4345,7 +4503,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Delete(':classId/students/:studentId/hard')",
           "method": "hardDeleteStudentFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string)",
-          "line": 269
+          "line": 277
         },
         {
           "controller": "@Controller('classes')",
@@ -4354,7 +4512,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Delete(':classId/students/:studentId')",
           "method": "removeStudentFromClass(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Param('studentId') studentId: string)",
-          "line": 282
+          "line": 290
         },
         {
           "controller": "@Controller('classes')",
@@ -4363,7 +4521,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Get(':classId/attendance')",
           "method": "getAttendance(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Query('date') date: string, @Query('startTime') startTime: string, @Query('endTime') endTime: string)",
-          "line": 295
+          "line": 303
         },
         {
           "controller": "@Controller('classes')",
@@ -4372,7 +4530,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Get(':id/attendance-sheet')",
           "method": "getAttendanceSheet(@CurrentUser() user: JwtUser, @Param('id') classId: string)",
-          "line": 312
+          "line": 320
         },
         {
           "controller": "@Controller('classes')",
@@ -4381,7 +4539,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':id/attendance-batch')",
           "method": "takeAttendanceBatch(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: TakeAttendanceBatchDto)",
-          "line": 320
+          "line": 328
         },
         {
           "controller": "@Controller('classes')",
@@ -4390,7 +4548,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Get(':classId/attendance-overview')",
           "method": "getAttendanceOverview(@CurrentUser() user: JwtUser, @Param('classId') classId: string)",
-          "line": 329
+          "line": 337
         },
         {
           "controller": "@Controller('classes')",
@@ -4399,7 +4557,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':classId/attendance')",
           "method": "takeAttendance(@CurrentUser() user: JwtUser, @Param('classId') classId: string, @Body() dto: TakeAttendanceDto)",
-          "line": 337
+          "line": 345
         },
         {
           "controller": "@Controller('classes')",
@@ -4408,7 +4566,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Get(':id/exam-sheet')",
           "method": "getExamSheet(@CurrentUser() user: JwtUser, @Param('id') classId: string)",
-          "line": 348
+          "line": 356
         },
         {
           "controller": "@Controller('classes')",
@@ -4417,7 +4575,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':id/exams')",
           "method": "createExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: CreateExamDto)",
-          "line": 353
+          "line": 361
         },
         {
           "controller": "@Controller('classes')",
@@ -4426,7 +4584,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Patch(':id/exams/:examId')",
           "method": "updateExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Param('examId') examId: string, @Body() dto: UpdateExamDto)",
-          "line": 362
+          "line": 370
         },
         {
           "controller": "@Controller('classes')",
@@ -4435,7 +4593,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Delete(':id/exams/:examId')",
           "method": "deleteExam(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Param('examId') examId: string)",
-          "line": 372
+          "line": 380
         },
         {
           "controller": "@Controller('classes')",
@@ -4444,7 +4602,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':id/exams/file')",
           "method": "uploadExamFile(@UploadedFile() file?: UploadImageFile)",
-          "line": 381
+          "line": 389
         },
         {
           "controller": "@Controller('classes')",
@@ -4453,7 +4611,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':id/exam-scores')",
           "method": "takeExamScoresBatch(@CurrentUser() user: JwtUser, @Param('id') classId: string, @Body() dto: TakeExamScoresBatchDto)",
-          "line": 396
+          "line": 404
         },
         {
           "controller": "@Controller('classes')",
@@ -4462,7 +4620,7 @@
           "guard": "@UseGuards(JwtAuthGuard)",
           "route": "@Post(':id/exam-scores/evidence')",
           "method": "uploadExamEvidenceImage(@UploadedFile() file?: UploadImageFile)",
-          "line": 405
+          "line": 413
         }
       ],
       "indexes": [],
@@ -4534,8 +4692,8 @@
     },
     {
       "file": "edutrack_be/src/modules/classes/classes.service.ts",
-      "lines": 3345,
-      "sha256": "bb50787e71afc7295f806f6864ec237262c0d204ca1f36aa583ba777a15517f4",
+      "lines": 3400,
+      "sha256": "123dd970b17eb4904ce2c401ab88727b49b7c2ba25e00f5cee5ebaabf228bcc6",
       "imports": [
         {
           "from": "@nestjs/common",
@@ -4837,504 +4995,511 @@
             },
             {
               "name": "updateTemporarySchedule",
-              "line": 982,
+              "line": 1008,
               "decorators": [],
               "signature": "updateTemporarySchedule(teacherId: string, classId: string, scheduleId: string, dto: UpdateTemporaryScheduleDto)",
               "visibility": "public"
             },
             {
               "name": "updateTemporaryScheduleLocked",
-              "line": 993,
+              "line": 1019,
               "decorators": [],
               "signature": "updateTemporaryScheduleLocked(teacherId: string, classId: string, scheduleId: string, dto: UpdateTemporaryScheduleDto)",
               "visibility": "private"
             },
             {
               "name": "revokeTemporarySchedule",
-              "line": 1068,
+              "line": 1094,
               "decorators": [],
               "signature": "revokeTemporarySchedule(teacherId: string, classId: string, scheduleId: string)",
               "visibility": "public"
             },
             {
               "name": "revokeTemporaryScheduleLocked",
-              "line": 1078,
+              "line": 1104,
               "decorators": [],
               "signature": "revokeTemporaryScheduleLocked(teacherId: string, classId: string, scheduleId: string)",
               "visibility": "private"
             },
             {
               "name": "saveSessionContent",
-              "line": 1108,
+              "line": 1134,
               "decorators": [],
               "signature": "saveSessionContent(teacherId: string, classId: string, dto: SaveClassSessionContentDto): Promise<ClassSessionResponse>",
               "visibility": "public"
             },
             {
               "name": "enrollExistingStudent",
-              "line": 1191,
+              "line": 1217,
               "decorators": [],
               "signature": "enrollExistingStudent(teacherId: string, classId: string, studentId: string)",
               "visibility": "public"
             },
             {
               "name": "enrollExistingStudents",
-              "line": 1210,
+              "line": 1236,
               "decorators": [],
               "signature": "enrollExistingStudents(teacherId: string, classId: string, studentIds: string[]): Promise<EnrollmentBulkResponse>",
               "visibility": "public"
             },
             {
               "name": "createStudentAndEnroll",
-              "line": 1255,
+              "line": 1281,
               "decorators": [],
               "signature": "createStudentAndEnroll(teacherId: string, classId: string, dto: CreateStudentDto)",
               "visibility": "public"
             },
             {
               "name": "removeStudentFromClass",
-              "line": 1289,
+              "line": 1315,
               "decorators": [],
               "signature": "removeStudentFromClass(teacherId: string, classId: string, studentId: string)",
               "visibility": "public"
             },
             {
               "name": "removeStudentsFromClass",
-              "line": 1331,
+              "line": 1357,
               "decorators": [],
               "signature": "removeStudentsFromClass(teacherId: string, classId: string, studentIds: string[]): Promise<RemoveStudentsBulkResponse>",
               "visibility": "public"
             },
             {
               "name": "getAttendance",
-              "line": 1396,
+              "line": 1422,
               "decorators": [],
               "signature": "getAttendance(teacherId: string, classId: string, dateString: string, startTimeString: string, endTimeString: string)",
               "visibility": "public"
             },
             {
               "name": "getAttendanceSheet",
-              "line": 1491,
+              "line": 1517,
               "decorators": [],
               "signature": "getAttendanceSheet(teacherId: string, classId: string)",
               "visibility": "public"
             },
             {
               "name": "takeAttendanceBatch",
-              "line": 1573,
+              "line": 1599,
               "decorators": [],
               "signature": "takeAttendanceBatch(teacherId: string, classId: string, dto: TakeAttendanceBatchDto)",
               "visibility": "public"
             },
             {
               "name": "takeAttendanceBatchLocked",
-              "line": 1583,
+              "line": 1609,
               "decorators": [],
               "signature": "takeAttendanceBatchLocked(teacherId: string, classId: string, dto: TakeAttendanceBatchDto)",
               "visibility": "private"
             },
             {
               "name": "takeAttendance",
-              "line": 1630,
+              "line": 1656,
               "decorators": [],
               "signature": "takeAttendance(teacherId: string, classId: string, dto: TakeAttendanceDto)",
               "visibility": "public"
             },
             {
               "name": "takeAttendanceLocked",
-              "line": 1640,
+              "line": 1666,
               "decorators": [],
               "signature": "takeAttendanceLocked(teacherId: string, classId: string, dto: TakeAttendanceDto)",
               "visibility": "private"
             },
             {
               "name": "saveAttendanceForSession",
-              "line": 1669,
+              "line": 1695,
               "decorators": [],
               "signature": "saveAttendanceForSession(teacherId: string, classId: string, dto: TakeAttendanceDto, dbSession?: ClientSession)",
               "visibility": "private"
             },
             {
               "name": "resolveSessionScheduleType",
-              "line": 1973,
+              "line": 1999,
               "decorators": [],
               "signature": "resolveSessionScheduleType(scheduleEventType?: AttendanceScheduleEventType)",
               "visibility": "private"
             },
             {
               "name": "getAttendanceOverview",
-              "line": 1995,
+              "line": 2021,
               "decorators": [],
               "signature": "getAttendanceOverview(teacherIdStr: string, classIdStr: string)",
               "visibility": "public"
             },
             {
               "name": "getPopulatedAttendanceSession",
-              "line": 2044,
+              "line": 2070,
               "decorators": [],
               "signature": "getPopulatedAttendanceSession(session: Types.ObjectId | PopulatedAttendanceSession | null | undefined): PopulatedAttendanceSession | null",
               "visibility": "private"
             },
             {
               "name": "getAttendanceSessionId",
-              "line": 2059,
+              "line": 2085,
               "decorators": [],
               "signature": "getAttendanceSessionId(session: Types.ObjectId | PopulatedAttendanceSession | null | undefined)",
               "visibility": "private"
             },
             {
               "name": "findBilledTuitionLocks",
-              "line": 2073,
+              "line": 2099,
               "decorators": [],
               "signature": "findBilledTuitionLocks(teacherId: Types.ObjectId, classId: Types.ObjectId, attendanceIdValues: ObjectIdValue[], sessionIdValues: ObjectIdValue[], studentIdValues: ObjectIdValue[], dbSession?: ClientSession): Promise<AttendanceBillingLocks>",
               "visibility": "private"
             },
             {
               "name": "hasBilledTuitionEntry",
-              "line": 2137,
+              "line": 2163,
               "decorators": [],
               "signature": "hasBilledTuitionEntry(teacherId: Types.ObjectId, classId: Types.ObjectId, sessionId: Types.ObjectId, studentId: Types.ObjectId, attendanceId?: Types.ObjectId, dbSession?: ClientSession)",
               "visibility": "private"
             },
             {
               "name": "toUniqueObjectIds",
-              "line": 2162,
+              "line": 2188,
               "decorators": [],
               "signature": "toUniqueObjectIds(values: ObjectIdValue[])",
               "visibility": "private"
             },
             {
               "name": "calculateAttendanceSummary",
-              "line": 2182,
+              "line": 2208,
               "decorators": [],
               "signature": "calculateAttendanceSummary(records: AttendanceSummaryRecord[])",
               "visibility": "private"
             },
             {
               "name": "resolveClassColorIndex",
-              "line": 2206,
+              "line": 2232,
               "decorators": [],
               "signature": "resolveClassColorIndex(teacherId: Types.ObjectId, requestedColorIndex?: number)",
               "visibility": "private"
             },
             {
               "name": "normalizeColorIndex",
-              "line": 2237,
+              "line": 2263,
               "decorators": [],
               "signature": "normalizeColorIndex(colorIndex: number)",
               "visibility": "private"
             },
             {
               "name": "normalizeColorHex",
-              "line": 2245,
+              "line": 2271,
               "decorators": [],
               "signature": "normalizeColorHex(colorHex: string | undefined)",
               "visibility": "private"
             },
             {
               "name": "countActiveStudentsInClass",
-              "line": 2259,
+              "line": 2285,
               "decorators": [],
               "signature": "countActiveStudentsInClass(teacherId: Types.ObjectId, classId: Types.ObjectId)",
               "visibility": "private"
             },
             {
               "name": "deactivateClassEnrollments",
-              "line": 2272,
+              "line": 2298,
               "decorators": [],
               "signature": "deactivateClassEnrollments(teacherId: Types.ObjectId, classId: Types.ObjectId)",
               "visibility": "private"
             },
             {
               "name": "findClassForTeacherOrThrow",
-              "line": 2293,
+              "line": 2319,
               "decorators": [],
               "signature": "findClassForTeacherOrThrow(teacherId: string, classId: string | Types.ObjectId, session?: ClientSession)",
               "visibility": "private"
             },
             {
               "name": "findActiveStudentsInClass",
-              "line": 2320,
+              "line": 2346,
               "decorators": [],
               "signature": "findActiveStudentsInClass(teacherId: string, classId: Types.ObjectId)",
               "visibility": "private"
             },
             {
               "name": "createActiveEnrollment",
-              "line": 2347,
+              "line": 2373,
               "decorators": [],
               "signature": "createActiveEnrollment(teacherId: string, classId: Types.ObjectId, studentId: Types.ObjectId, session?: ClientSession)",
               "visibility": "private"
             },
             {
               "name": "createStudentEnrollmentEntities",
-              "line": 2411,
+              "line": 2437,
               "decorators": [],
               "signature": "createStudentEnrollmentEntities(teacherId: string, classId: string, dto: CreateStudentDto, session?: ClientSession): Promise<StudentEnrollmentCreationResult>",
               "visibility": "private"
             },
             {
               "name": "toClassResponse",
-              "line": 2436,
+              "line": 2462,
               "decorators": [],
               "signature": "toClassResponse(classroom: ClassDocument, studentCount: number, latestFixedSchedule: LatestFixedScheduleResponse | null = null): ClassResponse",
               "visibility": "private"
             },
             {
+              "name": "findPriceHistory",
+              "line": 2484,
+              "decorators": [],
+              "signature": "findPriceHistory(teacherId: string, classId: string)",
+              "visibility": "public"
+            },
+            {
               "name": "resolvePriceEffectiveFrom",
-              "line": 2458,
+              "line": 2513,
               "decorators": [],
               "signature": "resolvePriceEffectiveFrom(value?: string)",
               "visibility": "private"
             },
             {
               "name": "ensureClassPriceBaseline",
-              "line": 2466,
+              "line": 2521,
               "decorators": [],
               "signature": "ensureClassPriceBaseline(teacherId: Types.ObjectId, classroom: ClassDocument)",
               "visibility": "private"
             },
             {
               "name": "upsertClassPriceVersion",
-              "line": 2492,
+              "line": 2547,
               "decorators": [],
               "signature": "upsertClassPriceVersion(teacherId: Types.ObjectId, classId: Types.ObjectId, price: PriceSnapshot, effectiveFrom: Date)",
               "visibility": "private"
             },
             {
               "name": "findClassPriceForDate",
-              "line": 2524,
+              "line": 2579,
               "decorators": [],
               "signature": "findClassPriceForDate(teacherId: Types.ObjectId, classroom: ClassDocument, sessionDate: Date, dbSession?: ClientSession): Promise<PriceSnapshot>",
               "visibility": "private"
             },
             {
               "name": "getFallbackClassPrice",
-              "line": 2547,
+              "line": 2602,
               "decorators": [],
               "signature": "getFallbackClassPrice(classroom: ClassDocument): PriceSnapshot",
               "visibility": "private"
             },
             {
               "name": "normalizeSlot",
-              "line": 2554,
+              "line": 2609,
               "decorators": [],
               "signature": "normalizeSlot(slot: ScheduleSlotDto): ClassScheduleSlotResponse",
               "visibility": "private"
             },
             {
               "name": "buildTemporarySchedulePayload",
-              "line": 2570,
+              "line": 2625,
               "decorators": [],
               "signature": "buildTemporarySchedulePayload(dto: CreateTemporaryScheduleDto)",
               "visibility": "private"
             },
             {
               "name": "buildOptionalTemporaryTimePayload",
-              "line": 2634,
+              "line": 2689,
               "decorators": [],
               "signature": "buildOptionalTemporaryTimePayload(startTime: string | undefined, endTime: string | undefined)",
               "visibility": "private"
             },
             {
               "name": "findLatestFixedScheduleMap",
-              "line": 2654,
+              "line": 2709,
               "decorators": [],
               "signature": "findLatestFixedScheduleMap(teacherId: Types.ObjectId, classIds: Types.ObjectId[])",
               "visibility": "private"
             },
             {
               "name": "findLatestFixedSchedule",
-              "line": 2687,
+              "line": 2742,
               "decorators": [],
               "signature": "findLatestFixedSchedule(teacherId: Types.ObjectId, classId: Types.ObjectId)",
               "visibility": "private"
             },
             {
               "name": "toLatestFixedScheduleResponse",
-              "line": 2703,
+              "line": 2758,
               "decorators": [],
               "signature": "toLatestFixedScheduleResponse(schedule: LeanScheduleVersion): LatestFixedScheduleResponse",
               "visibility": "private"
             },
             {
               "name": "toScheduleOverrideResponse",
-              "line": 2717,
+              "line": 2772,
               "decorators": [],
               "signature": "toScheduleOverrideResponse(schedule: LeanScheduleOverride | ScheduleOverrideDocument): ScheduleOverrideResponse",
               "visibility": "private"
             },
             {
               "name": "toClassSessionResponse",
-              "line": 2740,
+              "line": 2795,
               "decorators": [],
               "signature": "toClassSessionResponse(session: ClassSessionDocument): ClassSessionResponse",
               "visibility": "private"
             },
             {
               "name": "toVietnamScheduleSlot",
-              "line": 2760,
+              "line": 2815,
               "decorators": [],
               "signature": "toVietnamScheduleSlot(slot: ClassScheduleSlotResponse, timeStorage?: 'utc' | 'vietnam')",
               "visibility": "private"
             },
             {
               "name": "toVietnamTime",
-              "line": 2777,
+              "line": 2832,
               "decorators": [],
               "signature": "toVietnamTime(time: string | undefined, timeStorage?: 'utc' | 'vietnam')",
               "visibility": "private"
             },
             {
               "name": "toEnrollmentResponse",
-              "line": 2788,
+              "line": 2843,
               "decorators": [],
               "signature": "toEnrollmentResponse(enrollment: ClassEnrollmentDocument, student: StudentDocument): EnrollmentResponse",
               "visibility": "private"
             },
             {
               "name": "getEnrollmentErrorMessage",
-              "line": 2803,
+              "line": 2858,
               "decorators": [],
               "signature": "getEnrollmentErrorMessage(error: unknown)",
               "visibility": "private"
             },
             {
               "name": "toObjectId",
-              "line": 2834,
+              "line": 2889,
               "decorators": [],
               "signature": "toObjectId(value: string, fieldName: string)",
               "visibility": "private"
             },
             {
               "name": "parseDate",
-              "line": 2842,
+              "line": 2897,
               "decorators": [],
               "signature": "parseDate(value: string, label: string)",
               "visibility": "private"
             },
             {
               "name": "toVietnamDateKey",
-              "line": 2874,
+              "line": 2929,
               "decorators": [],
               "signature": "toVietnamDateKey(date: Date)",
               "visibility": "private"
             },
             {
               "name": "getCurrentVietnamDate",
-              "line": 2883,
+              "line": 2938,
               "decorators": [],
               "signature": "getCurrentVietnamDate()",
               "visibility": "private"
             },
             {
               "name": "requireDate",
-              "line": 2887,
+              "line": 2942,
               "decorators": [],
               "signature": "requireDate(value: string | undefined, label: string)",
               "visibility": "private"
             },
             {
               "name": "requireTime",
-              "line": 2895,
+              "line": 2950,
               "decorators": [],
               "signature": "requireTime(value: string | undefined, label: string)",
               "visibility": "private"
             },
             {
               "name": "getPreviousMoment",
-              "line": 2903,
+              "line": 2958,
               "decorators": [],
               "signature": "getPreviousMoment(date: Date)",
               "visibility": "private"
             },
             {
               "name": "isStartBeforeEnd",
-              "line": 2907,
+              "line": 2962,
               "decorators": [],
               "signature": "isStartBeforeEnd(startTime: string, endTime: string)",
               "visibility": "private"
             },
             {
               "name": "buildClassSessionSourceKey",
-              "line": 2911,
+              "line": 2966,
               "decorators": [],
               "signature": "buildClassSessionSourceKey(classId: string, date: string, startTime: string, endTime: string)",
               "visibility": "private"
             },
             {
               "name": "updateStudentEnrollmentStatus",
-              "line": 2920,
+              "line": 2975,
               "decorators": [],
               "signature": "updateStudentEnrollmentStatus(teacherId: string, classId: string, studentId: string, dto: UpdateEnrollmentStatusDto)",
               "visibility": "public"
             },
             {
               "name": "getEnrollmentDetail",
-              "line": 2957,
+              "line": 3012,
               "decorators": [],
               "signature": "getEnrollmentDetail(enrollment: ClassEnrollmentDocument)",
               "visibility": "private"
             },
             {
               "name": "hardDeleteStudentFromClass",
-              "line": 2968,
+              "line": 3023,
               "decorators": [],
               "signature": "hardDeleteStudentFromClass(teacherId: string, classId: string, studentId: string)",
               "visibility": "public"
             },
             {
               "name": "getExamSheet",
-              "line": 3017,
+              "line": 3072,
               "decorators": [],
               "signature": "getExamSheet(teacherIdStr: string, classIdStr: string)",
               "visibility": "public"
             },
             {
               "name": "createExam",
-              "line": 3063,
+              "line": 3118,
               "decorators": [],
               "signature": "createExam(teacherIdStr: string, classIdStr: string, dto: CreateExamDto)",
               "visibility": "public"
             },
             {
               "name": "updateExam",
-              "line": 3097,
+              "line": 3152,
               "decorators": [],
               "signature": "updateExam(teacherIdStr: string, classIdStr: string, examIdStr: string, dto: UpdateExamDto)",
               "visibility": "public"
             },
             {
               "name": "deleteExam",
-              "line": 3140,
+              "line": 3195,
               "decorators": [],
               "signature": "deleteExam(teacherIdStr: string, classIdStr: string, examIdStr: string)",
               "visibility": "public"
             },
             {
               "name": "takeExamScoresBatch",
-              "line": 3189,
+              "line": 3244,
               "decorators": [],
               "signature": "takeExamScoresBatch(teacherIdStr: string, classIdStr: string, dto: TakeExamScoresBatchDto)",
               "visibility": "public"
             },
             {
               "name": "isDuplicateKeyError",
-              "line": 3306,
+              "line": 3361,
               "decorators": [],
               "signature": "isDuplicateKeyError(error: unknown)",
               "visibility": "private"
             },
             {
               "name": "isTransactionUnsupportedError",
-              "line": 3315,
+              "line": 3370,
               "decorators": [],
               "signature": "isTransactionUnsupportedError(error: unknown)",
               "visibility": "private"
             },
             {
               "name": "getErrorCode",
-              "line": 3332,
+              "line": 3387,
               "decorators": [],
               "signature": "getErrorCode(error: unknown)",
               "visibility": "private"
@@ -5813,8 +5978,8 @@
     },
     {
       "file": "edutrack_be/src/modules/classes/dto/create-temporary-schedule.dto.ts",
-      "lines": 46,
-      "sha256": "e9f7f355f37baae8fb90cb30fc38403b98c75764f262511d19df394e1298ce7f",
+      "lines": 56,
+      "sha256": "1502005f4ec9919e19d1cd30ea789038448c5aa22c5a73539e2ad59d4788e0c5",
       "imports": [
         {
           "from": "class-validator",
@@ -5920,6 +6085,30 @@
                 "@IsOptional()",
                 "@IsString()",
                 "@MaxLength(300)"
+              ],
+              "type": "string",
+              "optional": true,
+              "initializer": ""
+            },
+            {
+              "name": "topic",
+              "line": 46,
+              "decorators": [
+                "@IsOptional()",
+                "@IsString()",
+                "@MaxLength(160)"
+              ],
+              "type": "string",
+              "optional": true,
+              "initializer": ""
+            },
+            {
+              "name": "content",
+              "line": 51,
+              "decorators": [
+                "@IsOptional()",
+                "@IsString()",
+                "@MaxLength(1200)"
               ],
               "type": "string",
               "optional": true,
@@ -22293,7 +22482,7 @@
     {
       "file": "edutrack_be/src/modules/users/dto/push-subscription.dto.ts",
       "lines": 81,
-      "sha256": "4c5e4b82df4cc136bef14fe5f79b02dff9983d65df75f5a3f1c457571cb10e35",
+      "sha256": "1ab325a82e030dd53ca344e9443227234a22023e74bb772cd55951dbe42e1bed",
       "imports": [
         {
           "from": "class-transformer",
@@ -26061,8 +26250,8 @@
     },
     {
       "file": "edutrack_fe/components/classes/class-schedule-parts.tsx",
-      "lines": 1498,
-      "sha256": "1889b8bfc668b71ab44d61ee40a3234a8df98b4eb009490207948a1504ab431c",
+      "lines": 1508,
+      "sha256": "189f41ba81321b011c87b5458ac99785ffccf1139d9a877d9a06238a2dd9ba15",
       "imports": [
         {
           "from": "lucide-react",
@@ -26112,175 +26301,175 @@
         },
         {
           "name": "LessonContentForm",
-          "line": 59
+          "line": 61
         },
         {
           "name": "ScheduleConfirmAction",
-          "line": 64
+          "line": 66
         },
         {
           "name": "SelectOption",
-          "line": 71
+          "line": 73
         },
         {
           "name": "SessionPeriodValue",
-          "line": 77
+          "line": 79
         },
         {
           "name": "SchedulePeriod",
-          "line": 80
+          "line": 82
         },
         {
           "name": "emptySlot",
-          "line": 86
+          "line": 88
         },
         {
           "name": "initialFixedForm",
-          "line": 92
+          "line": 94
         },
         {
           "name": "initialTemporaryForm",
-          "line": 97
+          "line": 99
         },
         {
           "name": "initialLessonForm",
-          "line": 106
+          "line": 110
         },
         {
           "name": "dayOptions",
-          "line": 111
+          "line": 115
         },
         {
           "name": "actionOptions",
-          "line": 121
+          "line": 125
         },
         {
           "name": "calendarPeriods",
-          "line": 132
+          "line": 136
         },
         {
           "name": "unknownPeriod",
-          "line": 150
+          "line": 154
         },
         {
           "name": "SummaryItem",
-          "line": 223
+          "line": 227
         },
         {
           "name": "CurrentFixedSchedule",
-          "line": 243
+          "line": 247
         },
         {
           "name": "WeekCalendar",
-          "line": 305
+          "line": 309
         },
         {
           "name": "TemporarySchedulePanel",
-          "line": 486
+          "line": 490
         },
         {
           "name": "LessonAdjustmentControls",
-          "line": 555
+          "line": 559
         },
         {
           "name": "CalendarSkeleton",
-          "line": 694
+          "line": 698
         },
         {
           "name": "SelectField",
-          "line": 748
+          "line": 752
         },
         {
           "name": "DateField",
-          "line": 900
+          "line": 904
         },
         {
           "name": "TimeField",
-          "line": 925
+          "line": 929
         },
         {
           "name": "buildFixedFormFromSchedule",
-          "line": 955
+          "line": 959
         },
         {
           "name": "buildTemporaryFormFromSchedule",
-          "line": 970
+          "line": 974
         },
         {
           "name": "buildTemporaryFormFromEvent",
-          "line": 985
+          "line": 991
         },
         {
           "name": "validateFixedSchedule",
-          "line": 1018
+          "line": 1026
         },
         {
           "name": "buildTemporaryPayload",
-          "line": 1044
+          "line": 1052
         },
         {
           "name": "getActionLabel",
-          "line": 1115
+          "line": 1125
         },
         {
           "name": "getEventStyle",
-          "line": 1147
+          "line": 1157
         },
         {
           "name": "getEventIcon",
-          "line": 1161
+          "line": 1171
         },
         {
           "name": "formatTimeRange",
-          "line": 1205
+          "line": 1215
         },
         {
           "name": "getCalendarCellKey",
-          "line": 1219
+          "line": 1229
         },
         {
           "name": "compareEventsByStartTime",
-          "line": 1223
+          "line": 1233
         },
         {
           "name": "getSessionPeriod",
-          "line": 1243
+          "line": 1253
         },
         {
           "name": "mapEventTypeToScheduleType",
-          "line": 1292
+          "line": 1302
         },
         {
           "name": "isStandaloneTemporaryAction",
-          "line": 1312
+          "line": 1322
         },
         {
           "name": "getTemporaryScheduleIdFromEvent",
-          "line": 1316
+          "line": 1326
         },
         {
           "name": "isTemporaryScheduleInWeek",
-          "line": 1324
+          "line": 1334
         },
         {
           "name": "buildWeekDays",
-          "line": 1337
+          "line": 1347
         },
         {
           "name": "formatDate",
-          "line": 1348
+          "line": 1358
         },
         {
           "name": "getCurrentWeekStartKey",
-          "line": 1405
+          "line": 1415
         },
         {
           "name": "getWeekStartKey",
-          "line": 1418
+          "line": 1428
         },
         {
           "name": "addDaysToDateKey",
-          "line": 1430
+          "line": 1440
         }
       ],
       "classes": [],
@@ -26288,247 +26477,247 @@
         {
           "name": "SummaryItem",
           "signature": "SummaryItem({ icon, label, value, }: { icon: ReactNode; label: string; value: string; })",
-          "line": 223
+          "line": 227
         },
         {
           "name": "CurrentFixedSchedule",
           "signature": "CurrentFixedSchedule({ schedule, isSuspended, onSuspend, onResume, }: { schedule: LatestFixedSchedule | null; isSuspended?: boolean; onSuspend?: () => void; onResume?: () => void; })",
-          "line": 243
+          "line": 247
         },
         {
           "name": "WeekCalendar",
           "signature": "WeekCalendar({ days, eventsByDateAndPeriod, onEventSelect, periods, }: { days: TeacherScheduleDay[]; eventsByDateAndPeriod: Map<string, TeacherScheduleEvent[]>; onEventSelect: (event: TeacherScheduleEvent) => void; periods: SchedulePeriod[]; })",
-          "line": 305
+          "line": 309
         },
         {
           "name": "DayHeader",
           "signature": "DayHeader({ day }: { day: TeacherScheduleDay })",
-          "line": 375
+          "line": 379
         },
         {
           "name": "PeriodHeader",
           "signature": "PeriodHeader({ period }: { period: SchedulePeriod })",
-          "line": 384
+          "line": 388
         },
         {
           "name": "CalendarCell",
           "signature": "CalendarCell({ day, events, onEventSelect, period, }: { day: TeacherScheduleDay; events: TeacherScheduleEvent[]; onEventSelect: (event: TeacherScheduleEvent) => void; period: SchedulePeriod; })",
-          "line": 398
+          "line": 402
         },
         {
           "name": "ScheduleEventCard",
           "signature": "ScheduleEventCard({ event, onSelect, }: { event: TeacherScheduleEvent; onSelect: () => void; })",
-          "line": 436
+          "line": 440
         },
         {
           "name": "TemporarySchedulePanel",
           "signature": "TemporarySchedulePanel({ isRevoking, onEdit, onRevoke, schedules, }: { isRevoking: boolean; onEdit: (schedule: ClassTemporarySchedule) => void; onRevoke: (scheduleId: string) => void; schedules: ClassTemporarySchedule[]; })",
-          "line": 486
+          "line": 490
         },
         {
           "name": "LessonAdjustmentControls",
           "signature": "LessonAdjustmentControls({ event, form, isSaving, mode, onCancel, onChange, onModeChange, onSave, }: { event: TeacherScheduleEvent; form: TemporaryScheduleForm; isSaving: boolean; mode: ScheduleOverrideAction | \"\"; onCancel: () => void; onChange: Dispatch<SetStateAction<TemporaryScheduleForm>>; onModeChange: (mode: ScheduleOverrideAction) => void; onSave: () => void; })",
-          "line": 555
+          "line": 559
         },
         {
           "name": "CalendarSkeleton",
           "signature": "CalendarSkeleton({ days, periods, }: { days: TeacherScheduleDay[]; periods: SchedulePeriod[]; })",
-          "line": 694
+          "line": 698
         },
         {
           "name": "SelectField",
           "signature": "SelectField({ label, onChange, options, value, }: { label: string; onChange: (value: string) => void; options: SelectOption[]; value: string; })",
-          "line": 748
+          "line": 752
         },
         {
           "name": "DateField",
           "signature": "DateField({ label, onChange, value, }: { label: string; onChange: (value: string) => void; value: string; })",
-          "line": 900
+          "line": 904
         },
         {
           "name": "TimeField",
           "signature": "TimeField({ label, onChange, value, }: { label: string; onChange: (value: string) => void; value: string; })",
-          "line": 925
+          "line": 929
         },
         {
           "name": "buildFixedFormFromSchedule",
           "signature": "buildFixedFormFromSchedule(schedule: LatestFixedSchedule | null): FixedScheduleForm",
-          "line": 955
+          "line": 959
         },
         {
           "name": "buildTemporaryFormFromSchedule",
           "signature": "buildTemporaryFormFromSchedule(schedule: ClassTemporarySchedule): TemporaryScheduleForm",
-          "line": 970
+          "line": 974
         },
         {
           "name": "buildTemporaryFormFromEvent",
           "signature": "buildTemporaryFormFromEvent(event: TeacherScheduleEvent, action: ScheduleOverrideAction): TemporaryScheduleForm",
-          "line": 985
+          "line": 991
         },
         {
           "name": "validateFixedSchedule",
           "signature": "validateFixedSchedule(form: FixedScheduleForm)",
-          "line": 1018
+          "line": 1026
         },
         {
           "name": "buildTemporaryPayload",
           "signature": "buildTemporaryPayload(form: TemporaryScheduleForm): CreateTemporarySchedulePayload | string",
-          "line": 1044
+          "line": 1052
         },
         {
           "name": "formatTemporarySchedule",
           "signature": "formatTemporarySchedule(schedule: ClassTemporarySchedule)",
-          "line": 1101
+          "line": 1111
         },
         {
           "name": "getActionLabel",
           "signature": "getActionLabel(action: ScheduleOverrideAction)",
-          "line": 1115
+          "line": 1125
         },
         {
           "name": "getTemporaryIcon",
           "signature": "getTemporaryIcon(action: ScheduleOverrideAction)",
-          "line": 1131
+          "line": 1141
         },
         {
           "name": "getEventStyle",
           "signature": "getEventStyle(event: TeacherScheduleEvent)",
-          "line": 1147
+          "line": 1157
         },
         {
           "name": "getEventIcon",
           "signature": "getEventIcon(type: TeacherScheduleEventType)",
-          "line": 1161
+          "line": 1171
         },
         {
           "name": "getEventLabel",
           "signature": "getEventLabel(type: TeacherScheduleEventType)",
-          "line": 1181
+          "line": 1191
         },
         {
           "name": "formatTimeRange",
           "signature": "formatTimeRange(event: TeacherScheduleEvent)",
-          "line": 1205
+          "line": 1215
         },
         {
           "name": "getLessonContent",
           "signature": "getLessonContent(event: TeacherScheduleEvent)",
-          "line": 1213
+          "line": 1223
         },
         {
           "name": "getCalendarCellKey",
           "signature": "getCalendarCellKey(date: string, period: SessionPeriodValue)",
-          "line": 1219
+          "line": 1229
         },
         {
           "name": "compareEventsByStartTime",
           "signature": "compareEventsByStartTime(firstEvent: TeacherScheduleEvent, secondEvent: TeacherScheduleEvent)",
-          "line": 1223
+          "line": 1233
         },
         {
           "name": "getTimeOrderValue",
           "signature": "getTimeOrderValue(time?: string)",
-          "line": 1233
+          "line": 1243
         },
         {
           "name": "getSessionPeriod",
           "signature": "getSessionPeriod(time?: string): { label: string; value: SessionPeriodValue; }",
-          "line": 1243
+          "line": 1253
         },
         {
           "name": "getSessionPeriodIcon",
           "signature": "getSessionPeriodIcon(period: SessionPeriodValue)",
-          "line": 1276
+          "line": 1286
         },
         {
           "name": "mapEventTypeToScheduleType",
           "signature": "mapEventTypeToScheduleType(type: TeacherScheduleEventType)",
-          "line": 1292
+          "line": 1302
         },
         {
           "name": "isStandaloneTemporaryAction",
           "signature": "isStandaloneTemporaryAction(action: ScheduleOverrideAction)",
-          "line": 1312
+          "line": 1322
         },
         {
           "name": "getTemporaryScheduleIdFromEvent",
           "signature": "getTemporaryScheduleIdFromEvent(event: TeacherScheduleEvent)",
-          "line": 1316
+          "line": 1326
         },
         {
           "name": "isTemporaryScheduleInWeek",
           "signature": "isTemporaryScheduleInWeek(schedule: ClassTemporarySchedule, weekStartKey: string)",
-          "line": 1324
+          "line": 1334
         },
         {
           "name": "buildWeekDays",
           "signature": "buildWeekDays(weekStartKey: string): TeacherScheduleDay[]",
-          "line": 1337
+          "line": 1347
         },
         {
           "name": "formatDate",
           "signature": "formatDate(value?: string)",
-          "line": 1348
+          "line": 1358
         },
         {
           "name": "toDateInputValue",
           "signature": "toDateInputValue(value?: string)",
-          "line": 1362
+          "line": 1372
         },
         {
           "name": "normalizeTimeInput",
           "signature": "normalizeTimeInput(value: string)",
-          "line": 1381
+          "line": 1391
         },
         {
           "name": "normalizeTimeOnBlur",
           "signature": "normalizeTimeOnBlur(value: string)",
-          "line": 1391
+          "line": 1401
         },
         {
           "name": "getCurrentWeekStartKey",
           "signature": "getCurrentWeekStartKey(): string",
-          "line": 1405
+          "line": 1415
         },
         {
           "name": "getWeekStartKey",
           "signature": "getWeekStartKey(dateKey: string): string",
-          "line": 1418
+          "line": 1428
         },
         {
           "name": "addDaysToDateKey",
           "signature": "addDaysToDateKey(dateKey: string, days: number): string",
-          "line": 1430
+          "line": 1440
         },
         {
           "name": "isToday",
           "signature": "isToday(dateKey: string)",
-          "line": 1440
+          "line": 1450
         },
         {
           "name": "parseVietnamDateKey",
           "signature": "parseVietnamDateKey(value: string)",
-          "line": 1444
+          "line": 1454
         },
         {
           "name": "getVietnamDayOfWeek",
           "signature": "getVietnamDayOfWeek(date: Date)",
-          "line": 1467
+          "line": 1477
         },
         {
           "name": "toVietnamDateKey",
           "signature": "toVietnamDateKey(date: Date)",
-          "line": 1474
+          "line": 1484
         },
         {
           "name": "addDays",
           "signature": "addDays(date: Date, days: number)",
-          "line": 1483
+          "line": 1493
         },
         {
           "name": "getDayLabel",
           "signature": "getDayLabel(dayOfWeek: number)",
-          "line": 1487
+          "line": 1497
         }
       ],
       "types": [
@@ -26540,31 +26729,31 @@
         {
           "name": "TemporaryScheduleForm",
           "line": 48,
-          "definition": "export type TemporaryScheduleForm = {\n  action: ScheduleOverrideAction;\n  originalDate: string;\n  originalStartTime?: string;\n  originalEndTime?: string;\n  newDate: string;\n  startTime: string;\n  endTime: string;\n  reason: string;\n};"
+          "definition": "export type TemporaryScheduleForm = {\n  action: ScheduleOverrideAction;\n  originalDate: string;\n  originalStartTime?: string;\n  originalEndTime?: string;\n  newDate: string;\n  startTime: string;\n  endTime: string;\n  reason: string;\n  topic: string;\n  content: string;\n};"
         },
         {
           "name": "LessonContentForm",
-          "line": 59,
+          "line": 61,
           "definition": "export type LessonContentForm = {\n  topic: string;\n  content: string;\n};"
         },
         {
           "name": "ScheduleConfirmAction",
-          "line": 64,
+          "line": 66,
           "definition": "export type ScheduleConfirmAction =\n  | { type: \"fixed\" }\n  | { type: \"temporary\" }\n  | { scheduleId: string; type: \"revoke\" }\n  | { type: \"lessonContent\" }\n  | { type: \"lessonAdjustment\" };"
         },
         {
           "name": "SelectOption",
-          "line": 71,
+          "line": 73,
           "definition": "export type SelectOption = {\n  icon?: ReactNode;\n  label: string;\n  value: string;\n};"
         },
         {
           "name": "SessionPeriodValue",
-          "line": 77,
+          "line": 79,
           "definition": "export type SessionPeriodValue =\n  \"morning\" | \"afternoon\" | \"evening\" | \"unknown\";"
         },
         {
           "name": "SchedulePeriod",
-          "line": 80,
+          "line": 82,
           "definition": "export type SchedulePeriod = {\n  label: string;\n  timeHint: string;\n  value: SessionPeriodValue;\n};"
         }
       ],
@@ -26577,8 +26766,8 @@
     },
     {
       "file": "edutrack_fe/components/classes/class-schedule-tab.module.css",
-      "lines": 1295,
-      "sha256": "bfdb8252686f74595af05d00bcf3bf42599c505a0a52c561164c1bd671ddea00",
+      "lines": 1296,
+      "sha256": "700f2cdf19f957ffa9d407de6839c60b85fa216a24c1d51e719b07aea990e9ae",
       "imports": [],
       "exports": [],
       "classes": [],
@@ -26593,8 +26782,8 @@
     },
     {
       "file": "edutrack_fe/components/classes/class-schedule-tab.tsx",
-      "lines": 1569,
-      "sha256": "d0912a34930a0f46c281f50c03bb41165927ad6abfe38f75021f7ed0b9c2fb10",
+      "lines": 1598,
+      "sha256": "be81e96156edee949efae6c81933ac7aaccbf2b8cba47924f0e056aae0591733",
       "imports": [
         {
           "from": "lucide-react",
@@ -26816,12 +27005,12 @@
     },
     {
       "file": "edutrack_fe/components/classes/class-tuition-tab.tsx",
-      "lines": 1135,
-      "sha256": "45b0f0b9d187d3e32658222e34e9815c06ad083f359098a3d7bc5c22314a06cf",
+      "lines": 1181,
+      "sha256": "0abc60d735000fbd4ee1186f3f49a6ceea58093c6526445e18fbe68d962e5c60",
       "imports": [
         {
           "from": "lucide-react",
-          "bindings": "{ CalendarDays, CheckCircle2, Coins, FileText, LoaderCircle, RefreshCw, Save, }"
+          "bindings": "{ CalendarDays, CheckCircle2, Coins, FileText, Filter, LoaderCircle, RefreshCw, Save, }"
         },
         {
           "from": "react",
@@ -26852,6 +27041,14 @@
           "bindings": "{ TuitionMetric }"
         },
         {
+          "from": "./tuition/tuition-options",
+          "bindings": "{ TuitionOptions }"
+        },
+        {
+          "from": "./tuition/price-history-modal",
+          "bindings": "{ PriceHistoryModal }"
+        },
+        {
           "from": "./tuition/receipt-dialogs",
           "bindings": "{ BULK_RECEIPT_DOWNLOAD_ID, CurrencyField, IssueReceiptModal, PaymentModal, buildPriceForm, formatDateInput, getReceiptPreviewErrorHtml, getTuitionEntriesPeriod, initialFilters, initialIssueForm, toDateInputValue, type BillingFilterState, type IssueFormState, type IssueMode, type PaymentFormState, type PriceFormState, }"
         },
@@ -26875,7 +27072,7 @@
       "exports": [
         {
           "name": "ClassTuitionTab",
-          "line": 94
+          "line": 97
         }
       ],
       "classes": [],
@@ -26883,27 +27080,27 @@
         {
           "name": "downloadBlobFile",
           "signature": "downloadBlobFile(blob: Blob, fileName: string, fallbackMimeType: string, extension: string)",
-          "line": 67
+          "line": 70
         },
         {
           "name": "ClassTuitionTab",
           "signature": "ClassTuitionTab({ classroom, initialIssueMode = \"class\", initialIssueStudent, onClassUpdated, onInitialIssueHandled, }: { classroom: ClassroomDetail; initialIssueMode?: IssueMode; initialIssueStudent?: Student | null; onClassUpdated?: (classroom: Classroom) => void; onInitialIssueHandled?: () => void; })",
-          "line": 94
+          "line": 97
         },
         {
           "name": "ReceiptPreviewDialog",
           "signature": "ReceiptPreviewDialog({ html, onClose, }: { html: string; onClose: () => void; })",
-          "line": 991
+          "line": 1037
         },
         {
           "name": "PriceSettingsPanel",
           "signature": "PriceSettingsPanel({ form, isLoading, makeupPrice, onChange, onSubmit, priceEffectiveFrom, regularPrice, }: { form: PriceFormState; isLoading: boolean; makeupPrice: number; onChange: (form: PriceFormState) => void; onSubmit: () => void; priceEffectiveFrom?: string | null; regularPrice: number; })",
-          "line": 1022
+          "line": 1068
         },
         {
           "name": "PriceDateField",
           "signature": "PriceDateField({ onChange, value, }: { onChange: (value: string) => void; value: string; })",
-          "line": 1107
+          "line": 1153
         }
       ],
       "types": [],
@@ -26918,14 +27115,14 @@
             "classroom.id",
             "filters"
           ],
-          "line": 158
+          "line": 163
         },
         {
           "fn": "schoolApi.listReceipts",
           "args": [
             "{ classId: classroom.id, fromDate: filters.fromDate || undefined, toDate: filters.toDate || undefined, }"
           ],
-          "line": 159
+          "line": 164
         },
         {
           "fn": "schoolApi.getStudentBillingOverview",
@@ -26933,7 +27130,7 @@
             "student.id",
             "candidateFilters"
           ],
-          "line": 293
+          "line": 298
         },
         {
           "fn": "schoolApi.getStudentBillingCandidates",
@@ -26941,7 +27138,7 @@
             "student.id",
             "{ ...candidateFilters, classIds: effectiveClassIds, }"
           ],
-          "line": 308
+          "line": 313
         },
         {
           "fn": "schoolApi.getBillingCandidates",
@@ -26950,7 +27147,7 @@
             "student.id",
             "candidateFilters"
           ],
-          "line": 318
+          "line": 323
         },
         {
           "fn": "schoolApi.previewStudentReceipt",
@@ -26958,7 +27155,7 @@
             "selectedStudent.id",
             "payload"
           ],
-          "line": 386
+          "line": 391
         },
         {
           "fn": "schoolApi.previewReceipt",
@@ -26967,7 +27164,7 @@
             "selectedStudent.id",
             "payload"
           ],
-          "line": 387
+          "line": 392
         },
         {
           "fn": "schoolApi.issueStudentReceipt",
@@ -26975,7 +27172,7 @@
             "selectedStudent.id",
             "payload"
           ],
-          "line": 420
+          "line": 425
         },
         {
           "fn": "schoolApi.issueReceipt",
@@ -26984,42 +27181,42 @@
             "selectedStudent.id",
             "payload"
           ],
-          "line": 421
+          "line": 426
         },
         {
           "fn": "schoolApi.getReceiptDownload",
           "args": [
             "receipt.id"
           ],
-          "line": 494
+          "line": 499
         },
         {
           "fn": "schoolApi.getReceiptDownload",
           "args": [
             "receipt.id"
           ],
-          "line": 512
+          "line": 517
         },
         {
           "fn": "schoolApi.downloadReceipts",
           "args": [
             "{ receiptIds: selectedReceipts.map((receipt) => receipt.id), }"
           ],
-          "line": 532
+          "line": 537
         },
         {
           "fn": "schoolApi.retryReceiptPdf",
           "args": [
             "receipt.id"
           ],
-          "line": 557
+          "line": 562
         },
         {
           "fn": "schoolApi.cancelReceipt",
           "args": [
             "receiptToCancel.id"
           ],
-          "line": 577
+          "line": 582
         },
         {
           "fn": "schoolApi.uploadReceiptPaymentProof",
@@ -27027,7 +27224,7 @@
             "paymentReceipt.id",
             "paymentForm.proofFile"
           ],
-          "line": 641
+          "line": 646
         },
         {
           "fn": "schoolApi.updateReceiptPayment",
@@ -27035,7 +27232,7 @@
             "paymentReceipt.id",
             "{ paymentStatus: paymentForm.paymentStatus, paidAmount: paymentForm.paymentStatus === \"partially_paid\" ? parsedPaidAmount : undefined, paidAt: paymentForm.paymentStatus === \"unpaid"
           ],
-          "line": 647
+          "line": 652
         },
         {
           "fn": "schoolApi.updateClass",
@@ -27043,7 +27240,7 @@
             "classroom.id",
             "{ regularPrice, makeupPrice, priceEffectiveFrom: priceForm.priceEffectiveFrom, }"
           ],
-          "line": 752
+          "line": 757
         }
       ],
       "headings": []
@@ -28917,6 +29114,62 @@
       "headings": []
     },
     {
+      "file": "edutrack_fe/components/classes/tuition/price-history-modal.tsx",
+      "lines": 126,
+      "sha256": "713dbce5c170ebe189d5b6fb9bb8d011e15d018e6277f825607275b620c3fb64",
+      "imports": [
+        {
+          "from": "lucide-react",
+          "bindings": "{ Coins, RefreshCw }"
+        },
+        {
+          "from": "react",
+          "bindings": "{ useEffect, useState }"
+        },
+        {
+          "from": "@/lib/api/school",
+          "bindings": "{ schoolApi }"
+        },
+        {
+          "from": "@/types/school",
+          "bindings": "type { ClassPriceHistoryEntry }"
+        },
+        {
+          "from": "../classroom-ui",
+          "bindings": "{ EmptyState, InlineLoading, Modal, SecondaryAction, }"
+        },
+        {
+          "from": "../classroom-utils",
+          "bindings": "{ formatMoney, getErrorMessage, toVietnamDateInputValue, }"
+        },
+        {
+          "from": "./receipt-dialogs",
+          "bindings": "{ formatDateInput }"
+        }
+      ],
+      "exports": [
+        {
+          "name": "PriceHistoryModal",
+          "line": 20
+        }
+      ],
+      "classes": [],
+      "functions": [
+        {
+          "name": "PriceHistoryModal",
+          "signature": "PriceHistoryModal({ classId, className, onClose, }: { classId: string; className: string; onClose: () => void; })",
+          "line": 20
+        }
+      ],
+      "types": [],
+      "objects": [],
+      "tests": [],
+      "routes": [],
+      "indexes": [],
+      "calls": [],
+      "headings": []
+    },
+    {
       "file": "edutrack_fe/components/classes/tuition/receipt-dialogs.tsx",
       "lines": 1115,
       "sha256": "39bb348326b531361f94ad69680efc108231d823904d9fd9d8acd1775fae6494",
@@ -29310,6 +29563,42 @@
           "definition": "type TuitionMetricTone = \"primary\" | \"info\" | \"warning\" | \"success\";"
         }
       ],
+      "objects": [],
+      "tests": [],
+      "routes": [],
+      "indexes": [],
+      "calls": [],
+      "headings": []
+    },
+    {
+      "file": "edutrack_fe/components/classes/tuition/tuition-options.tsx",
+      "lines": 57,
+      "sha256": "e47a1e31c362dbd2a19ba7860bf86f76ed24fe5ee5606d27c601b089b77b12e3",
+      "imports": [
+        {
+          "from": "lucide-react",
+          "bindings": "{ ChevronDown, History, Settings2 }"
+        },
+        {
+          "from": "react",
+          "bindings": "{ useEffect, useRef }"
+        }
+      ],
+      "exports": [
+        {
+          "name": "TuitionOptions",
+          "line": 6
+        }
+      ],
+      "classes": [],
+      "functions": [
+        {
+          "name": "TuitionOptions",
+          "signature": "TuitionOptions({ onPriceHistory, }: { onPriceHistory: () => void; })",
+          "line": 6
+        }
+      ],
+      "types": [],
       "objects": [],
       "tests": [],
       "routes": [],
@@ -33989,8 +34278,8 @@
     },
     {
       "file": "edutrack_fe/lib/api/school.ts",
-      "lines": 742,
-      "sha256": "e41f77f644d7f0085b2e37ab633139789fd089e50df9e8b0f636bdcaa514ca94",
+      "lines": 749,
+      "sha256": "a27df57d5355d719bf41cec409d1a800c84b1cd3d2fbbb7dfd6af15ef6cbdfb0",
       "imports": [
         {
           "from": "@/lib/auth/token-storage",
@@ -33998,7 +34287,7 @@
         },
         {
           "from": "@/types/school",
-          "bindings": "type { AttendanceResponse, Classroom, ClassroomDetail, ClassScheduleOverview, ClassSessionContent, ClassTemporarySchedule, CreateClassPayload, CreateStudentPayload, CreateTemporarySchedulePayload, DashboardOverviewData, DeleteStudentMode, EnrollmentBulkResponse, EnrollmentResponse, LatestFixedSchedule, SaveClassSessionContentPayload, SaveFixedSchedulePayload, Student, StudentImportResult, StudentListFilters, TakeAttendancePayload, TakeAttendanceBatchPayload, TeacherWeekSchedule, UpdateClassPayload, UpdateStudentPayload, UpdateTemporarySchedulePayload, SuspendFixedSchedulePayload, ResumeFixedSchedulePayload, UpdateEnrollmentStatusPayload, AttendanceSheetResponse, Exam, CreateExamPayload, UpdateExamPayload, ExamSheetResponse, FileDownloadResponse, TakeExamScoresBatchPayload, BillingCandidates, BillingOverview, IssueReceiptPayload, PaymentStatus, ReceiptDetail, ReceiptBulkDownloadPayload, ReceiptDownloadResponse, ReceiptListItem, ReceiptPreviewResponse, RemoveStudentsBulkResponse, StudentBillingOverview, StudentBulkDeleteResult, UpdateReceiptPaymentPayload, ScheduleConflictResult, ScheduleAvailabilityPayload, ScheduleAvailability, ScheduleTimeSlot, AiScheduleSessionResponse, AiChatResponse, AiSessionListItem, AiSessionDetail, }"
+          "bindings": "type { AttendanceResponse, Classroom, ClassroomDetail, ClassPriceHistoryEntry, ClassScheduleOverview, ClassSessionContent, ClassTemporarySchedule, CreateClassPayload, CreateStudentPayload, CreateTemporarySchedulePayload, DashboardOverviewData, DeleteStudentMode, EnrollmentBulkResponse, EnrollmentResponse, LatestFixedSchedule, SaveClassSessionContentPayload, SaveFixedSchedulePayload, Student, StudentImportResult, StudentListFilters, TakeAttendancePayload, TakeAttendanceBatchPayload, TeacherWeekSchedule, UpdateClassPayload, UpdateStudentPayload, UpdateTemporarySchedulePayload, SuspendFixedSchedulePayload, ResumeFixedSchedulePayload, UpdateEnrollmentStatusPayload, AttendanceSheetResponse, Exam, CreateExamPayload, UpdateExamPayload, ExamSheetResponse, FileDownloadResponse, TakeExamScoresBatchPayload, BillingCandidates, BillingOverview, IssueReceiptPayload, PaymentStatus, ReceiptDetail, ReceiptBulkDownloadPayload, ReceiptDownloadResponse, ReceiptListItem, ReceiptPreviewResponse, RemoveStudentsBulkResponse, StudentBillingOverview, StudentBulkDeleteResult, UpdateReceiptPaymentPayload, ScheduleConflictResult, ScheduleAvailabilityPayload, ScheduleAvailability, ScheduleTimeSlot, AiScheduleSessionResponse, AiChatResponse, AiSessionListItem, AiSessionDetail, }"
         },
         {
           "from": "./client",
@@ -34008,7 +34297,7 @@
       "exports": [
         {
           "name": "schoolApi",
-          "line": 90
+          "line": 91
         }
       ],
       "classes": [],
@@ -34016,12 +34305,12 @@
         {
           "name": "getToken",
           "signature": "getToken()",
-          "line": 62
+          "line": 63
         },
         {
           "name": "buildQuery",
           "signature": "buildQuery(params: Record<string, string | string[] | undefined>)",
-          "line": 66
+          "line": 67
         }
       ],
       "types": [],
@@ -34031,347 +34320,352 @@
           "methods": [
             {
               "name": "getDashboardOverview",
-              "line": 91,
+              "line": 92,
               "signature": "getDashboardOverview()"
             },
             {
               "name": "checkFixedSchedule",
-              "line": 97,
+              "line": 98,
               "signature": "checkFixedSchedule(classId: string, payload: SaveFixedSchedulePayload)"
             },
             {
               "name": "checkTemporarySchedule",
-              "line": 102,
+              "line": 103,
               "signature": "checkTemporarySchedule(classId: string, payload: CreateTemporarySchedulePayload, ignoreOverrideId?: string)"
             },
             {
               "name": "getScheduleAvailability",
-              "line": 107,
+              "line": 108,
               "signature": "getScheduleAvailability(payload: ScheduleAvailabilityPayload)"
             },
             {
               "name": "getScheduleSourceSlots",
-              "line": 112,
+              "line": 113,
               "signature": "getScheduleSourceSlots(classId: string, date: string, ignoreOverrideId?: string)"
             },
             {
               "name": "listStudents",
-              "line": 116,
+              "line": 117,
               "signature": "listStudents(filters: StudentListFilters = {})"
             },
             {
               "name": "downloadStudentImportTemplate",
-              "line": 122,
+              "line": 123,
               "signature": "downloadStudentImportTemplate(): Promise<FileDownloadResponse>"
             },
             {
               "name": "importStudents",
-              "line": 128,
+              "line": 129,
               "signature": "importStudents(file: File)"
             },
             {
               "name": "listClasses",
-              "line": 139,
+              "line": 140,
               "signature": "listClasses(search?: string)"
             },
             {
               "name": "createClass",
-              "line": 153,
+              "line": 154,
               "signature": "createClass(payload: CreateClassPayload)"
             },
             {
               "name": "updateClass",
-              "line": 161,
+              "line": 162,
               "signature": "updateClass(classId: string, payload: UpdateClassPayload)"
             },
             {
               "name": "deleteClass",
-              "line": 169,
+              "line": 170,
               "signature": "deleteClass(classId: string)"
             },
             {
               "name": "uploadClassImage",
-              "line": 176,
+              "line": 177,
               "signature": "uploadClassImage(file: File)"
             },
             {
               "name": "getClassDetail",
-              "line": 187,
+              "line": 188,
               "signature": "getClassDetail(classId: string)"
             },
             {
+              "name": "getClassPriceHistory",
+              "line": 194,
+              "signature": "getClassPriceHistory(classId: string)"
+            },
+            {
               "name": "getClassSchedules",
-              "line": 193,
+              "line": 200,
               "signature": "getClassSchedules(classId: string)"
             },
             {
               "name": "saveFixedSchedule",
-              "line": 199,
+              "line": 206,
               "signature": "saveFixedSchedule(classId: string, payload: SaveFixedSchedulePayload)"
             },
             {
               "name": "previewSuspendFixedSchedule",
-              "line": 207,
+              "line": 214,
               "signature": "previewSuspendFixedSchedule(classId: string, payload: SuspendFixedSchedulePayload)"
             },
             {
               "name": "suspendFixedSchedule",
-              "line": 218,
+              "line": 225,
               "signature": "suspendFixedSchedule(classId: string, payload: SuspendFixedSchedulePayload)"
             },
             {
               "name": "resumeFixedSchedule",
-              "line": 226,
+              "line": 233,
               "signature": "resumeFixedSchedule(classId: string, payload: ResumeFixedSchedulePayload)"
             },
             {
               "name": "createTemporarySchedule",
-              "line": 234,
+              "line": 241,
               "signature": "createTemporarySchedule(classId: string, payload: CreateTemporarySchedulePayload)"
             },
             {
               "name": "updateTemporarySchedule",
-              "line": 248,
+              "line": 255,
               "signature": "updateTemporarySchedule(classId: string, scheduleId: string, payload: UpdateTemporarySchedulePayload)"
             },
             {
               "name": "revokeTemporarySchedule",
-              "line": 263,
+              "line": 270,
               "signature": "revokeTemporarySchedule(classId: string, scheduleId: string)"
             },
             {
               "name": "saveClassSessionContent",
-              "line": 273,
+              "line": 280,
               "signature": "saveClassSessionContent(classId: string, payload: SaveClassSessionContentPayload)"
             },
             {
               "name": "searchStudents",
-              "line": 287,
+              "line": 294,
               "signature": "searchStudents(search: string)"
             },
             {
               "name": "createStudent",
-              "line": 293,
+              "line": 300,
               "signature": "createStudent(payload: CreateStudentPayload)"
             },
             {
               "name": "updateStudent",
-              "line": 301,
+              "line": 308,
               "signature": "updateStudent(studentId: string, payload: UpdateStudentPayload)"
             },
             {
               "name": "deleteStudent",
-              "line": 309,
+              "line": 316,
               "signature": "deleteStudent(studentId: string, mode: DeleteStudentMode)"
             },
             {
               "name": "deleteStudents",
-              "line": 321,
+              "line": 328,
               "signature": "deleteStudents(studentIds: string[], mode: DeleteStudentMode)"
             },
             {
               "name": "uploadStudentAvatar",
-              "line": 329,
+              "line": 336,
               "signature": "uploadStudentAvatar(file: File)"
             },
             {
               "name": "enrollExistingStudent",
-              "line": 340,
+              "line": 347,
               "signature": "enrollExistingStudent(classId: string, studentId: string)"
             },
             {
               "name": "enrollExistingStudents",
-              "line": 348,
+              "line": 355,
               "signature": "enrollExistingStudents(classId: string, studentIds: string[])"
             },
             {
               "name": "createStudentAndEnroll",
-              "line": 359,
+              "line": 366,
               "signature": "createStudentAndEnroll(classId: string, payload: CreateStudentPayload)"
             },
             {
               "name": "removeStudentFromClass",
-              "line": 370,
+              "line": 377,
               "signature": "removeStudentFromClass(classId: string, studentId: string)"
             },
             {
               "name": "removeStudentsFromClass",
-              "line": 380,
+              "line": 387,
               "signature": "removeStudentsFromClass(classId: string, studentIds: string[])"
             },
             {
               "name": "updateStudentEnrollmentStatus",
-              "line": 391,
+              "line": 398,
               "signature": "updateStudentEnrollmentStatus(classId: string, studentId: string, payload: UpdateEnrollmentStatusPayload)"
             },
             {
               "name": "hardDeleteStudentFromClass",
-              "line": 399,
+              "line": 406,
               "signature": "hardDeleteStudentFromClass(classId: string, studentId: string)"
             },
             {
               "name": "getTeacherWeekSchedule",
-              "line": 406,
+              "line": 413,
               "signature": "getTeacherWeekSchedule(weekStart?: string)"
             },
             {
               "name": "getAttendance",
-              "line": 423,
+              "line": 430,
               "signature": "getAttendance(classId: string, date: string, startTime: string, endTime: string)"
             },
             {
               "name": "getAttendanceOverview",
-              "line": 443,
+              "line": 450,
               "signature": "getAttendanceOverview(classId: string)"
             },
             {
               "name": "takeAttendance",
-              "line": 450,
+              "line": 457,
               "signature": "takeAttendance(classId: string, payload: TakeAttendancePayload)"
             },
             {
               "name": "getAttendanceSheet",
-              "line": 458,
+              "line": 465,
               "signature": "getAttendanceSheet(classId: string)"
             },
             {
               "name": "takeAttendanceBatch",
-              "line": 465,
+              "line": 472,
               "signature": "takeAttendanceBatch(classId: string, payload: TakeAttendanceBatchPayload)"
             },
             {
               "name": "getExamSheet",
-              "line": 474,
+              "line": 481,
               "signature": "getExamSheet(classId: string)"
             },
             {
               "name": "createExam",
-              "line": 481,
+              "line": 488,
               "signature": "createExam(classId: string, payload: CreateExamPayload)"
             },
             {
               "name": "updateExam",
-              "line": 489,
+              "line": 496,
               "signature": "updateExam(classId: string, examId: string, payload: UpdateExamPayload)"
             },
             {
               "name": "deleteExam",
-              "line": 497,
+              "line": 504,
               "signature": "deleteExam(classId: string, examId: string)"
             },
             {
               "name": "uploadExamFile",
-              "line": 504,
+              "line": 511,
               "signature": "uploadExamFile(classId: string, file: File)"
             },
             {
               "name": "uploadExamEvidenceImage",
-              "line": 515,
+              "line": 522,
               "signature": "uploadExamEvidenceImage(classId: string, file: File)"
             },
             {
               "name": "takeExamScoresBatch",
-              "line": 526,
+              "line": 533,
               "signature": "takeExamScoresBatch(classId: string, payload: TakeExamScoresBatchPayload)"
             },
             {
               "name": "getBillingOverview",
-              "line": 534,
+              "line": 541,
               "signature": "getBillingOverview(classId: string, filters: { fromDate?: string; toDate?: string } = {})"
             },
             {
               "name": "getBillingCandidates",
-              "line": 546,
+              "line": 553,
               "signature": "getBillingCandidates(classId: string, studentId: string, filters: { fromDate?: string; toDate?: string } = {})"
             },
             {
               "name": "getStudentBillingOverview",
-              "line": 559,
+              "line": 566,
               "signature": "getStudentBillingOverview(studentId: string, filters: { classIds?: string[]; fromDate?: string; toDate?: string } = {})"
             },
             {
               "name": "getStudentBillingCandidates",
-              "line": 571,
+              "line": 578,
               "signature": "getStudentBillingCandidates(studentId: string, filters: { classIds?: string[]; fromDate?: string; toDate?: string } = {})"
             },
             {
               "name": "previewReceipt",
-              "line": 583,
+              "line": 590,
               "signature": "previewReceipt(classId: string, studentId: string, payload: IssueReceiptPayload)"
             },
             {
               "name": "issueReceipt",
-              "line": 598,
+              "line": 605,
               "signature": "issueReceipt(classId: string, studentId: string, payload: IssueReceiptPayload)"
             },
             {
               "name": "previewStudentReceipt",
-              "line": 609,
+              "line": 616,
               "signature": "previewStudentReceipt(studentId: string, payload: IssueReceiptPayload)"
             },
             {
               "name": "issueStudentReceipt",
-              "line": 620,
+              "line": 627,
               "signature": "issueStudentReceipt(studentId: string, payload: IssueReceiptPayload)"
             },
             {
               "name": "listReceipts",
-              "line": 628,
+              "line": 635,
               "signature": "listReceipts(filters: { classId?: string; studentId?: string; paymentStatus?: PaymentStatus; fromDate?: string; toDate?: string; } = {})"
             },
             {
               "name": "getReceiptDownload",
-              "line": 647,
+              "line": 654,
               "signature": "getReceiptDownload(receiptId: string): Promise<ReceiptDownloadResponse>"
             },
             {
               "name": "getReceiptDetail",
-              "line": 656,
+              "line": 663,
               "signature": "getReceiptDetail(receiptId: string)"
             },
             {
               "name": "downloadReceipts",
-              "line": 663,
+              "line": 670,
               "signature": "downloadReceipts(payload: ReceiptBulkDownloadPayload): Promise<ReceiptDownloadResponse>"
             },
             {
               "name": "retryReceiptPdf",
-              "line": 671,
+              "line": 678,
               "signature": "retryReceiptPdf(receiptId: string)"
             },
             {
               "name": "updateReceiptPayment",
-              "line": 678,
+              "line": 685,
               "signature": "updateReceiptPayment(receiptId: string, payload: UpdateReceiptPaymentPayload)"
             },
             {
               "name": "cancelReceipt",
-              "line": 689,
+              "line": 696,
               "signature": "cancelReceipt(receiptId: string)"
             },
             {
               "name": "uploadReceiptPaymentProof",
-              "line": 696,
+              "line": 703,
               "signature": "uploadReceiptPaymentProof(receiptId: string, file: File)"
             },
             {
               "name": "createAiScheduleSession",
-              "line": 712,
+              "line": 719,
               "signature": "createAiScheduleSession()"
             },
             {
               "name": "sendAiScheduleMessage",
-              "line": 719,
+              "line": 726,
               "signature": "sendAiScheduleMessage(sessionId: string, message: string)"
             },
             {
               "name": "listAiScheduleSessions",
-              "line": 727,
+              "line": 734,
               "signature": "listAiScheduleSessions()"
             },
             {
               "name": "getAiScheduleSession",
-              "line": 733,
+              "line": 740,
               "signature": "getAiScheduleSession(sessionId: string)"
             }
           ]
@@ -34387,7 +34681,7 @@
             "\"/dashboard/overview\"",
             "{ token: getToken(), }"
           ],
-          "line": 92
+          "line": 93
         },
         {
           "fn": "apiRequest",
@@ -34395,7 +34689,7 @@
             "\"/schedules/conflicts/check-fixed\"",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify({ ...payload, classId }), }"
           ],
-          "line": 98
+          "line": 99
         },
         {
           "fn": "apiRequest",
@@ -34403,7 +34697,7 @@
             "\"/schedules/conflicts/check-temporary\"",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify({ ...payload, classId, ignoreOverrideId }), }"
           ],
-          "line": 103
+          "line": 104
         },
         {
           "fn": "apiRequest",
@@ -34411,7 +34705,7 @@
             "\"/schedules/availability\"",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 108
+          "line": 109
         },
         {
           "fn": "apiRequest",
@@ -34419,7 +34713,7 @@
             "`/schedules/source-slots${buildQuery({ classId, date, ignoreOverrideId })}`",
             "{ token: getToken() }"
           ],
-          "line": 113
+          "line": 114
         },
         {
           "fn": "apiRequest",
@@ -34427,7 +34721,7 @@
             "`/students${buildQuery(filters)}`",
             "{ token: getToken(), }"
           ],
-          "line": 117
+          "line": 118
         },
         {
           "fn": "apiRequest",
@@ -34435,7 +34729,7 @@
             "\"/students/import\"",
             "{ method: \"POST\", token: getToken(), body: formData, }"
           ],
-          "line": 132
+          "line": 133
         },
         {
           "fn": "apiRequest",
@@ -34443,7 +34737,7 @@
             "`/classes${queryString ? `?${queryString}` : \"\"}`",
             "{ token: getToken(), }"
           ],
-          "line": 148
+          "line": 149
         },
         {
           "fn": "apiRequest",
@@ -34451,7 +34745,7 @@
             "\"/classes\"",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 154
+          "line": 155
         },
         {
           "fn": "apiRequest",
@@ -34459,7 +34753,7 @@
             "`/classes/${classId}`",
             "{ method: \"PATCH\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 162
+          "line": 163
         },
         {
           "fn": "apiRequest",
@@ -34467,7 +34761,7 @@
             "`/classes/${classId}`",
             "{ method: \"DELETE\", token: getToken(), }"
           ],
-          "line": 170
+          "line": 171
         },
         {
           "fn": "apiRequest",
@@ -34475,7 +34769,7 @@
             "\"/classes/image\"",
             "{ method: \"POST\", token: getToken(), body: formData, }"
           ],
-          "line": 180
+          "line": 181
         },
         {
           "fn": "apiRequest",
@@ -34483,7 +34777,15 @@
             "`/classes/${classId}`",
             "{ token: getToken(), }"
           ],
-          "line": 188
+          "line": 189
+        },
+        {
+          "fn": "apiRequest",
+          "args": [
+            "`/classes/${classId}/price-history`",
+            "{ token: getToken(), }"
+          ],
+          "line": 195
         },
         {
           "fn": "apiRequest",
@@ -34491,7 +34793,7 @@
             "`/classes/${classId}/schedules`",
             "{ token: getToken(), }"
           ],
-          "line": 194
+          "line": 201
         },
         {
           "fn": "apiRequest",
@@ -34499,7 +34801,7 @@
             "`/classes/${classId}/schedules/fixed`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 200
+          "line": 207
         },
         {
           "fn": "apiRequest",
@@ -34507,7 +34809,7 @@
             "`/classes/${classId}/schedules/fixed/suspend-preview`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 208
+          "line": 215
         },
         {
           "fn": "apiRequest",
@@ -34515,7 +34817,7 @@
             "`/classes/${classId}/schedules/fixed/suspend`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 219
+          "line": 226
         },
         {
           "fn": "apiRequest",
@@ -34523,7 +34825,7 @@
             "`/classes/${classId}/schedules/fixed/resume`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 227
+          "line": 234
         },
         {
           "fn": "apiRequest",
@@ -34531,7 +34833,7 @@
             "`/classes/${classId}/schedules/temporary`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 238
+          "line": 245
         },
         {
           "fn": "apiRequest",
@@ -34539,7 +34841,7 @@
             "`/classes/${classId}/schedules/temporary/${scheduleId}`",
             "{ method: \"PATCH\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 253
+          "line": 260
         },
         {
           "fn": "apiRequest",
@@ -34547,7 +34849,7 @@
             "`/classes/${classId}/schedules/temporary/${scheduleId}`",
             "{ method: \"DELETE\", token: getToken(), }"
           ],
-          "line": 264
+          "line": 271
         },
         {
           "fn": "apiRequest",
@@ -34555,7 +34857,7 @@
             "`/classes/${classId}/schedules/session-content`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 277
+          "line": 284
         },
         {
           "fn": "apiRequest",
@@ -34563,7 +34865,7 @@
             "`/students${buildQuery({ limit: \"12\", search })}`",
             "{ token: getToken(), }"
           ],
-          "line": 288
+          "line": 295
         },
         {
           "fn": "apiRequest",
@@ -34571,7 +34873,7 @@
             "\"/students\"",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 294
+          "line": 301
         },
         {
           "fn": "apiRequest",
@@ -34579,7 +34881,7 @@
             "`/students/${studentId}`",
             "{ method: \"PATCH\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 302
+          "line": 309
         },
         {
           "fn": "apiRequest",
@@ -34587,7 +34889,7 @@
             "`/students/${studentId}?${params.toString()}`",
             "{ method: \"DELETE\", token: getToken(), }"
           ],
-          "line": 312
+          "line": 319
         },
         {
           "fn": "apiRequest",
@@ -34595,7 +34897,7 @@
             "\"/students/bulk-delete\"",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify({ mode, studentIds }), }"
           ],
-          "line": 322
+          "line": 329
         },
         {
           "fn": "apiRequest",
@@ -34603,7 +34905,7 @@
             "\"/students/avatar\"",
             "{ method: \"POST\", token: getToken(), body: formData, }"
           ],
-          "line": 333
+          "line": 340
         },
         {
           "fn": "apiRequest",
@@ -34611,7 +34913,7 @@
             "`/classes/${classId}/students`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify({ studentId }), }"
           ],
-          "line": 341
+          "line": 348
         },
         {
           "fn": "apiRequest",
@@ -34619,7 +34921,7 @@
             "`/classes/${classId}/students/bulk`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify({ studentIds }), }"
           ],
-          "line": 349
+          "line": 356
         },
         {
           "fn": "apiRequest",
@@ -34627,7 +34929,7 @@
             "`/classes/${classId}/students/new`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 360
+          "line": 367
         },
         {
           "fn": "apiRequest",
@@ -34635,7 +34937,7 @@
             "`/classes/${classId}/students/${studentId}`",
             "{ method: \"DELETE\", token: getToken(), }"
           ],
-          "line": 371
+          "line": 378
         },
         {
           "fn": "apiRequest",
@@ -34643,7 +34945,7 @@
             "`/classes/${classId}/students/bulk-remove`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify({ studentIds }), }"
           ],
-          "line": 381
+          "line": 388
         },
         {
           "fn": "apiRequest",
@@ -34651,7 +34953,7 @@
             "`/classes/${classId}/students/${studentId}/status`",
             "{ method: \"PATCH\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 392
+          "line": 399
         },
         {
           "fn": "apiRequest",
@@ -34659,7 +34961,7 @@
             "`/classes/${classId}/students/${studentId}/hard`",
             "{ method: \"DELETE\", token: getToken(), }"
           ],
-          "line": 400
+          "line": 407
         },
         {
           "fn": "apiRequest",
@@ -34667,7 +34969,7 @@
             "`/schedules/week${queryString ? `?${queryString}` : \"\"}`",
             "{ token: getToken(), }"
           ],
-          "line": 415
+          "line": 422
         },
         {
           "fn": "apiRequest",
@@ -34675,7 +34977,7 @@
             "`/classes/${classId}/attendance?${params.toString()}`",
             "{ token: getToken(), }"
           ],
-          "line": 435
+          "line": 442
         },
         {
           "fn": "apiRequest",
@@ -34683,7 +34985,7 @@
             "`/classes/${classId}/attendance-overview`",
             "{ method: \"GET\", token: getToken(), }"
           ],
-          "line": 444
+          "line": 451
         },
         {
           "fn": "apiRequest",
@@ -34691,7 +34993,7 @@
             "`/classes/${classId}/attendance`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 451
+          "line": 458
         },
         {
           "fn": "apiRequest",
@@ -34699,7 +35001,7 @@
             "`/classes/${classId}/attendance-sheet`",
             "{ method: \"GET\", token: getToken(), }"
           ],
-          "line": 459
+          "line": 466
         },
         {
           "fn": "apiRequest",
@@ -34707,7 +35009,7 @@
             "`/classes/${classId}/attendance-batch`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 466
+          "line": 473
         },
         {
           "fn": "apiRequest",
@@ -34715,7 +35017,7 @@
             "`/classes/${classId}/exam-sheet`",
             "{ method: \"GET\", token: getToken(), }"
           ],
-          "line": 475
+          "line": 482
         },
         {
           "fn": "apiRequest",
@@ -34723,7 +35025,7 @@
             "`/classes/${classId}/exams`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 482
+          "line": 489
         },
         {
           "fn": "apiRequest",
@@ -34731,7 +35033,7 @@
             "`/classes/${classId}/exams/${examId}`",
             "{ method: \"PATCH\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 490
+          "line": 497
         },
         {
           "fn": "apiRequest",
@@ -34739,7 +35041,7 @@
             "`/classes/${classId}/exams/${examId}`",
             "{ method: \"DELETE\", token: getToken(), }"
           ],
-          "line": 498
+          "line": 505
         },
         {
           "fn": "apiRequest",
@@ -34747,7 +35049,7 @@
             "`/classes/${classId}/exams/file`",
             "{ method: \"POST\", token: getToken(), body: formData, }"
           ],
-          "line": 508
+          "line": 515
         },
         {
           "fn": "apiRequest",
@@ -34755,7 +35057,7 @@
             "`/classes/${classId}/exam-scores/evidence`",
             "{ method: \"POST\", token: getToken(), body: formData, }"
           ],
-          "line": 519
+          "line": 526
         },
         {
           "fn": "apiRequest",
@@ -34763,7 +35065,7 @@
             "`/classes/${classId}/exam-scores`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 527
+          "line": 534
         },
         {
           "fn": "apiRequest",
@@ -34771,7 +35073,7 @@
             "`/classes/${classId}/billing/overview${buildQuery(filters)}`",
             "{ token: getToken(), }"
           ],
-          "line": 538
+          "line": 545
         },
         {
           "fn": "apiRequest",
@@ -34779,7 +35081,7 @@
             "`/classes/${classId}/students/${studentId}/billing-candidates${buildQuery(filters)}`",
             "{ token: getToken(), }"
           ],
-          "line": 551
+          "line": 558
         },
         {
           "fn": "apiRequest",
@@ -34787,7 +35089,7 @@
             "`/students/${studentId}/billing/overview${buildQuery(filters)}`",
             "{ token: getToken(), }"
           ],
-          "line": 563
+          "line": 570
         },
         {
           "fn": "apiRequest",
@@ -34795,7 +35097,7 @@
             "`/students/${studentId}/billing-candidates${buildQuery(filters)}`",
             "{ token: getToken(), }"
           ],
-          "line": 575
+          "line": 582
         },
         {
           "fn": "apiRequest",
@@ -34803,7 +35105,7 @@
             "`/classes/${classId}/students/${studentId}/receipts/preview`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 588
+          "line": 595
         },
         {
           "fn": "apiRequest",
@@ -34811,7 +35113,7 @@
             "`/classes/${classId}/students/${studentId}/receipts`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 599
+          "line": 606
         },
         {
           "fn": "apiRequest",
@@ -34819,7 +35121,7 @@
             "`/students/${studentId}/receipts/preview`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 610
+          "line": 617
         },
         {
           "fn": "apiRequest",
@@ -34827,7 +35129,7 @@
             "`/students/${studentId}/receipts`",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 621
+          "line": 628
         },
         {
           "fn": "apiRequest",
@@ -34835,7 +35137,7 @@
             "`/receipts${buildQuery(filters)}`",
             "{ token: getToken(), }"
           ],
-          "line": 637
+          "line": 644
         },
         {
           "fn": "apiRequest",
@@ -34843,7 +35145,7 @@
             "`/receipts/${receiptId}`",
             "{ cache: \"no-store\", token: getToken(), }"
           ],
-          "line": 657
+          "line": 664
         },
         {
           "fn": "apiRequest",
@@ -34851,7 +35153,7 @@
             "`/receipts/${receiptId}/render-pdf`",
             "{ method: \"POST\", token: getToken(), }"
           ],
-          "line": 672
+          "line": 679
         },
         {
           "fn": "apiRequest",
@@ -34859,7 +35161,7 @@
             "`/receipts/${receiptId}/payment`",
             "{ method: \"PATCH\", token: getToken(), body: JSON.stringify(payload), }"
           ],
-          "line": 682
+          "line": 689
         },
         {
           "fn": "apiRequest",
@@ -34867,7 +35169,7 @@
             "`/receipts/${receiptId}`",
             "{ method: \"DELETE\", token: getToken(), }"
           ],
-          "line": 690
+          "line": 697
         },
         {
           "fn": "apiRequest",
@@ -34875,7 +35177,7 @@
             "`/receipts/${receiptId}/payment-proof`",
             "{ method: \"POST\", token: getToken(), body: formData, }"
           ],
-          "line": 700
+          "line": 707
         },
         {
           "fn": "apiRequest",
@@ -34883,7 +35185,7 @@
             "\"/ai/schedule-suggest\"",
             "{ method: \"POST\", token: getToken(), }"
           ],
-          "line": 713
+          "line": 720
         },
         {
           "fn": "apiRequest",
@@ -34891,7 +35193,7 @@
             "\"/ai/schedule-suggest/chat\"",
             "{ method: \"POST\", token: getToken(), body: JSON.stringify({ sessionId, message }), }"
           ],
-          "line": 720
+          "line": 727
         },
         {
           "fn": "apiRequest",
@@ -34899,7 +35201,7 @@
             "\"/ai/schedule-suggest/sessions\"",
             "{ token: getToken(), }"
           ],
-          "line": 728
+          "line": 735
         },
         {
           "fn": "apiRequest",
@@ -34907,7 +35209,7 @@
             "`/ai/schedule-suggest/sessions/${sessionId}`",
             "{ token: getToken(), }"
           ],
-          "line": 734
+          "line": 741
         }
       ],
       "headings": []
@@ -35985,8 +36287,8 @@
     },
     {
       "file": "edutrack_fe/tests/receipt-template-selection.spec.ts",
-      "lines": 260,
-      "sha256": "7750058a0eb28637a0dda0cd108395e90cb1ef8ab5b6a6d03bf1f11f37674474",
+      "lines": 261,
+      "sha256": "0177b921525b52f6187a0b56eb5d2bd0a67c3c67eb1566ab6aa002660099f94f",
       "imports": [
         {
           "from": "@playwright/test",
@@ -36012,7 +36314,7 @@
       "tests": [
         {
           "label": "blocks issuance on template load errors, retries and fits mobile",
-          "line": 230
+          "line": 231
         }
       ],
       "routes": [],
@@ -36174,6 +36476,51 @@
         {
           "label": "the installed PWA opens the protected session-restoring route",
           "line": 53
+        }
+      ],
+      "routes": [],
+      "indexes": [],
+      "calls": [],
+      "headings": []
+    },
+    {
+      "file": "edutrack_fe/tests/temporary-schedule-content.spec.ts",
+      "lines": 104,
+      "sha256": "0cd55b806bde61a750069189f84f86310f8adb975e2af98770db4c26438eef97",
+      "imports": [
+        {
+          "from": "@playwright/test",
+          "bindings": "{ expect, test, type Page }"
+        },
+        {
+          "from": "../types/school",
+          "bindings": "type { CreateTemporarySchedulePayload }"
+        }
+      ],
+      "exports": [],
+      "classes": [],
+      "functions": [
+        {
+          "name": "setup",
+          "signature": "setup(page: Page, rejectWrite = false)",
+          "line": 7
+        },
+        {
+          "name": "confirmCreation",
+          "signature": "confirmCreation(page: Page)",
+          "line": 53
+        }
+      ],
+      "types": [],
+      "objects": [],
+      "tests": [
+        {
+          "label": "allows an empty lesson and hides content fields for cancellation",
+          "line": 80
+        },
+        {
+          "label": "keeps entered content when creation fails and resets it when the teacher cancels",
+          "line": 95
         }
       ],
       "routes": [],
@@ -36420,8 +36767,8 @@
     },
     {
       "file": "edutrack_fe/types/school.ts",
-      "lines": 811,
-      "sha256": "54729b83669657a6d8ab347b54ac1d94ede3759e9366fc0e746bb92329f90450",
+      "lines": 823,
+      "sha256": "7271571c958359654c5f5b69ff69c16debb1ed7877c5114e06cf421b0338228a",
       "imports": [],
       "exports": [
         {
@@ -36521,276 +36868,280 @@
           "line": 163
         },
         {
-          "name": "CreateClassPayload",
+          "name": "ClassPriceHistoryEntry",
           "line": 167
         },
         {
+          "name": "CreateClassPayload",
+          "line": 174
+        },
+        {
           "name": "UpdateClassPayload",
-          "line": 178
+          "line": 185
         },
         {
           "name": "SaveFixedSchedulePayload",
-          "line": 182
+          "line": 189
         },
         {
           "name": "CreateTemporarySchedulePayload",
-          "line": 187
+          "line": 194
         },
         {
           "name": "UpdateTemporarySchedulePayload",
-          "line": 198
-        },
-        {
-          "name": "ClassSessionScheduleType",
-          "line": 200
-        },
-        {
-          "name": "SaveClassSessionContentPayload",
           "line": 207
         },
         {
-          "name": "ClassSessionContent",
-          "line": 216
+          "name": "ClassSessionScheduleType",
+          "line": 212
         },
         {
-          "name": "TeacherScheduleEventType",
+          "name": "SaveClassSessionContentPayload",
+          "line": 219
+        },
+        {
+          "name": "ClassSessionContent",
           "line": 228
         },
         {
+          "name": "TeacherScheduleEventType",
+          "line": 240
+        },
+        {
           "name": "TeacherScheduleClass",
-          "line": 236
+          "line": 248
         },
         {
           "name": "TeacherScheduleDay",
-          "line": 244
+          "line": 256
         },
         {
           "name": "TeacherScheduleEvent",
-          "line": 249
+          "line": 261
         },
         {
           "name": "TeacherWeekSchedule",
-          "line": 270
+          "line": 282
         },
         {
           "name": "DashboardTodayLesson",
-          "line": 278
+          "line": 290
         },
         {
           "name": "DashboardRevenueStats",
-          "line": 284
+          "line": 296
         },
         {
           "name": "DashboardMonthlyRevenue",
-          "line": 293
+          "line": 305
         },
         {
           "name": "DashboardPendingPayment",
-          "line": 299
+          "line": 311
         },
         {
           "name": "DashboardOverviewData",
-          "line": 322
+          "line": 334
         },
         {
           "name": "ScheduleConflict",
-          "line": 343
+          "line": 355
         },
         {
           "name": "ScheduleConflictResult",
-          "line": 348
+          "line": 360
         },
         {
           "name": "ScheduleAvailabilityPayload",
-          "line": 352
+          "line": 364
         },
         {
           "name": "ScheduleTimeSlot",
-          "line": 358
+          "line": 370
         },
         {
           "name": "ScheduleAvailability",
-          "line": 359
-        },
-        {
-          "name": "EnrollmentResponse",
-          "line": 361
-        },
-        {
-          "name": "EnrollmentBulkResponse",
           "line": 371
         },
         {
-          "name": "RemoveStudentsBulkResponse",
+          "name": "EnrollmentResponse",
+          "line": 373
+        },
+        {
+          "name": "EnrollmentBulkResponse",
           "line": 383
         },
         {
-          "name": "AttendanceStatus",
+          "name": "RemoveStudentsBulkResponse",
           "line": 395
         },
         {
+          "name": "AttendanceStatus",
+          "line": 407
+        },
+        {
           "name": "AttendanceRecord",
-          "line": 397
+          "line": 409
         },
         {
           "name": "AttendanceResponse",
-          "line": 408
+          "line": 420
         },
         {
           "name": "TakeAttendanceRecordPayload",
-          "line": 423
+          "line": 435
         },
         {
           "name": "TakeAttendancePayload",
-          "line": 429
-        },
-        {
-          "name": "TakeAttendanceBatchPayload",
-          "line": 437
-        },
-        {
-          "name": "FlatAttendanceRecord",
           "line": 441
         },
         {
+          "name": "TakeAttendanceBatchPayload",
+          "line": 449
+        },
+        {
+          "name": "FlatAttendanceRecord",
+          "line": 453
+        },
+        {
           "name": "AttendanceSheetResponse",
-          "line": 450
+          "line": 462
         },
         {
           "name": "Exam",
-          "line": 455
+          "line": 467
         },
         {
           "name": "ExamScore",
-          "line": 465
+          "line": 477
         },
         {
           "name": "ExamSheetResponse",
-          "line": 474
+          "line": 486
         },
         {
           "name": "CreateExamPayload",
-          "line": 480
+          "line": 492
         },
         {
           "name": "UpdateExamPayload",
-          "line": 489
+          "line": 501
         },
         {
           "name": "TakeExamScoreEntry",
-          "line": 491
-        },
-        {
-          "name": "TakeExamScoresBatchPayload",
-          "line": 499
-        },
-        {
-          "name": "PaymentStatus",
           "line": 503
         },
         {
+          "name": "TakeExamScoresBatchPayload",
+          "line": 511
+        },
+        {
+          "name": "PaymentStatus",
+          "line": 515
+        },
+        {
           "name": "ReceiptPdfStatus",
-          "line": 509
+          "line": 521
         },
         {
           "name": "ReceiptScope",
-          "line": 510
+          "line": 522
         },
         {
           "name": "ReceiptTeacherSnapshot",
-          "line": 512
+          "line": 524
         },
         {
           "name": "ReceiptClassSnapshot",
-          "line": 527
+          "line": 539
         },
         {
           "name": "ReceiptStudentSnapshot",
-          "line": 535
+          "line": 547
         },
         {
           "name": "ReceiptSessionSnapshot",
-          "line": 543
+          "line": 555
         },
         {
           "name": "ReceiptExamSnapshot",
-          "line": 570
+          "line": 582
         },
         {
           "name": "ReceiptDetail",
-          "line": 585
+          "line": 597
         },
         {
           "name": "ReceiptListItem",
-          "line": 628
+          "line": 640
         },
         {
           "name": "BillingOverviewStudent",
-          "line": 652
+          "line": 664
         },
         {
           "name": "BillingOverview",
-          "line": 662
+          "line": 674
         },
         {
           "name": "StudentBillingOverviewClass",
-          "line": 676
+          "line": 688
         },
         {
           "name": "StudentBillingOverview",
-          "line": 692
+          "line": 704
         },
         {
           "name": "BillingClassSummary",
-          "line": 703
+          "line": 715
         },
         {
           "name": "BillingCandidates",
-          "line": 711
+          "line": 723
         },
         {
           "name": "IssueReceiptPayload",
-          "line": 728
+          "line": 740
         },
         {
           "name": "ReceiptPreviewResponse",
-          "line": 752
-        },
-        {
-          "name": "FileDownloadResponse",
-          "line": 758
-        },
-        {
-          "name": "ReceiptDownloadResponse",
           "line": 764
         },
         {
-          "name": "ReceiptBulkDownloadPayload",
-          "line": 766
-        },
-        {
-          "name": "UpdateReceiptPaymentPayload",
+          "name": "FileDownloadResponse",
           "line": 770
         },
         {
+          "name": "ReceiptDownloadResponse",
+          "line": 776
+        },
+        {
+          "name": "ReceiptBulkDownloadPayload",
+          "line": 778
+        },
+        {
+          "name": "UpdateReceiptPaymentPayload",
+          "line": 782
+        },
+        {
           "name": "AiChatMessage",
-          "line": 781
-        },
-        {
-          "name": "AiScheduleSessionResponse",
-          "line": 787
-        },
-        {
-          "name": "AiChatResponse",
           "line": 793
         },
         {
+          "name": "AiScheduleSessionResponse",
+          "line": 799
+        },
+        {
+          "name": "AiChatResponse",
+          "line": 805
+        },
+        {
           "name": "AiSessionListItem",
-          "line": 797
+          "line": 809
         },
         {
           "name": "AiSessionDetail",
-          "line": 805
+          "line": 817
         }
       ],
       "classes": [],
@@ -36917,343 +37268,348 @@
           "definition": "export type ClassroomDetail = Classroom & {\n  students: Student[];\n};"
         },
         {
-          "name": "CreateClassPayload",
+          "name": "ClassPriceHistoryEntry",
           "line": 167,
+          "definition": "export type ClassPriceHistoryEntry = {\n  id: string | null;\n  regularPrice: number;\n  makeupPrice: number;\n  effectiveFrom: string | null;\n};"
+        },
+        {
+          "name": "CreateClassPayload",
+          "line": 174,
           "definition": "export type CreateClassPayload = {\n  name: string;\n  description?: string;\n  imageUrl?: string;\n  colorIndex?: number;\n  colorHex?: string;\n  regularPrice: number;\n  makeupPrice: number;\n  priceEffectiveFrom?: string;\n};"
         },
         {
           "name": "UpdateClassPayload",
-          "line": 178,
+          "line": 185,
           "definition": "export type UpdateClassPayload = Partial<CreateClassPayload> & {\n  status?: ClassStatus;\n};"
         },
         {
           "name": "SaveFixedSchedulePayload",
-          "line": 182,
+          "line": 189,
           "definition": "export type SaveFixedSchedulePayload = {\n  effectiveFrom: string;\n  schedules: ClassScheduleSlot[];\n};"
         },
         {
           "name": "CreateTemporarySchedulePayload",
-          "line": 187,
-          "definition": "export type CreateTemporarySchedulePayload = {\n  action: ScheduleOverrideAction;\n  originalDate?: string;\n  originalStartTime?: string;\n  originalEndTime?: string;\n  newDate?: string;\n  startTime?: string;\n  endTime?: string;\n  reason?: string;\n};"
+          "line": 194,
+          "definition": "export type CreateTemporarySchedulePayload = {\n  action: ScheduleOverrideAction;\n  originalDate?: string;\n  originalStartTime?: string;\n  originalEndTime?: string;\n  newDate?: string;\n  startTime?: string;\n  endTime?: string;\n  reason?: string;\n  topic?: string;\n  content?: string;\n};"
         },
         {
           "name": "UpdateTemporarySchedulePayload",
-          "line": 198,
-          "definition": "export type UpdateTemporarySchedulePayload = CreateTemporarySchedulePayload;"
+          "line": 207,
+          "definition": "export type UpdateTemporarySchedulePayload = Omit<\n  CreateTemporarySchedulePayload,\n  \"topic\" | \"content\"\n>;"
         },
         {
           "name": "ClassSessionScheduleType",
-          "line": 200,
+          "line": 212,
           "definition": "export type ClassSessionScheduleType =\n  | \"fixed\"\n  | \"temporary\"\n  | \"extra\"\n  | \"one_on_one\"\n  | \"manual\";"
         },
         {
           "name": "SaveClassSessionContentPayload",
-          "line": 207,
+          "line": 219,
           "definition": "export type SaveClassSessionContentPayload = {\n  date: string;\n  startTime: string;\n  endTime: string;\n  scheduleType?: ClassSessionScheduleType;\n  topic?: string;\n  content?: string;\n};"
         },
         {
           "name": "ClassSessionContent",
-          "line": 216,
+          "line": 228,
           "definition": "export type ClassSessionContent = {\n  id: string;\n  classId: string;\n  date: string;\n  startTime: string;\n  endTime: string;\n  scheduleType: ClassSessionScheduleType;\n  status: \"scheduled\" | \"completed\" | \"cancelled\";\n  topic?: string;\n  content?: string;\n};"
         },
         {
           "name": "TeacherScheduleEventType",
-          "line": 228,
+          "line": 240,
           "definition": "export type TeacherScheduleEventType =\n  | \"fixed\"\n  | \"extra\"\n  | \"one_on_one\"\n  | \"reschedule\"\n  | \"cancel\"\n  | \"manual\";"
         },
         {
           "name": "TeacherScheduleClass",
-          "line": 236,
+          "line": 248,
           "definition": "export type TeacherScheduleClass = {\n  id: string;\n  name: string;\n  imageUrl: string;\n  colorIndex: number;\n  colorHex?: string;\n};"
         },
         {
           "name": "TeacherScheduleDay",
-          "line": 244,
+          "line": 256,
           "definition": "export type TeacherScheduleDay = {\n  date: string;\n  dayOfWeek: number;\n};"
         },
         {
           "name": "TeacherScheduleEvent",
-          "line": 249,
+          "line": 261,
           "definition": "export type TeacherScheduleEvent = {\n  id: string;\n  classId: string;\n  className: string;\n  classImageUrl: string;\n  colorIndex: number;\n  colorHex?: string;\n  date: string;\n  dayOfWeek: number;\n  startTime?: string;\n  endTime?: string;\n  type: TeacherScheduleEventType;\n  reason?: string;\n  originalDate?: string;\n  originalStartTime?: string;\n  originalEndTime?: string;\n  topic?: string;\n  content?: string;\n  lessonContent?: string;\n};"
         },
         {
           "name": "TeacherWeekSchedule",
-          "line": 270,
+          "line": 282,
           "definition": "export type TeacherWeekSchedule = {\n  weekStart: string;\n  weekEnd: string;\n  days: TeacherScheduleDay[];\n  classes: TeacherScheduleClass[];\n  events: TeacherScheduleEvent[];\n};"
         },
         {
           "name": "DashboardTodayLesson",
-          "line": 278,
+          "line": 290,
           "definition": "export type DashboardTodayLesson = TeacherScheduleEvent & {\n  displayTitle: string;\n  statusLabel: string;\n  typeLabel: string;\n};"
         },
         {
           "name": "DashboardRevenueStats",
-          "line": 284,
+          "line": 296,
           "definition": "export type DashboardRevenueStats = {\n  issuedAmount: number;\n  paidAmount: number;\n  outstandingAmount: number;\n  paidReceiptCount: number;\n  pendingReceiptCount: number;\n  receiptCount: number;\n};"
         },
         {
           "name": "DashboardMonthlyRevenue",
-          "line": 293,
+          "line": 305,
           "definition": "export type DashboardMonthlyRevenue = {\n  month: number;\n  issuedAmount: number;\n  collectedAmount: number;\n};"
         },
         {
           "name": "DashboardPendingPayment",
-          "line": 299,
+          "line": 311,
           "definition": "export type DashboardPendingPayment = {\n  id: string;\n  classId?: string;\n  className: string;\n  colorHex?: string;\n  dueDate?: string | null;\n  issuedAt?: string;\n  lessonCount: number;\n  paidAmount: number;\n  parentName: string;\n  parentPhone: string;\n  paymentStatus: PaymentStatus;\n  pdfStatus?: ReceiptPdfStatus;\n  periodEnd?: string;\n  periodStart?: string;\n  receiptNumber?: string;\n  remainingAmount: number;\n  studentCode?: string;\n  studentId?: string;\n  studentName: string;\n  totalAmount: number;\n};"
         },
         {
           "name": "DashboardOverviewData",
-          "line": 322,
+          "line": 334,
           "definition": "export type DashboardOverviewData = {\n  generatedAt: string;\n  today: string;\n  stats: {\n    activeClassCount: number;\n    activeStudentCount: number;\n    todaySessionCount: number;\n    unreadNotificationCount: number;\n    pendingPaymentCount: number;\n  };\n  revenue: {\n    year: number;\n    monthly: DashboardMonthlyRevenue[];\n    currentMonth: DashboardRevenueStats;\n    collectedThisMonth: number;\n    overall: DashboardRevenueStats;\n  };\n  todayLessons: DashboardTodayLesson[];\n  pendingPayments: DashboardPendingPayment[];\n};"
         },
         {
           "name": "ScheduleConflict",
-          "line": 343,
+          "line": 355,
           "definition": "export type ScheduleConflict = {\n  classId: string; className: string; scheduleId: string;\n  date: string; startTime: string; endTime: string;\n  type: \"fixed\" | \"temporary\"; message: string;\n};"
         },
         {
           "name": "ScheduleConflictResult",
-          "line": 348,
+          "line": 360,
           "definition": "export type ScheduleConflictResult = {\n  blockingConflicts: ScheduleConflict[];\n  warnings: ScheduleConflict[];\n};"
         },
         {
           "name": "ScheduleAvailabilityPayload",
-          "line": 352,
+          "line": 364,
           "definition": "export type ScheduleAvailabilityPayload = {\n  classId: string; mode: \"fixed\" | \"temporary\"; date: string;\n  dayOfWeek?: number; duration: number; startTime: string; endTime: string;\n  ignoreOverrideId?: string; originalDate?: string;\n  originalStartTime?: string; originalEndTime?: string;\n};"
         },
         {
           "name": "ScheduleTimeSlot",
-          "line": 358,
+          "line": 370,
           "definition": "export type ScheduleTimeSlot = { startTime: string; endTime: string };"
         },
         {
           "name": "ScheduleAvailability",
-          "line": 359,
+          "line": 371,
           "definition": "export type ScheduleAvailability = { slots: ScheduleTimeSlot[]; warnings: ScheduleConflict[] };"
         },
         {
           "name": "EnrollmentResponse",
-          "line": 361,
+          "line": 373,
           "definition": "export type EnrollmentResponse = {\n  id: string;\n  classId: string;\n  studentId: string;\n  status: EnrollmentStatus;\n  joinedAt: string;\n  leftAt?: string | null;\n  student: Student;\n};"
         },
         {
           "name": "EnrollmentBulkResponse",
-          "line": 371,
+          "line": 383,
           "definition": "export type EnrollmentBulkResponse = {\n  totalCount: number;\n  successCount: number;\n  failedCount: number;\n  enrollments: EnrollmentResponse[];\n  errors: Array<{\n    studentId: string;\n    studentName?: string;\n    message: string;\n  }>;\n};"
         },
         {
           "name": "RemoveStudentsBulkResponse",
-          "line": 383,
+          "line": 395,
           "definition": "export type RemoveStudentsBulkResponse = {\n  totalCount: number;\n  successCount: number;\n  failedCount: number;\n  removedStudents: Student[];\n  errors: Array<{\n    studentId: string;\n    studentName?: string;\n    message: string;\n  }>;\n};"
         },
         {
           "name": "AttendanceStatus",
-          "line": 395,
+          "line": 407,
           "definition": "export type AttendanceStatus = \"present\" | \"absent\" | \"excused\" | \"late\";"
         },
         {
           "name": "AttendanceRecord",
-          "line": 397,
+          "line": 409,
           "definition": "export type AttendanceRecord = {\n  id: string;\n  studentId: string;\n  studentName: string;\n  studentCode: string;\n  studentAvatar?: string;\n  status: AttendanceStatus;\n  note?: string;\n  isBilled?: boolean;\n};"
         },
         {
           "name": "AttendanceResponse",
-          "line": 408,
+          "line": 420,
           "definition": "export type AttendanceResponse = {\n  sessionId: string | null;\n  classId: string;\n  date: string;\n  startTime: string;\n  endTime: string;\n  records: AttendanceRecord[];\n  summary: {\n    total: number;\n    present: number;\n    absent: number;\n    excused: number;\n  };\n};"
         },
         {
           "name": "TakeAttendanceRecordPayload",
-          "line": 423,
+          "line": 435,
           "definition": "export interface TakeAttendanceRecordPayload {\n  studentId: string;\n  status?: AttendanceStatus | null;\n  note?: string;\n}"
         },
         {
           "name": "TakeAttendancePayload",
-          "line": 429,
+          "line": 441,
           "definition": "export type TakeAttendancePayload = {\n  date: string;\n  startTime: string;\n  endTime: string;\n  scheduleEventType?: Exclude<TeacherScheduleEventType, \"cancel\"> | \"manual\";\n  records: TakeAttendanceRecordPayload[];\n};"
         },
         {
           "name": "TakeAttendanceBatchPayload",
-          "line": 437,
+          "line": 449,
           "definition": "export type TakeAttendanceBatchPayload = {\n  sessions: TakeAttendancePayload[];\n};"
         },
         {
           "name": "FlatAttendanceRecord",
-          "line": 441,
+          "line": 453,
           "definition": "export type FlatAttendanceRecord = {\n  id: string;\n  sessionId: string;\n  studentId: string;\n  status: AttendanceStatus;\n  note: string;\n  isBilled?: boolean;\n};"
         },
         {
           "name": "AttendanceSheetResponse",
-          "line": 450,
+          "line": 462,
           "definition": "export type AttendanceSheetResponse = {\n  sessions: TeacherScheduleEvent[];\n  records: FlatAttendanceRecord[];\n};"
         },
         {
           "name": "Exam",
-          "line": 455,
+          "line": 467,
           "definition": "export type Exam = {\n  id: string;\n  title: string;\n  testDate: string;\n  maxScore: number;\n  description?: string;\n  fileUrl?: string;\n  fileName?: string;\n};"
         },
         {
           "name": "ExamScore",
-          "line": 465,
+          "line": 477,
           "definition": "export type ExamScore = {\n  id: string;\n  examId: string;\n  studentId: string;\n  score: number;\n  note?: string;\n  evidenceImages?: string[];\n};"
         },
         {
           "name": "ExamSheetResponse",
-          "line": 474,
+          "line": 486,
           "definition": "export type ExamSheetResponse = {\n  students: Student[];\n  exams: Exam[];\n  scores: ExamScore[];\n};"
         },
         {
           "name": "CreateExamPayload",
-          "line": 480,
+          "line": 492,
           "definition": "export type CreateExamPayload = {\n  title: string;\n  testDate: string;\n  maxScore: number;\n  description?: string;\n  fileUrl?: string;\n  fileName?: string;\n};"
         },
         {
           "name": "UpdateExamPayload",
-          "line": 489,
+          "line": 501,
           "definition": "export type UpdateExamPayload = Partial<CreateExamPayload>;"
         },
         {
           "name": "TakeExamScoreEntry",
-          "line": 491,
+          "line": 503,
           "definition": "export type TakeExamScoreEntry = {\n  examId: string;\n  studentId: string;\n  score: number | null;\n  note?: string;\n  evidenceImages?: string[];\n};"
         },
         {
           "name": "TakeExamScoresBatchPayload",
-          "line": 499,
+          "line": 511,
           "definition": "export type TakeExamScoresBatchPayload = {\n  scores: TakeExamScoreEntry[];\n};"
         },
         {
           "name": "PaymentStatus",
-          "line": 503,
+          "line": 515,
           "definition": "export type PaymentStatus =\n  | \"unpaid\"\n  | \"partially_paid\"\n  | \"paid\"\n  | \"cancelled\";"
         },
         {
           "name": "ReceiptPdfStatus",
-          "line": 509,
+          "line": 521,
           "definition": "export type ReceiptPdfStatus = \"pending\" | \"generated\" | \"failed\";"
         },
         {
           "name": "ReceiptScope",
-          "line": 510,
+          "line": 522,
           "definition": "export type ReceiptScope = \"class\" | \"multi_class\";"
         },
         {
           "name": "ReceiptTeacherSnapshot",
-          "line": 512,
+          "line": 524,
           "definition": "export type ReceiptTeacherSnapshot = {\n  fullName: string;\n  email: string;\n  phone?: string;\n  address?: string;\n  avatarUrl?: string;\n  bankAccountName?: string;\n  bankAccountNumber?: string;\n  bankName?: string;\n  bankCode?: string;\n  bankBin?: string;\n  bankLogoUrl?: string;\n  hasPaymentQr: boolean;\n};"
         },
         {
           "name": "ReceiptClassSnapshot",
-          "line": 527,
+          "line": 539,
           "definition": "export type ReceiptClassSnapshot = {\n  classId?: string;\n  className: string;\n  colorHex?: string;\n  regularPrice: number;\n  makeupPrice: number;\n};"
         },
         {
           "name": "ReceiptStudentSnapshot",
-          "line": 535,
+          "line": 547,
           "definition": "export type ReceiptStudentSnapshot = {\n  studentCode?: string;\n  fullName: string;\n  phone?: string;\n  parentName?: string;\n  parentPhone?: string;\n};"
         },
         {
           "name": "ReceiptSessionSnapshot",
-          "line": 543,
+          "line": 555,
           "definition": "export type ReceiptSessionSnapshot = {\n  tuitionEntryId: string;\n  attendanceId?: string;\n  sequence: number;\n  sessionId?: string;\n  classId?: string;\n  attendedClassId?: string;\n  billingClassId?: string;\n  makeupForClassId?: string;\n  date: string;\n  startTime?: string;\n  endTime?: string;\n  className: string;\n  attendedClassName?: string;\n  billingClassName?: string;\n  makeupForClassName?: string;\n  classColorHex?: string;\n  topic?: string;\n  content?: string;\n  attendanceStatus: AttendanceStatus;\n  scheduleType?: ClassSessionScheduleType;\n  tuitionType: string;\n  unitPrice: number;\n  amount: number;\n  note?: string;\n};"
         },
         {
           "name": "ReceiptExamSnapshot",
-          "line": 570,
+          "line": 582,
           "definition": "export type ReceiptExamSnapshot = {\n  examId?: string;\n  examScoreId?: string;\n  classId?: string;\n  className: string;\n  title: string;\n  date: string;\n  score: number;\n  maxScore: number;\n  description?: string;\n  note?: string;\n  evidenceImages?: string[];\n  teacherRemark?: string;\n};"
         },
         {
           "name": "ReceiptDetail",
-          "line": 585,
+          "line": 597,
           "definition": "export type ReceiptDetail = {\n  template?: { id: string; name: string; version: number; revision: string };\n  id: string;\n  teacherId: string;\n  classId: string;\n  classIds?: string[];\n  primaryClassId?: string;\n  scopeType?: ReceiptScope;\n  studentId: string;\n  billingCycleId?: string | null;\n  receiptNumber: string;\n  issuedAt: string;\n  periodStart: string;\n  periodEnd: string;\n  dueDate?: string | null;\n  reason: \"cycle_completed\" | \"manual_early\";\n  teacherSnapshot: ReceiptTeacherSnapshot;\n  classSnapshot: ReceiptClassSnapshot;\n  classSnapshots?: ReceiptClassSnapshot[];\n  studentSnapshot: ReceiptStudentSnapshot;\n  sessions: ReceiptSessionSnapshot[];\n  exams: ReceiptExamSnapshot[];\n  lessonCount: number;\n  subtotal: number;\n  discountAmount: number;\n  adjustmentAmount: number;\n  totalAmount: number;\n  paymentStatus: PaymentStatus;\n  paidAmount: number;\n  paidAt?: string | null;\n  note?: string;\n  teacherComment?: string;\n  strengthsComment?: string;\n  improvementsComment?: string;\n  generalComment?: string;\n  paymentNote?: string;\n  paymentProofUrl?: string;\n  pdfStatus: ReceiptPdfStatus;\n  pdfUrl?: string | null;\n  pdfGeneratedAt?: string | null;\n  pdfFailedReason?: string | null;\n};"
         },
         {
           "name": "ReceiptListItem",
-          "line": 628,
+          "line": 640,
           "definition": "export type ReceiptListItem = {\n  id: string;\n  classId: string;\n  classIds?: string[];\n  primaryClassId?: string;\n  scopeType?: ReceiptScope;\n  studentId: string;\n  receiptNumber: string;\n  issuedAt: string;\n  periodStart: string;\n  periodEnd: string;\n  studentName: string;\n  className: string;\n  classSnapshots?: ReceiptClassSnapshot[];\n  lessonCount: number;\n  totalAmount: number;\n  paymentStatus: PaymentStatus;\n  paidAmount?: number;\n  paidAt?: string | null;\n  paymentNote?: string;\n  pdfStatus: ReceiptPdfStatus;\n  pdfUrl?: string | null;\n};"
         },
         {
           "name": "BillingOverviewStudent",
-          "line": 652,
+          "line": 664,
           "definition": "export type BillingOverviewStudent = {\n  student: Student;\n  unbilledLessonCount: number;\n  unbilledAmount: number;\n  firstUnbilledSessionDate?: string;\n  lastUnbilledSessionDate?: string;\n  reachedSuggestedCycle: boolean;\n  latestReceipt?: ReceiptListItem | null;\n};"
         },
         {
           "name": "BillingOverview",
-          "line": 662,
+          "line": 674,
           "definition": "export type BillingOverview = {\n  classId: string;\n  className: string;\n  regularPrice: number;\n  makeupPrice: number;\n  totals: {\n    students: number;\n    unbilledLessonCount: number;\n    unbilledAmount: number;\n    readyToIssueCount: number;\n  };\n  students: BillingOverviewStudent[];\n};"
         },
         {
           "name": "StudentBillingOverviewClass",
-          "line": 676,
+          "line": 688,
           "definition": "export type StudentBillingOverviewClass = {\n  class: {\n    id: string;\n    name: string;\n    colorHex?: string;\n    regularPrice: number;\n    makeupPrice: number;\n  };\n  unbilledLessonCount: number;\n  unbilledAmount: number;\n  firstUnbilledSessionDate?: string;\n  lastUnbilledSessionDate?: string;\n  reachedSuggestedCycle: boolean;\n  latestReceipt?: ReceiptListItem | null;\n};"
         },
         {
           "name": "StudentBillingOverview",
-          "line": 692,
+          "line": 704,
           "definition": "export type StudentBillingOverview = {\n  student: Student;\n  classes: StudentBillingOverviewClass[];\n  totals: {\n    classes: number;\n    unbilledLessonCount: number;\n    unbilledAmount: number;\n    readyToIssueCount: number;\n  };\n};"
         },
         {
           "name": "BillingClassSummary",
-          "line": 703,
+          "line": 715,
           "definition": "export type BillingClassSummary = {\n  id: string;\n  name: string;\n  colorHex?: string;\n  regularPrice: number;\n  makeupPrice: number;\n};"
         },
         {
           "name": "BillingCandidates",
-          "line": 711,
+          "line": 723,
           "definition": "export type BillingCandidates = {\n  class: BillingClassSummary;\n  classes?: BillingClassSummary[];\n  scopeType?: ReceiptScope;\n  student: Student;\n  periodStart: string;\n  periodEnd: string;\n  suggestedTuitionEntryIds: string[];\n  tuitionEntries: ReceiptSessionSnapshot[];\n  exams: ReceiptExamSnapshot[];\n  summary: {\n    unbilledLessonCount: number;\n    unbilledAmount: number;\n    examCount: number;\n  };\n};"
         },
         {
           "name": "IssueReceiptPayload",
-          "line": 728,
+          "line": 740,
           "definition": "export type IssueReceiptPayload = {\n  templateId?: string;\n  templateRevision?: string;\n  scopeType?: ReceiptScope;\n  classIds?: string[];\n  fromDate?: string;\n  toDate?: string;\n  dueDate?: string;\n  tuitionEntryIds?: string[];\n  targetSessionCount?: number;\n  discountAmount?: number;\n  adjustmentAmount?: number;\n  note?: string;\n  teacherComment?: string;\n  strengthsComment?: string;\n  improvementsComment?: string;\n  generalComment?: string;\n  paymentNote?: string;\n  examRemarks?: Array<{\n    examScoreId: string;\n    teacherRemark: string;\n  }>;\n};"
         },
         {
           "name": "ReceiptPreviewResponse",
-          "line": 752,
+          "line": 764,
           "definition": "export type ReceiptPreviewResponse = {\n  template: { id: string; name: string; version: number; revision: string };\n  receipt: ReceiptDetail;\n  html: string;\n};"
         },
         {
           "name": "FileDownloadResponse",
-          "line": 758,
+          "line": 770,
           "definition": "export type FileDownloadResponse = {\n  blob: Blob;\n  contentType?: string;\n  fileName: string;\n};"
         },
         {
           "name": "ReceiptDownloadResponse",
-          "line": 764,
+          "line": 776,
           "definition": "export type ReceiptDownloadResponse = FileDownloadResponse;"
         },
         {
           "name": "ReceiptBulkDownloadPayload",
-          "line": 766,
+          "line": 778,
           "definition": "export type ReceiptBulkDownloadPayload = {\n  receiptIds: string[];\n};"
         },
         {
           "name": "UpdateReceiptPaymentPayload",
-          "line": 770,
+          "line": 782,
           "definition": "export type UpdateReceiptPaymentPayload = {\n  paymentStatus: Exclude<PaymentStatus, \"cancelled\">;\n  paidAmount?: number;\n  paidAt?: string;\n  paymentNote?: string;\n  paymentProofUrl?: string;\n  paymentProofPublicId?: string;\n};"
         },
         {
           "name": "AiChatMessage",
-          "line": 781,
+          "line": 793,
           "definition": "export type AiChatMessage = {\n  role: \"user\" | \"ai\";\n  text: string;\n  timestamp: string;\n};"
         },
         {
           "name": "AiScheduleSessionResponse",
-          "line": 787,
+          "line": 799,
           "definition": "export type AiScheduleSessionResponse = {\n  sessionId: string;\n  scheduleContext: string;\n  greeting: string;\n};"
         },
         {
           "name": "AiChatResponse",
-          "line": 793,
+          "line": 805,
           "definition": "export type AiChatResponse = {\n  reply: string;\n};"
         },
         {
           "name": "AiSessionListItem",
-          "line": 797,
+          "line": 809,
           "definition": "export type AiSessionListItem = {\n  sessionId: string;\n  messageCount: number;\n  lastActivityAt: string;\n  createdAt: string;\n  preview: string;\n};"
         },
         {
           "name": "AiSessionDetail",
-          "line": 805,
+          "line": 817,
           "definition": "export type AiSessionDetail = {\n  sessionId: string;\n  messages: AiChatMessage[];\n  scheduleContext: string;\n  createdAt: string;\n};"
         }
       ],
